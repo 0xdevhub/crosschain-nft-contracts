@@ -13,7 +13,7 @@ describe('Registry', function () {
     const { registry } = await loadFixture(deployRegistryFixture)
 
     const adapterType = VAULT_V1
-    const adapterAddress = '0x0000000000000000000000000000000000000001'
+    const adapterAddress = ethers.ZeroAddress
 
     const tx = await registry.createAdapter(adapterType, adapterAddress)
     const receipt = await tx.wait()
@@ -35,27 +35,15 @@ describe('Registry', function () {
     })
   })
 
-  it('should revert if adapter already exists', async function () {
-    const { registry } = await loadFixture(deployRegistryFixture)
-
-    const adapterType = VAULT_V1
-    const adapterAddress = '0x0000000000000000000000000000000000000001'
-
-    await registry.createAdapter(adapterType, adapterAddress)
-
-    await expect(
-      registry.createAdapter(adapterType, adapterAddress)
-    ).to.be.revertedWithCustomError(registry, 'Registry_AdapterAlreadyExists')
-  })
-
-  it('should revert if address zero', async function () {
+  it('should revert if not manager', async function () {
+    const [, notManager] = await ethers.getSigners()
     const { registry } = await loadFixture(deployRegistryFixture)
 
     const adapterType = VAULT_V1
     const adapterAddress = ethers.ZeroAddress
 
     await expect(
-      registry.createAdapter(adapterType, adapterAddress)
-    ).to.be.revertedWithCustomError(registry, 'Registry_AdapterAddressZero')
+      registry.connect(notManager).createAdapter(adapterType, adapterAddress)
+    ).to.be.revertedWithCustomError(registry, 'Roles_NotRoleManager')
   })
 })

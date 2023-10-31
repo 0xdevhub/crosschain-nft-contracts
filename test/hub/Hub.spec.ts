@@ -60,12 +60,11 @@ describe('Hub', function () {
       deployHubFixture.bind(this, registryAddress)
     )
 
-    const INVALID_ID = ethers.keccak256(ethers.toUtf8Bytes('INVALID_ID'))
-
+    const invalidAdapterId = ethers.keccak256(ethers.toUtf8Bytes('INVALID_ID'))
     const appAddress = '0x0000000000000000000000000000000000000001'
 
     await expect(
-      hub.createApp(INVALID_ID, appAddress)
+      hub.createApp(invalidAdapterId, appAddress)
     ).to.be.revertedWithCustomError(hub, 'Hub_AdapterNotFound')
   })
 })
