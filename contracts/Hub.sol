@@ -1,33 +1,50 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {AppType, App} from "./interfaces/IApp.sol";
+import {IHub} from "./interfaces/IHub.sol";
+import {IRegistry} from "./interfaces/IRegistry.sol";
+import {App} from "./interfaces/IApp.sol";
+import {Adapter} from "./interfaces/IAdapter.sol";
 
-contract Hub {
+contract Hub is IHub {
+    IRegistry public immutable registryAddress;
+
     mapping(bytes32 => App) private _apps;
 
-    event Hub_AppCreated(bytes32 indexed appId);
+    constructor(IRegistry registryAddress_) {
+        registryAddress = registryAddress_;
+    }
 
-    error Hub_UnknownAppType();
+    modifier onlyRegistryAdapter(bytes32 adapterId_) {
+        if (registryAddress.getAdapter(adapterId_).adapterAddress == address(0)) {
+            revert IHub.Hub_AdapterNotFound(adapterId_);
+        }
+        _;
+    }
 
-    function createApp(AppType appType_, address appAddress_) external returns (bytes32) {
+    function createApp(
+        bytes32 adapterId_,
+        address appAddress_
+    ) external onlyRegistryAdapter(adapterId_) returns (bytes32) {
+        Adapter memory adapter = registryAddress.getAdapter(adapterId_);
+
         App memory app = App({
-            owner: msg.sender,
-            appType: appType_,
+            adapter: adapter,
             appAddress: appAddress_,
+            owner: msg.sender,
             createdAt: block.timestamp
         });
 
-        bytes32 appId = keccak256(abi.encodePacked(msg.sender, appType_, appAddress_));
+        bytes32 appId = keccak256(abi.encodePacked(app.appAddress, msg.sender));
 
         _apps[appId] = app;
 
-        emit Hub_AppCreated(appId);
+        emit IHub.Hub_AppCreated(appId);
 
         return appId;
     }
 
-    function getApp(bytes32 appId) external view returns (App memory) {
-        return _apps[appId];
+    function getApp(bytes32 appId_) external view returns (App memory) {
+        return _apps[appId_];
     }
 }

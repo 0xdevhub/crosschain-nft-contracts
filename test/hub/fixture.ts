@@ -1,14 +1,13 @@
+import { address } from './../utils/types'
 import { ethers } from 'hardhat'
 
-export enum AppType {
-  Vault
-}
-
-export async function deployHubFixture() {
+export async function deployHubFixture(address: address) {
   const [owner] = await ethers.getSigners()
 
   const Hub = await ethers.getContractFactory('Hub')
-  const hub = await Hub.deploy()
+  const hub = await Hub.deploy(address)
 
-  return { hub, owner }
+  const hubAddress = (await hub.getAddress()) as address
+
+  return { hub, owner, hubAddress }
 }
