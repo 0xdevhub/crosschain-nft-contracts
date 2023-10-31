@@ -29,10 +29,10 @@ devDependencies:
     specifier: ^3.0.1
     version: 3.0.1(hardhat@2.18.3)(typescript@5.2.2)
   '@typechain/ethers-v6':
-    specifier: ^0.4.0
+    specifier: ^0.4.3
     version: 0.4.3(ethers@6.8.0)(typechain@8.3.2)(typescript@5.2.2)
   '@typechain/hardhat':
-    specifier: ^8.0.0
+    specifier: ^8.0.3
     version: 8.0.3(@typechain/ethers-v6@0.4.3)(ethers@6.8.0)(hardhat@2.18.3)(typechain@8.3.2)
   '@types/chai':
     specifier: ^4.2.0
@@ -77,7 +77,7 @@ devDependencies:
     specifier: '>=8.0.0'
     version: 10.9.1(@types/node@20.8.9)(typescript@5.2.2)
   typechain:
-    specifier: ^8.1.0
+    specifier: ^8.3.2
     version: 8.3.2(typescript@5.2.2)
   typescript:
     specifier: '>=4.5.0'
