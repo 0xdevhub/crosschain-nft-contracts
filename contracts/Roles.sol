@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import "./interfaces/IRoles.sol";
+import {IRoles, MANAGER_ROLE} from "./interfaces/IRoles.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract Roles is AccessControl {
     modifier OnlyManager() {
-        if (!hasRole(MANAGER_ROLE, msg.sender)) {
-            revert Roles_NotRoleManager();
+        if (!isManager(msg.sender)) {
+            revert IRoles.Roles_NotRoleManager();
         }
         _;
     }
@@ -18,5 +18,9 @@ contract Roles is AccessControl {
 
     function _setManagerRole(address _address) internal {
         _grantRole(MANAGER_ROLE, _address);
+    }
+
+    function isManager(address _address) public view returns (bool) {
+        return hasRole(MANAGER_ROLE, _address);
     }
 }
