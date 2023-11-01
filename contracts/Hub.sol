@@ -30,7 +30,7 @@ contract Hub is IHub, AccessManaged {
     ) external checkIsRegistryAdapter(adapterId_) restricted returns (bytes32) {
         App memory app = App({adapter: _getRegistryAdapter(adapterId_), appAddress: appAddress_});
 
-        bytes32 appId = keccak256(abi.encodePacked(_appIdSalt++, appAddress_, msg.sender));
+        bytes32 appId = keccak256(abi.encodePacked(_appIdSalt++, adapterId_, appAddress_, msg.sender));
 
         _apps[appId] = app;
 

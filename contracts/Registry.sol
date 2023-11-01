@@ -15,7 +15,7 @@ contract Registry is IRegistry, AccessManaged {
     function createAdapter(bytes32 adapterType_, address adapterAddress_) external restricted returns (bytes32) {
         Adapter memory adapter = Adapter({adapterType: adapterType_, adapterAddress: adapterAddress_});
 
-        bytes32 adapterId = keccak256(abi.encodePacked(_adapterIdSalt++, adapterType_, adapterAddress_));
+        bytes32 adapterId = keccak256(abi.encodePacked(_adapterIdSalt++, adapterType_, adapterAddress_, msg.sender));
         _adapters[adapterId] = adapter;
 
         emit IRegistry.Registry_AdapterCreated(adapterId);
