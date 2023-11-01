@@ -15,17 +15,14 @@ contract Hub is IHub {
         registryAddress = registryAddress_;
     }
 
-    modifier onlyRegistryAdapter(bytes32 adapterId_) {
+    modifier isAdapter(bytes32 adapterId_) {
         if (!registryAddress.isAdapter(adapterId_)) {
             revert IHub.Hub_AdapterNotFound(adapterId_);
         }
         _;
     }
 
-    function createApp(
-        bytes32 adapterId_,
-        address appAddress_
-    ) external onlyRegistryAdapter(adapterId_) returns (bytes32) {
+    function createApp(bytes32 adapterId_, address appAddress_) external isAdapter(adapterId_) returns (bytes32) {
         Adapter memory adapter = registryAddress.getAdapter(adapterId_);
 
         App memory app = App({
