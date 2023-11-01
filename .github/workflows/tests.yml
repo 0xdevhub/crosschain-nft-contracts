@@ -19,7 +19,8 @@ jobs:
           node-version: 18
 
       - name: Install pnpm
-        run: pnpm install -g pnpm
+        run: |
+          wget -qO- https://get.pnpm.io/install.sh | sh -
 
       - name: Install project dependencies
         run: pnpm install
