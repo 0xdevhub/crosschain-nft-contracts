@@ -15,22 +15,18 @@ contract Hub is IHub {
         registryAddress = registryAddress_;
     }
 
-    modifier isAdapter(bytes32 adapterId_) {
+    modifier checkRegistryAdapter(bytes32 adapterId_) {
         if (!registryAddress.isAdapter(adapterId_)) {
             revert IHub.Hub_AdapterNotFound(adapterId_);
         }
         _;
     }
 
-    function createApp(bytes32 adapterId_, address appAddress_) external isAdapter(adapterId_) returns (bytes32) {
-        Adapter memory adapter = registryAddress.getAdapter(adapterId_);
-
-        App memory app = App({
-            adapter: adapter,
-            appAddress: appAddress_,
-            owner: msg.sender,
-            createdAt: block.timestamp
-        });
+    function createApp(
+        bytes32 adapterId_,
+        address appAddress_
+    ) external checkRegistryAdapter(adapterId_) returns (bytes32) {
+        App memory app = App({adapter: _getRegistryAdapter(adapterId_), appAddress: appAddress_});
 
         bytes32 appId = keccak256(abi.encodePacked(appAddress_, msg.sender));
 
@@ -39,6 +35,10 @@ contract Hub is IHub {
         emit IHub.Hub_AppCreated(appId);
 
         return appId;
+    }
+
+    function _getRegistryAdapter(bytes32 adapterId_) internal view returns (Adapter memory) {
+        return registryAddress.getAdapter(adapterId_);
     }
 
     function getApp(bytes32 appId_) external view returns (App memory) {

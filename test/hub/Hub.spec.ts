@@ -1,7 +1,4 @@
-import {
-  time,
-  loadFixture
-} from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
@@ -16,7 +13,7 @@ describe('Hub', function () {
       deployRegistryFixture
     )
 
-    const { owner, hub } = await loadFixture(
+    const { hub } = await loadFixture(
       deployHubFixture.bind(this, registryAddress)
     )
 
@@ -38,16 +35,11 @@ describe('Hub', function () {
     const logs2 = await hub.queryFilter(filter2, receipt2?.blockHash)
     const [appId] = logs2[0].args
     const app = await hub.getApp(appId)
-    const createdAt = await time.latest()
 
     expect({
-      owner: app.owner,
-      createdAt: app.createdAt,
       appAddress: app.appAddress,
       adapter: app.adapter
     }).to.deep.equal({
-      owner: owner.address,
-      createdAt,
       appAddress,
       adapter
     })

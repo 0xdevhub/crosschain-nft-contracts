@@ -1,7 +1,4 @@
-import {
-  time,
-  loadFixture
-} from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
@@ -17,7 +14,6 @@ describe('Registry', function () {
 
     const tx = await registry.createAdapter(adapterType, adapterAddress)
     const receipt = await tx.wait()
-
     const filter = registry.filters.Registry_AdapterCreated
     const logs = await registry.queryFilter(filter, receipt?.blockHash)
     const [adapterId] = logs[0].args
@@ -26,12 +22,10 @@ describe('Registry', function () {
 
     expect({
       adapterType: adapter.adapterType,
-      adapterAddress: adapter.adapterAddress,
-      enabled: adapter.enabled
+      adapterAddress: adapter.adapterAddress
     }).to.deep.equal({
       adapterType,
-      adapterAddress,
-      enabled: false
+      adapterAddress
     })
   })
 

@@ -1,4 +1,4 @@
-import { address } from './../utils/types'
+import { address } from './../../types/account'
 import { ethers } from 'hardhat'
 
 export async function deployHubFixture(address: address) {

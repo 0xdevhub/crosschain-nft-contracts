@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat'
-import { address } from '../utils/types'
+import { address } from './../../types/account'
 
 export const VAULT_V1 = ethers.keccak256(ethers.toUtf8Bytes('VAULT.V1'))
 
