@@ -6,12 +6,15 @@ import { ethers } from 'hardhat'
 import { deployHubFixture } from './fixture'
 import { VAULT_V1 } from '../registry/fixture'
 import { deployRegistryFixture } from '../registry/fixture'
+import { MANAGER_ROLE } from '../../constants/roles'
 
 describe('Hub', function () {
   it('should set app data on create', async function () {
-    const { registryAddress, registry } = await loadFixture(
+    const { registryAddress, registry, owner } = await loadFixture(
       deployRegistryFixture
     )
+
+    await registry.grantRole(MANAGER_ROLE, owner.address)
 
     const { hub } = await loadFixture(
       deployHubFixture.bind(this, registryAddress)

@@ -4,10 +4,13 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { deployRegistryFixture, VAULT_V1 } from './fixture'
+import { MANAGER_ROLE } from '../../constants/roles'
 
 describe('Registry', function () {
   it('should set adapter data on create', async function () {
-    const { registry } = await loadFixture(deployRegistryFixture)
+    const { registry, owner } = await loadFixture(deployRegistryFixture)
+
+    await registry.grantRole(MANAGER_ROLE, owner.address)
 
     const adapterType = VAULT_V1
     const adapterAddress = ethers.ZeroAddress
@@ -38,6 +41,6 @@ describe('Registry', function () {
 
     await expect(
       registry.connect(notManager).createAdapter(adapterType, adapterAddress)
-    ).to.be.revertedWithCustomError(registry, 'Roles_NotRoleManager')
+    ).to.be.revertedWithCustomError(registry, 'Roles_NotManager')
   })
 })
