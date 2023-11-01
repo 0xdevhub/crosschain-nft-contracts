@@ -9,6 +9,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 contract Hub is IHub, AccessManaged {
     IRegistry public immutable registryAddress;
+    uint256 private _appIdSalt;
 
     mapping(bytes32 => App) private _apps;
 
@@ -29,7 +30,7 @@ contract Hub is IHub, AccessManaged {
     ) external checkIsRegistryAdapter(adapterId_) restricted returns (bytes32) {
         App memory app = App({adapter: _getRegistryAdapter(adapterId_), appAddress: appAddress_});
 
-        bytes32 appId = keccak256(abi.encodePacked(appAddress_, msg.sender));
+        bytes32 appId = keccak256(abi.encodePacked(_appIdSalt++, appAddress_, msg.sender));
 
         _apps[appId] = app;
 

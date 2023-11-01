@@ -6,7 +6,7 @@ import {Adapter} from "./interfaces/IAdapter.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
 contract Registry is IRegistry, AccessManaged {
-    uint256 private adapterIdSalt;
+    uint256 private _adapterIdSalt;
 
     mapping(bytes32 => Adapter) private _adapters;
 
@@ -15,7 +15,7 @@ contract Registry is IRegistry, AccessManaged {
     function createAdapter(bytes32 adapterType_, address adapterAddress_) external restricted returns (bytes32) {
         Adapter memory adapter = Adapter({adapterType: adapterType_, adapterAddress: adapterAddress_});
 
-        bytes32 adapterId = keccak256(abi.encodePacked(adapterIdSalt++, adapterType_, adapterAddress_));
+        bytes32 adapterId = keccak256(abi.encodePacked(_adapterIdSalt++, adapterType_, adapterAddress_));
         _adapters[adapterId] = adapter;
 
         emit IRegistry.Registry_AdapterCreated(adapterId);
