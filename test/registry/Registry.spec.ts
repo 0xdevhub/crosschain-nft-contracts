@@ -89,4 +89,33 @@ describe('Registry', function () {
 
     expect(adapterId1).to.not.equal(adapterId2)
   })
+
+  it('should revert if not authorized', async function () {
+    const [, developer, otherAccount] = await ethers.getSigners()
+
+    const { accessManagementAddress, accessManagement } = await loadFixture(
+      deployAccessManagementFixture
+    )
+
+    const { registry, registryAddress } = await loadFixture(
+      deployRegistryFixture.bind(this, accessManagementAddress)
+    )
+
+    // grant role to developer
+    await accessManagement.grantRole(DEVELOPER_ROLE, developer.address, 0n)
+
+    // grant role to developer to create adapter
+    await accessManagement.setTargetFunctionRole(
+      registryAddress,
+      [registry.interface.getFunction('createAdapter').selector],
+      DEVELOPER_ROLE
+    )
+
+    // create adapter
+    const adapterType = VAULT_V1
+    const adapterAddress = ethers.ZeroAddress
+    await expect(
+      registry.connect(otherAccount).createAdapter(adapterType, adapterAddress)
+    ).to.be.revertedWithCustomError(registry, 'AccessManagedUnauthorized')
+  })
 })

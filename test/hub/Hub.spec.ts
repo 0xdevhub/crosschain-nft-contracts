@@ -169,12 +169,12 @@ describe('Hub', function () {
   })
 
   it('should revert if not authorized', async function () {
-    const [, , otherAccount] = await ethers.getSigners()
+    const [, developer, otherAccount] = await ethers.getSigners()
     const { accessManagementAddress, accessManagement } = await loadFixture(
       deployAccessManagementFixture
     )
 
-    const { registry, registryAddress, developer } = await loadFixture(
+    const { registry, registryAddress } = await loadFixture(
       deployRegistryFixture.bind(this, accessManagementAddress)
     )
 
