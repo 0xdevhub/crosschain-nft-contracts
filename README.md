@@ -1,5 +1,7 @@
 # 0xdevhub - core contracts
 
+[![Run Tests](https://github.com/0xdevhub/core-contracts/actions/workflows/tests.yml/badge.svg)](https://github.com/0xdevhub/core-contracts/actions/workflows/tests.yml)
+
 ## Getting Started
 
 ```shell
