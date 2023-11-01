@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.21;
 
-import {IRoles, MANAGER_ROLE} from "./interfaces/IRoles.sol";
+import {IRoles} from "./interfaces/IRoles.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+
+bytes32 constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
 contract Roles is AccessControl {
     modifier OnlyManager() {

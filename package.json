@@ -3,6 +3,9 @@
   "repository": "git@github.com:0xdevhub/core-contracts.git",
   "author": "welliton gervickas <wellitogervickas@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
