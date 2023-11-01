@@ -1,9 +1,8 @@
 import { ethers } from 'hardhat'
-import { address } from '@/types/account'
 
 export const VAULT_V1 = ethers.keccak256(ethers.toUtf8Bytes('VAULT.V1'))
 
-export async function deployRegistryFixture(accessManagementAddress: address) {
+export async function deployRegistryFixture(accessManagementAddress: string) {
   const [owner, developer] = await ethers.getSigners()
 
   const Registry = await ethers.getContractFactory('Registry')

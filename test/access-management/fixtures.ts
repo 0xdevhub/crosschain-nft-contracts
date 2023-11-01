@@ -1,4 +1,3 @@
-import { address } from '@/types/account'
 import { ethers } from 'hardhat'
 
 export const ADMIN_ROLE = 0n
@@ -10,8 +9,7 @@ export async function deployAccessManagementFixture() {
   const AccessManagement = await ethers.getContractFactory('AccessManagement')
   const accessManagement = await AccessManagement.deploy(owner.address)
 
-  const accessManagementAddress =
-    (await accessManagement.getAddress()) as address
+  const accessManagementAddress = await accessManagement.getAddress()
 
   return { accessManagement, owner, accessManagementAddress }
 }
