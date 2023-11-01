@@ -35,17 +35,13 @@ contract Hub is IHub {
             createdAt: block.timestamp
         });
 
-        bytes32 appId = _generateId(appAddress_, msg.sender);
+        bytes32 appId = keccak256(abi.encodePacked(appAddress_, msg.sender));
 
         _apps[appId] = app;
 
         emit IHub.Hub_AppCreated(appId);
 
         return appId;
-    }
-
-    function _generateId(address appAddress_, address sender_) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(appAddress_, sender_));
     }
 
     function getApp(bytes32 appId_) external view returns (App memory) {

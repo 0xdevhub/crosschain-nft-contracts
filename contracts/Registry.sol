@@ -11,17 +11,13 @@ contract Registry is IRegistry, Roles {
     function createAdapter(bytes32 adapterType_, address adapterAddress_) external OnlyManager returns (bytes32) {
         Adapter memory adapter = Adapter({adapterType: adapterType_, adapterAddress: adapterAddress_, enabled: false});
 
-        bytes32 adapterId = _generateId(adapterType_, adapterAddress_);
+        bytes32 adapterId = keccak256(abi.encodePacked(adapterType_, adapterAddress_));
 
         _adapters[adapterId] = adapter;
 
         emit IRegistry.Registry_AdapterCreated(adapterId);
 
         return adapterId;
-    }
-
-    function _generateId(bytes32 adapterType_, address adapterAddress_) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(adapterType_, adapterAddress_));
     }
 
     function getAdapter(bytes32 adapterId) external view returns (Adapter memory) {
