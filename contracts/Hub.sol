@@ -5,17 +5,18 @@ import {IHub} from "./interfaces/IHub.sol";
 import {IRegistry} from "./interfaces/IRegistry.sol";
 import {App} from "./interfaces/IApp.sol";
 import {Adapter} from "./interfaces/IAdapter.sol";
+import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-contract Hub is IHub {
+contract Hub is IHub, AccessManaged {
     IRegistry public immutable registryAddress;
 
     mapping(bytes32 => App) private _apps;
 
-    constructor(IRegistry registryAddress_) {
+    constructor(IRegistry registryAddress_, address accessManagement_) AccessManaged(accessManagement_) {
         registryAddress = registryAddress_;
     }
 
-    modifier checkRegistryAdapter(bytes32 adapterId_) {
+    modifier checkIsRegistryAdapter(bytes32 adapterId_) {
         if (!registryAddress.isAdapter(adapterId_)) {
             revert IHub.Hub_AdapterNotFound(adapterId_);
         }
@@ -25,7 +26,7 @@ contract Hub is IHub {
     function createApp(
         bytes32 adapterId_,
         address appAddress_
-    ) external checkRegistryAdapter(adapterId_) returns (bytes32) {
+    ) external checkIsRegistryAdapter(adapterId_) restricted returns (bytes32) {
         App memory app = App({adapter: _getRegistryAdapter(adapterId_), appAddress: appAddress_});
 
         bytes32 appId = keccak256(abi.encodePacked(appAddress_, msg.sender));

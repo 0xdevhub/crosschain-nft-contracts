@@ -3,16 +3,19 @@ pragma solidity 0.8.21;
 
 import {IRegistry, Adapter} from "./interfaces/IRegistry.sol";
 import {Adapter} from "./interfaces/IAdapter.sol";
-import {Roles} from "./Roles.sol";
+import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-contract Registry is IRegistry, Roles {
+contract Registry is IRegistry, AccessManaged {
+    uint256 private adapterIdSalt;
+
     mapping(bytes32 => Adapter) private _adapters;
 
-    function createAdapter(bytes32 adapterType_, address adapterAddress_) external onlyManager returns (bytes32) {
+    constructor(address accessManagement_) AccessManaged(accessManagement_) {}
+
+    function createAdapter(bytes32 adapterType_, address adapterAddress_) external restricted returns (bytes32) {
         Adapter memory adapter = Adapter({adapterType: adapterType_, adapterAddress: adapterAddress_});
 
-        bytes32 adapterId = keccak256(abi.encodePacked(adapterType_, adapterAddress_));
-
+        bytes32 adapterId = keccak256(abi.encodePacked(adapterIdSalt++, adapterType_, adapterAddress_));
         _adapters[adapterId] = adapter;
 
         emit IRegistry.Registry_AdapterCreated(adapterId);
