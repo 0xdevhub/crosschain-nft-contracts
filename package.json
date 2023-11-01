@@ -1,5 +1,7 @@
 {
   "name": "0xdevhub-core-contracts",
+  "version": "1.0.0",
+  "private": false,
   "repository": "git@github.com:0xdevhub/core-contracts.git",
   "author": "welliton gervickas <wellitogervickas@gmail.com>",
   "license": "MIT",
