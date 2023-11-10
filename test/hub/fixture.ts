@@ -1,14 +1,11 @@
-import { ethers } from 'hardhat'
+import { getContractAddress, getContractFactory } from '@/scripts/utils'
+import { Hub__factory } from '@/typechain'
 
-export async function deployHubFixture(
-  registryAddress: string,
-  accessManagementAddress: string
-) {
-  const [owner] = await ethers.getSigners()
-  const Hub = await ethers.getContractFactory('Hub')
-  const hub = await Hub.deploy(registryAddress, accessManagementAddress)
+export async function deployHubFixture(accessManagementAddress: string) {
+  const Hub = await getContractFactory<Hub__factory>('Hub')
 
-  const hubAddress = await hub.getAddress()
+  const hub = await Hub.deploy(accessManagementAddress)
+  const hubAddress = await getContractAddress(hub)
 
-  return { hub, owner, hubAddress }
+  return { hub, hubAddress }
 }

@@ -1,27 +1,54 @@
-import { ethers } from "hardhat";
+import {
+  deployContract,
+  getContractAddress,
+  getContractAt,
+  getNetwork,
+  getSigners
+} from './utils'
+
+import { DEVELOPER_ROLE, DEVELOPER_ROLE_DELAY } from './constants'
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  const { chainId } = await getNetwork()
+  console.log('chainId ' + chainId)
 
-  const lockedAmount = ethers.parseEther("0.001");
+  const [owner, developer] = await getSigners()
+  console.log('owner:' + owner.address)
 
-  const lock = await ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
+  // deploy access management contract
+  const accessManagement = await deployContract(
+    'AccessManagement',
+    owner.address
+  )
+  const accessManagementAddress = await getContractAddress(accessManagement)
+  console.log('accessManagementAddress:' + accessManagementAddress)
 
-  await lock.waitForDeployment();
+  // grant role to developer
+  const accessManagementContract = await getContractAt(
+    'AccessManagement',
+    accessManagementAddress
+  )
+
+  await accessManagementContract.grantRole(
+    DEVELOPER_ROLE,
+    developer.address,
+    DEVELOPER_ROLE_DELAY
+  )
 
   console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount,
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`,
-  );
+    'developer role granted: ',
+    developer.address,
+    DEVELOPER_ROLE,
+    DEVELOPER_ROLE_DELAY
+  )
+
+  // deploy hub contract
+  const hubContract = await deployContract('Hub', accessManagementAddress)
+  const hubAddress = await getContractAddress(hubContract)
+  console.log('hubAddress:' + hubAddress)
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  console.error(error)
+  process.exitCode = 1
+})

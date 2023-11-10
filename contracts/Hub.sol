@@ -1,49 +1,65 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import {IHub} from "./interfaces/IHub.sol";
-import {IRegistry} from "./interfaces/IRegistry.sol";
-import {App} from "./interfaces/IApp.sol";
-import {Adapter} from "./interfaces/IAdapter.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-contract Hub is IHub, AccessManaged {
-    IRegistry public immutable registryAddress;
-    uint256 private _appIdSalt;
+/**
+ * @title Hub
+ * @notice This contract is used to manage apps in the protocol
+ */
 
-    mapping(bytes32 => App) private _apps;
-
-    constructor(IRegistry registryAddress_, address accessManagement_) AccessManaged(accessManagement_) {
-        registryAddress = registryAddress_;
+contract Hub is AccessManaged {
+    struct App {
+        address appAddress;
     }
 
-    modifier checkIsRegistryAdapter(bytes32 adapterId_) {
-        if (!registryAddress.isAdapter(adapterId_)) {
-            revert IHub.Hub_AdapterNotFound(adapterId_);
-        }
-        _;
-    }
+    /// @notice The salt used to generate appIds
+    uint256 private s_appIdSalt;
 
-    function createApp(
-        bytes32 adapterId_,
-        address appAddress_
-    ) external checkIsRegistryAdapter(adapterId_) restricted returns (bytes32) {
-        App memory app = App({adapter: _getRegistryAdapter(adapterId_), appAddress: appAddress_});
+    mapping(bytes32 => App) private s_apps;
 
-        bytes32 appId = keccak256(abi.encodePacked(_appIdSalt++, adapterId_, appAddress_, msg.sender));
+    /// @notice Emitted when an app is added to the hub
+    event Hub_AppAdded(bytes32 indexed appId_);
 
-        _apps[appId] = app;
+    constructor(address accessManagement_) AccessManaged(accessManagement_) {}
 
-        emit IHub.Hub_AppCreated(appId);
+    /**
+     * @notice Adds an app to the hub
+     * @param appAddress_ The address of the app contract
+     * @return The id of the app
+     */
+    function addApp(address appAddress_) external restricted returns (bytes32) {
+        bytes32 appId = _getNextAppId(appAddress_);
+        s_apps[appId] = App({appAddress: appAddress_});
+
+        emit Hub_AppAdded(appId);
 
         return appId;
     }
 
-    function _getRegistryAdapter(bytes32 adapterId_) internal view returns (Adapter memory) {
-        return registryAddress.getAdapter(adapterId_);
+    /**
+     * @notice Gets the next app id
+     * @param appAddress_ The address of the app contract
+     * @return The id of the app
+     */
+    function _getNextAppId(address appAddress_) private returns (bytes32) {
+        return keccak256(abi.encodePacked(_getNextAppIdSalt(), msg.sender, appAddress_));
     }
 
+    /**
+     * @notice Gets the next app id salt
+     * @return The next app id salt
+     */
+    function _getNextAppIdSalt() private returns (uint256) {
+        return s_appIdSalt++;
+    }
+
+    /**
+     * @notice Gets an app from the hub
+     * @param appId_ The id of the app
+     * @return The app
+     */
     function getApp(bytes32 appId_) external view returns (App memory) {
-        return _apps[appId_];
+        return s_apps[appId_];
     }
 }
