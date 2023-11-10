@@ -1,27 +1,37 @@
-import { ethers } from "hardhat";
+import { BaseContract } from 'ethers'
+import { ethers } from 'hardhat'
 
-async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+async function deployContract(
+  name: string,
+  ...args: unknown[]
+): Promise<BaseContract> {
+  const Contract = await ethers.getContractFactory(name)
+  const contract = await Contract.deploy(...args)
+  await contract.waitForDeployment()
 
-  const lockedAmount = ethers.parseEther("0.001");
-
-  const lock = await ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
-
-  await lock.waitForDeployment();
-
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount,
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`,
-  );
+  return contract
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
+async function main() {
+  const { chainId } = await ethers.provider.getNetwork()
+  console.log('chainId ' + chainId)
+
+  const [owner] = await ethers.getSigners()
+  console.log('owner:' + owner.address)
+
+  const accessManagementContract = await deployContract(
+    'AccessManagement',
+    owner.address
+  )
+  const accessManagementAddress = await accessManagementContract.getAddress()
+  console.log('accessManagementAddress:' + accessManagementAddress)
+
+  const hubContract = await deployContract('Hub', accessManagementAddress)
+  const hubAddress = await hubContract.getAddress()
+  console.log('hubAddress:' + hubAddress)
+}
+
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  console.error(error)
+  process.exitCode = 1
+})
