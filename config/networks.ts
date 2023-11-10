@@ -2,7 +2,7 @@ const networks = {}
 
 console.log('NODE_ENV: ', process.env.NODE_ENV)
 
-if (process.env.NODE_ENV !== 'devevelopment') {
+if (process.env.NODE_ENV !== 'development') {
   Object.assign(networks, {
     mumbai: {
       url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.MUMBAI_API_KEY}`,
