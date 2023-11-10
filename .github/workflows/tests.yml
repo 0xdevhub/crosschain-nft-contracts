@@ -9,8 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment:
-      name: hardhat
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,6 +23,12 @@ jobs:
 
       - name: Install project dependencies
         run: pnpm install
+
+      - name: Output vars
+        run: |
+          echo "ACCOUNTS_PRIVATE_KEY_1: $ACCOUNTS_PRIVATE_KEY_1"
+          echo "ACCOUNTS_PRIVATE_KEY_2: $ACCOUNTS_PRIVATE_KEY_2"
+          echo "MUMBAI_API_KEY: $MUMBAI_API_KEY"
 
       - name: Run Tests
         run: pnpm test
