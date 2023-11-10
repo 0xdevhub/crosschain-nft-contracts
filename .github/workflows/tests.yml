@@ -1,8 +1,5 @@
 name: Run Tests
 
-env:
-  NAME: 'Node'
-
 on:
   push:
     branches:
