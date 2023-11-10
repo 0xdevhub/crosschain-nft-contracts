@@ -4,10 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
-
 import { deployHubFixture } from './fixture'
-// import { VAULT_V1 } from '../registry/fixture'
-// import { deployRegistryFixture } from '../registry/fixture'
 
 describe('Hub', function () {
   it('should add app by app address', async function () {
@@ -49,5 +46,23 @@ describe('Hub', function () {
     }).to.deep.equal({
       appAddress
     })
+  })
+
+  it('should revert if try to call addApp without role', async function () {
+    const [, developer] = await ethers.getSigners()
+
+    const { accessManagementAddress } = await loadFixture(
+      deployAccessManagementFixture
+    )
+
+    const { hub } = await loadFixture(
+      deployHubFixture.bind(this, accessManagementAddress)
+    )
+
+    const appAddress = '0x0000000000000000000000000000000000000001'
+
+    await expect(
+      hub.connect(developer).addApp(appAddress)
+    ).to.be.revertedWithCustomError(hub, 'AccessManagedUnauthorized')
   })
 })
