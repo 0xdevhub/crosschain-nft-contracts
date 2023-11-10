@@ -7,16 +7,16 @@
 ```shell
 pnpm compile
 pnpm typechain
+pnpm node
+pnpm deploy:localhost
+pnpm deploy:mumbai
 ```
 
 ## Available scrips by `dlx hardhat`
 
 ```shell
 dlx hardhat help
-dlx hardhat test
 REPORT_GAS=true dlx hardhat test
-dlx hardhat node
-dlx hardhat run scripts/deploy.ts
 ```
 
 ## Testing
