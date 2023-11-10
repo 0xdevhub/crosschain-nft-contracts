@@ -3,10 +3,6 @@ pragma solidity 0.8.21;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-contract Bridge is AccessManaged {
+contract LayerZeroAdapter is AccessManaged {
     constructor(address accessManagement_) AccessManaged(accessManagement_) {}
-
-    function commitOnRamp() external {}
-
-    function storeOffRamp() external {}
 }

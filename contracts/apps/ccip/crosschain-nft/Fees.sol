@@ -10,4 +10,6 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 contract Fees is AccessManaged {
     constructor(address accessManagement_) AccessManaged(accessManagement_) {}
+
+    function setBridgeFee() external {}
 }

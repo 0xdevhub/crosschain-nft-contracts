@@ -29,19 +29,31 @@ describe('Hub', function () {
       DEVELOPER_ROLE
     )
 
-    const appAddress = '0x0000000000000000000000000000000000000001'
-    const tx2 = await hub.connect(developer).addApp(appAddress)
-    const receipt2 = await tx2.wait()
-    const filter2 = hub.filters.Hub_AppAdded
-    const logs2 = await hub.queryFilter(filter2, receipt2?.blockHash)
-    const [appId] = logs2[0].args
+    const appDetails = {
+      address: '0x0000000000000000000000000000000000000001',
+      name: 'App 1',
+      description: 'App 1 description'
+    }
+
+    const tx = await hub
+      .connect(developer)
+      .addApp(appDetails.address, appDetails.name, appDetails.description)
+
+    const receipt = await tx.wait()
+    const filter = hub.filters.Hub_AppAdded
+    const logs = await hub.queryFilter(filter, receipt?.blockHash)
+    const [appId] = logs[0].args
 
     const app = await hub.getApp(appId)
 
     expect({
-      appAddress: app.appAddress
+      appAddress: app.appAddress,
+      name: app.name,
+      description: app.description
     }).to.deep.equal({
-      appAddress
+      appAddress: appDetails.address,
+      name: appDetails.name,
+      description: appDetails.description
     })
   })
 
@@ -56,10 +68,15 @@ describe('Hub', function () {
       deployHubFixture.bind(this, accessManagementAddress)
     )
 
-    const appAddress = '0x0000000000000000000000000000000000000001'
-
+    const appDetails = {
+      address: '0x0000000000000000000000000000000000000001',
+      name: 'App 1',
+      description: 'App 1 description'
+    }
     await expect(
-      hub.connect(developer).addApp(appAddress)
+      hub
+        .connect(developer)
+        .addApp(appDetails.address, appDetails.name, appDetails.description)
     ).to.be.revertedWithCustomError(hub, 'AccessManagedUnauthorized')
   })
 })

@@ -3,14 +3,11 @@ pragma solidity 0.8.21;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-/**
- * @title Hub
- * @notice This contract is used to manage apps in the protocol
- */
-
 contract Hub is AccessManaged {
     struct App {
         address appAddress;
+        string name;
+        string description;
     }
 
     /// @notice The salt used to generate appIds
@@ -28,9 +25,13 @@ contract Hub is AccessManaged {
      * @param appAddress_ The address of the app contract
      * @return The id of the app
      */
-    function addApp(address appAddress_) external restricted returns (bytes32) {
+    function addApp(
+        address appAddress_,
+        string memory name_,
+        string memory description_
+    ) external restricted returns (bytes32) {
         bytes32 appId = _getNextAppId(appAddress_);
-        s_apps[appId] = App({appAddress: appAddress_});
+        s_apps[appId] = App({appAddress: appAddress_, name: name_, description: description_});
 
         emit Hub_AppAdded(appId);
 
