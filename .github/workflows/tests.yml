@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment:
+      name: hardhat
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
