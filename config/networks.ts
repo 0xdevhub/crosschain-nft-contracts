@@ -1,7 +1,5 @@
 const networks = {}
 
-console.log('NODE_ENV: ', process.env.NODE_ENV)
-
 if (process.env.NODE_ENV !== 'development') {
   Object.assign(networks, {
     mumbai: {

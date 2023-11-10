@@ -1,3 +1,3 @@
-## Crosschain NFT using CCIP App
+## Crosschain NFT
 
-A PoC project that handle crosschain NFT transfer using CCIP from chainlink.
+A PoC project to handle crosschain NFT
