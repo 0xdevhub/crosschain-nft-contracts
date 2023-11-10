@@ -1,33 +1,50 @@
-import { BaseContract } from 'ethers'
-import { ethers } from 'hardhat'
+import {
+  deployContract,
+  getContractAddress,
+  getContractAt,
+  getNetwork,
+  getSigners
+} from './utils'
 
-async function deployContract(
-  name: string,
-  ...args: unknown[]
-): Promise<BaseContract> {
-  const Contract = await ethers.getContractFactory(name)
-  const contract = await Contract.deploy(...args)
-  await contract.waitForDeployment()
-
-  return contract
-}
+import { DEVELOPER_ROLE, DEVELOPER_ROLE_DELAY } from './constants'
 
 async function main() {
-  const { chainId } = await ethers.provider.getNetwork()
+  const { chainId } = await getNetwork()
   console.log('chainId ' + chainId)
 
-  const [owner] = await ethers.getSigners()
+  const [owner, developer] = await getSigners()
   console.log('owner:' + owner.address)
 
-  const accessManagementContract = await deployContract(
+  // deploy access management contract
+  const accessManagement = await deployContract(
     'AccessManagement',
     owner.address
   )
-  const accessManagementAddress = await accessManagementContract.getAddress()
+  const accessManagementAddress = await getContractAddress(accessManagement)
   console.log('accessManagementAddress:' + accessManagementAddress)
 
+  // grant role to developer
+  const accessManagementContract = await getContractAt(
+    'AccessManagement',
+    accessManagementAddress
+  )
+
+  await accessManagementContract.grantRole(
+    DEVELOPER_ROLE,
+    developer.address,
+    DEVELOPER_ROLE_DELAY
+  )
+
+  console.log(
+    'developer role granted: ',
+    developer.address,
+    DEVELOPER_ROLE,
+    DEVELOPER_ROLE_DELAY
+  )
+
+  // deploy hub contract
   const hubContract = await deployContract('Hub', accessManagementAddress)
-  const hubAddress = await hubContract.getAddress()
+  const hubAddress = await getContractAddress(hubContract)
   console.log('hubAddress:' + hubAddress)
 }
 

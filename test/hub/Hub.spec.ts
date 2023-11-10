@@ -17,21 +17,18 @@ describe('Hub', function () {
     const DEVELOPER_ROLE = 1n
     const DELAY = 0n
 
-    // grant developer role to address
     await accessManagement.grantRole(DEVELOPER_ROLE, developer.address, DELAY)
 
     const { hub, hubAddress } = await loadFixture(
       deployHubFixture.bind(this, accessManagementAddress)
     )
 
-    // grant role to developer to add app
     await accessManagement.setTargetFunctionRole(
       hubAddress,
       [hub.interface.getFunction('addApp').selector],
       DEVELOPER_ROLE
     )
 
-    // create app
     const appAddress = '0x0000000000000000000000000000000000000001'
     const tx2 = await hub.connect(developer).addApp(appAddress)
     const receipt2 = await tx2.wait()
