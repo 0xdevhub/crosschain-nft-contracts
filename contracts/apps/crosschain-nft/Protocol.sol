@@ -6,7 +6,9 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 contract Protocol is AccessManaged {
     constructor(address accessManagement_) AccessManaged(accessManagement_) {}
 
+    /// @dev from original to wrapped
     function lockAndMintERC721() external {}
 
+    /// @dev from wrapped to origina
     function burnAndUnlockERC721() external {}
 }

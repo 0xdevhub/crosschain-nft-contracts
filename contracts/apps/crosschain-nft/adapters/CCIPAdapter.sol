@@ -26,16 +26,18 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver, AccessManaged {
 
     /// @dev only bridge can call
     function sendMessage(bytes memory calldata_) external override restricted returns (bytes memory) {
-        (uint64 destinationChainSelector, address receiver, bytes memory data, address feeToken) = abi.decode(
+        (uint64 targetChain, address receiver, bytes memory data, address feeToken) = abi.decode(
             calldata_,
             (uint64, address, bytes, address)
         );
 
-        return abi.encode(_ccipSend(destinationChainSelector, receiver, data, feeToken));
+        bytes32 messageId = _ccipSend(targetChain, receiver, data, feeToken);
+
+        return abi.encode(messageId);
     }
 
     function _ccipSend(
-        uint64 destinationChainSelector_,
+        uint64 targetChain_,
         address receiver_,
         bytes memory data_,
         address feeToken_
@@ -44,9 +46,9 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver, AccessManaged {
 
         IRouterClient router = IRouterClient(this.getRouter());
 
-        IERC20(feeToken_).approve(address(router), getFee(abi.encode(destinationChainSelector_, evm2AnyMessage)));
+        IERC20(feeToken_).approve(address(router), getFee(abi.encode(targetChain_, evm2AnyMessage)));
 
-        messageId = router.ccipSend(destinationChainSelector_, evm2AnyMessage);
+        messageId = router.ccipSend(targetChain_, evm2AnyMessage);
 
         emit IBaseAdapter.MessageSent(abi.encodePacked(messageId));
     }
@@ -69,11 +71,11 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver, AccessManaged {
     function getFee(bytes memory calldata_) public view override returns (uint256) {
         IRouterClient router = IRouterClient(this.getRouter());
 
-        (uint64 destinationChainSelector, Client.EVM2AnyMessage memory evm2AnyMessage) = abi.decode(
+        (uint64 targetChain, Client.EVM2AnyMessage memory message) = abi.decode(
             calldata_,
             (uint64, Client.EVM2AnyMessage)
         );
 
-        return router.getFee(destinationChainSelector, evm2AnyMessage);
+        return router.getFee(targetChain, message);
     }
 }
