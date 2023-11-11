@@ -8,5 +8,7 @@ interface IBaseAdapter {
 
     event MessageReceived(bytes indexed data_);
 
+    function getFee(bytes memory calldata_) external view returns (uint256);
+
     function sendMessage(bytes memory calldata_) external returns (bytes memory);
 }

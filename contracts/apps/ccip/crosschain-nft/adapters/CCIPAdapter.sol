@@ -20,6 +20,7 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver, AccessManaged {
     }
 
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
+        /// ToDo: call commitOfframp using the bridge
         emit IBaseAdapter.MessageReceived(any2EvmMessage.data);
     }
 
@@ -43,9 +44,7 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver, AccessManaged {
 
         IRouterClient router = IRouterClient(this.getRouter());
 
-        uint256 fees = router.getFee(destinationChainSelector_, evm2AnyMessage);
-
-        IERC20(feeToken_).approve(address(router), fees);
+        IERC20(feeToken_).approve(address(router), getFee(abi.encode(destinationChainSelector_, evm2AnyMessage)));
 
         messageId = router.ccipSend(destinationChainSelector_, evm2AnyMessage);
 
@@ -65,5 +64,16 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver, AccessManaged {
                 extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
                 feeToken: feeToken_
             });
+    }
+
+    function getFee(bytes memory calldata_) public view override returns (uint256) {
+        IRouterClient router = IRouterClient(this.getRouter());
+
+        (uint64 destinationChainSelector, Client.EVM2AnyMessage memory evm2AnyMessage) = abi.decode(
+            calldata_,
+            (uint64, Client.EVM2AnyMessage)
+        );
+
+        return router.getFee(destinationChainSelector, evm2AnyMessage);
     }
 }
