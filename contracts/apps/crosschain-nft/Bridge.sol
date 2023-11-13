@@ -6,48 +6,49 @@ import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 
 contract Bridge is IBridge, AccessManaged {
-    IBaseAdapter private s_adapter;
+    address private s_adapter;
 
-    constructor(address accessManagement_, IBaseAdapter adapter_) AccessManaged(accessManagement_) {
+    mapping(uint256 => IBridge.MessageSend) public s_sentMessages;
+    mapping(uint256 => IBridge.MessageReceive) public s_receivedMessages;
+
+    constructor(address accessManagement_, address adapter_) AccessManaged(accessManagement_) {
         _setAdapter(adapter_);
     }
 
-    function _setAdapter(IBaseAdapter adapter_) internal {
+    function _setAdapter(address adapter_) internal {
         s_adapter = adapter_;
 
-        emit IBridge.AdapterChange(adapter_);
+        emit IBridge.AdapterChanged(adapter_);
     }
 
     /// @inheritdoc IBridge
-    function setAdapter(IBaseAdapter adapter_) public override restricted {
+    function setAdapter(address adapter_) public override restricted {
         _setAdapter(adapter_);
     }
 
     /// @inheritdoc IBridge
-    function adapter() external view override returns (IBaseAdapter) {
+    function adapter() external view override returns (address) {
         return s_adapter;
     }
 
     /// @inheritdoc IBridge
-    function lockAndMintERC721() external override {
-        // @todo: lock and mint from source to target chain
-    }
+    function lockAndMintERC721() external override {}
 
     /// @inheritdoc IBridge
-    function burnAndUnlockERC721() external override {
-        // @todo: burn and unlock from target to source chain
-    }
+    function burnAndUnlockERC721() external override {}
 
     /**
      * @notice send message to adapter
-     * @param calldata_ encoded payload to send to adapter
+     * @param calldata_ encoded data to send to adapter
      */
     function _commitOnRamp(IBridge.MessageSend memory calldata_) private {
-        s_adapter.sendMessage(calldata_);
+        IBaseAdapter(s_adapter).sendMessage(calldata_);
+        emit IBridge.MessageSent(calldata_);
     }
 
     /// @inheritdoc IBridge
     function commitOffRamp(IBridge.MessageReceive memory calldata_) external override restricted {
-        // @todo: receive message from adapter
+        /// todo: handle offramp message
+        emit IBridge.MessageReceived(calldata_);
     }
 }

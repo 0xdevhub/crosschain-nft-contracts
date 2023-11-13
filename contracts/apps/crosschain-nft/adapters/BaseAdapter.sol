@@ -22,31 +22,31 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     function router() public view virtual returns (address);
 
     /// @inheritdoc IBaseAdapter
-    function getFee(bytes memory calldata_) public view virtual override returns (uint256);
+    function getFee(bytes memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
     function feeToken() public view virtual override returns (address);
 
     /// @inheritdoc IBaseAdapter
     /// @dev only bridge can call sendMessage
-    function sendMessage(IBridge.MessageSend memory calldata_) external override restricted {
-        _sendMessage(calldata_);
-        emit IBaseAdapter.MessageSent(calldata_);
+    function sendMessage(IBridge.MessageSend memory payload_) external override restricted {
+        _sendMessage(payload_);
+        emit IBaseAdapter.MessageSent(payload_);
     }
 
     /**
-     * @notice {override} to send crosschain message through adapter
-     * @param calldata_ encoded data to send to router
+     * @notice {override} to send crosschain message
+     * @param payload_ encoded data to send to router
      */
-    function _sendMessage(IBridge.MessageSend memory calldata_) internal virtual;
+    function _sendMessage(IBridge.MessageSend memory payload_) internal virtual;
 
     /**
-     * @notice receive crosschain message from router
-     * @param data_ encoded data to send to bridge
+     * @notice {override} to receive crosschain message
+     * @param payload_ encoded data to send to bridge
      */
-    function _receiveMessage(IBridge.MessageReceive memory data_) internal virtual {
-        IBridge(s_bridge).commitOffRamp(data_);
-        emit IBaseAdapter.MessageReceived(data_);
+    function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
+        IBridge(s_bridge).commitOffRamp(payload_);
+        emit IBaseAdapter.MessageReceived(payload_);
     }
 
     /// @dev enable to receive native token
