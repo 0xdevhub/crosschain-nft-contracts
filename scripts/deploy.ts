@@ -41,14 +41,6 @@ async function main() {
     DEVELOPER_ROLE,
     DEVELOPER_ROLE_DELAY
   )
-
-  // deploy hub contract
-  const hubContract = await deployContract('Hub', accessManagementAddress)
-  const hubAddress = await getContractAddress(hubContract)
-  console.log('hubAddress:' + hubAddress)
-
-  // todo: set function role
-  // todo: deploy apps
 }
 
 main().catch((error) => {
