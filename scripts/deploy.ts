@@ -46,6 +46,9 @@ async function main() {
   const hubContract = await deployContract('Hub', accessManagementAddress)
   const hubAddress = await getContractAddress(hubContract)
   console.log('hubAddress:' + hubAddress)
+
+  // todo: set function role
+  // todo: deploy apps
 }
 
 main().catch((error) => {
