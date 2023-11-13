@@ -23,4 +23,23 @@ describe('CCIPAdapter', function () {
 
     expect(router).to.be.equal(routerAddress)
   })
+
+  it('should return fee token as zero address', async function () {
+    const bridgeAddress = ethers.ZeroAddress
+    const accessManagementAddress = ethers.ZeroAddress
+    const routerAddress = '0x0000000000000000000000000000000000000001'
+
+    const { ccipAdapter } = await loadFixture(
+      deployCCIPAdapterFixture.bind(
+        null,
+        bridgeAddress,
+        accessManagementAddress,
+        routerAddress
+      )
+    )
+
+    const feeToken = await ccipAdapter.feeToken()
+
+    expect(feeToken).to.be.equal(ethers.ZeroAddress)
+  })
 })
