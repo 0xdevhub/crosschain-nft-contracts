@@ -86,7 +86,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
                 data: data_,
                 tokenAmounts: new Client.EVMTokenAmount[](0),
                 extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
-                feeToken: address(0) // todo: baseAdapter getFeeToken if zero, use native
+                feeToken: feeToken()
             });
     }
 }
