@@ -8,12 +8,12 @@ import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications
 import {IBaseAdapter, BaseAdapter} from "./BaseAdapter.sol";
 import {IBridge} from "../interfaces/IBridge.sol";
 
-contract CCIPAdapter is BaseAdapter, CCIPReceiver, AccessManaged {
+contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     constructor(
         address bridge_,
         address accessManagement_,
         address router_
-    ) BaseAdapter(bridge_) AccessManaged(accessManagement_) CCIPReceiver(router_) {}
+    ) BaseAdapter(bridge_, accessManagement_) CCIPReceiver(router_) {}
 
     /// @inheritdoc IBaseAdapter
     function router() public view override returns (address) {
@@ -31,23 +31,19 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
+    /// @dev pay fees using native token
     function feeToken() public pure override returns (address) {
         return address(0);
     }
 
-    /**
-     * @notice receive message from other chain via CCIP
-     * @param any2EvmMessage chainlink crosschain EVM message
-     * @dev only ccip router call call
-     */
+    /// @inheritdoc CCIPReceiver
+    /// @dev only ccip router can call
     function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
+        /// @dev override ccip receive and implement _receiveMessage from BaseAdapter
         _ccipReceive(any2EvmMessage);
     }
 
-    /**
-     * @notice handle message receive
-     * @param any2EvmMessage chainlink crosschain EVM message
-     */
+    /// @inheritdoc CCIPReceiver
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
         IBridge.MessageReceive memory messageReceive = IBridge.MessageReceive({
             fromChain: any2EvmMessage.sourceChainSelector,
@@ -55,21 +51,14 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AccessManaged {
             data: any2EvmMessage.data
         });
 
+        /// @dev call _receiveMessage from BaseAdapter to send message to bridge
         _receiveMessage(messageReceive);
     }
 
-    /// @inheritdoc IBaseAdapter
-    function sendMessage(IBridge.MessageSend memory calldata_) external override restricted {
-        _ccipSend(_chainIdToUint64(calldata_.toChain), calldata_.receiver, calldata_.data);
+    /// @inheritdoc BaseAdapter
+    function _sendMessage(IBridge.MessageSend memory calldata_) internal override restricted {
+        _ccipSend(uint64(calldata_.toChain), calldata_.receiver, calldata_.data);
         emit IBaseAdapter.MessageSent(calldata_);
-    }
-
-    /**
-     * @notice convert chain id to uint64
-     * @param chainId_ chain id
-     */
-    function _chainIdToUint64(uint256 chainId_) internal pure returns (uint64) {
-        return uint64(chainId_);
     }
 
     /**
@@ -78,12 +67,10 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AccessManaged {
      * @param receiver_ receiver address
      * @param data_ encoded message data
      */
-    function _ccipSend(uint64 toChain, address receiver_, bytes memory data_) private returns (bytes32) {
+    function _ccipSend(uint64 toChain, address receiver_, bytes memory data_) private {
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(receiver_, data_);
-
         uint256 fees = getFee(abi.encode(toChain, evm2AnyMessage));
-
-        return IRouterClient(router()).ccipSend{value: fees}(toChain, evm2AnyMessage);
+        IRouterClient(router()).ccipSend{value: fees}(toChain, evm2AnyMessage);
     }
 
     function _buildCCIPMessage(

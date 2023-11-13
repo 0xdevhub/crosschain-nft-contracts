@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IBridge} from "../interfaces/IBridge.sol";
 
 interface IBaseAdapter {
@@ -15,31 +14,30 @@ interface IBaseAdapter {
     event MessageReceived(IBridge.MessageReceive indexed data_);
 
     /**
-     * @notice get adapter router address
+     * @notice get router address
      */
     function router() external view returns (address);
 
     /**
-     * @notice get protocol bridge address
+     * @notice get bridge address
      */
     function bridge() external view returns (address);
 
     /**
-     * @notice get fee token for sending crosschain message
+     * @notice get fee token to sending crosschain message through router
      * @return fee token address
      */
     function feeToken() external view returns (address);
 
     /**
-     * @notice get fee for sending crosschain message
-     * @param calldata_ payload to destruct and get fee
+     * @notice get fee amount to sending crosschain message through router
+     * @param calldata_ encoded data to send to router
      */
     function getFee(bytes memory calldata_) external view returns (uint256);
 
     /**
-     * @notice send crosschain message
-     * @param calldata_ encoded payload do destruct and send
-     * @dev only protocol can call
+     * @notice send crosschain message through router
+     * @param calldata_ encoded data to send to router
      */
     function sendMessage(IBridge.MessageSend memory calldata_) external;
 }

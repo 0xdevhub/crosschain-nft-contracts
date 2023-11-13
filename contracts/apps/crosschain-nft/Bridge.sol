@@ -6,7 +6,6 @@ import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 
 contract Bridge is IBridge, AccessManaged {
-    // @todo: define message income / outcome in struct mapping
     IBaseAdapter private s_adapter;
 
     constructor(address accessManagement_, IBaseAdapter adapter_) AccessManaged(accessManagement_) {
