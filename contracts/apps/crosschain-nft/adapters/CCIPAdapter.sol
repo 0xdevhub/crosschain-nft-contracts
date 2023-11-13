@@ -7,22 +7,27 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IBaseAdapter, BaseAdapter} from "./BaseAdapter.sol";
+import {IBridge} from "../interfaces/IBridge.sol";
 
 contract CCIPAdapter is BaseAdapter, CCIPReceiver, AccessManaged {
     constructor(
+        IBridge bridge_,
         address accessManagement_,
         address ccipRouter_
-    ) CCIPReceiver(ccipRouter_) AccessManaged(accessManagement_) {}
+    ) BaseAdapter(bridge_) CCIPReceiver(ccipRouter_) AccessManaged(accessManagement_) {}
 
     /// @dev only router call call
     function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
         _ccipReceive(any2EvmMessage);
     }
 
-    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {}
+    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
+        // @todo: implement receive message, encode to known bytes
+        // _receiveMessage();
+    }
 
     /// @inheritdoc IBaseAdapter
-    /// @dev only bridge can call
+    /// @dev only protocol can call
     function sendMessage(bytes memory calldata_) external override restricted returns (bytes memory) {
         (uint64 targetChain, address receiver, bytes memory data) = abi.decode(calldata_, (uint64, address, bytes));
 

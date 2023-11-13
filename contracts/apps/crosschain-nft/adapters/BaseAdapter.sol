@@ -1,26 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
+import {IBridge} from "../interfaces/IBridge.sol";
 import {IBaseAdapter} from "../interfaces/IBaseAdapter.sol";
 
 abstract contract BaseAdapter is IBaseAdapter {
-    /**
-     * @notice send crosschain message
-     * @param calldata_ encoded payload do destruct and send
-     */
+    IBridge public immutable bridge;
+
+    constructor(IBridge bridge_) {
+        bridge = bridge_;
+    }
+
+    /// @inheritdoc IBaseAdapter
     function sendMessage(bytes memory calldata_) external virtual override returns (bytes memory);
 
-    /**
-     * @notice get fee for sending crosschain message
-     * @param calldata_ payload to destruct and get fee
-     */
+    /// @inheritdoc IBaseAdapter
     function getFee(bytes memory calldata_) public view virtual override returns (uint256);
 
-    /**
-     * @notice get fee token for sending crosschain message
-     * @return fee token address
-     */
+    /// @inheritdoc IBaseAdapter
     function getFeeToken() public view virtual override returns (address);
+
+    /**
+     * @notice receive message from other chain
+     * @param data_ encoded incoming message data
+     */
+    function _receiveMessage(bytes memory data_) internal virtual {
+        bridge.commitOffRamp(data_);
+
+        emit IBaseAdapter.MessageReceived(data_);
+    }
 
     /// @dev enable to receive native token
     receive() external payable {
