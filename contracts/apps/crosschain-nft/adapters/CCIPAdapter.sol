@@ -6,23 +6,29 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
-import {IBaseAdapter} from "../interfaces/IBaseAdapter.sol";
+import {IBaseAdapter, BaseAdapter} from "./BaseAdapter.sol";
 
-contract CCIPAdapter is IBaseAdapter, CCIPReceiver {
-    constructor(address ccipRouter) CCIPReceiver(ccipRouter) {}
+contract CCIPAdapter is BaseAdapter, CCIPReceiver, AccessManaged {
+    constructor(
+        address accessManagement_,
+        address ccipRouter_
+    ) CCIPReceiver(ccipRouter_) AccessManaged(accessManagement_) {}
 
-    /// @dev only router call call (todo: restricted)
-    function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override {
+    /// @dev only router call call
+    function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
         _ccipReceive(any2EvmMessage);
     }
 
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {}
 
-    /// @dev only bridge can call (todo: restricted)
-    function sendMessage(bytes memory calldata_) external override returns (bytes memory) {
+    /// @inheritdoc IBaseAdapter
+    /// @dev only bridge can call
+    function sendMessage(bytes memory calldata_) external override restricted returns (bytes memory) {
         (uint64 targetChain, address receiver, bytes memory data) = abi.decode(calldata_, (uint64, address, bytes));
 
         bytes32 messageId = _ccipSend(targetChain, receiver, data);
+
+        emit IBaseAdapter.MessageSent(abi.encodePacked(messageId));
 
         return abi.encode(messageId);
     }
@@ -35,9 +41,6 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver {
         IRouterClient router = IRouterClient(this.getRouter());
 
         messageId = router.ccipSend{value: fees}(targetChain_, evm2AnyMessage);
-
-        //Todo: move to sendMessage
-        emit IBaseAdapter.MessageSent(abi.encodePacked(messageId));
     }
 
     function _buildCCIPMessage(
@@ -54,6 +57,7 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver {
             });
     }
 
+    /// @inheritdoc IBaseAdapter
     function getFee(bytes memory calldata_) public view override returns (uint256) {
         IRouterClient router = IRouterClient(this.getRouter());
 
@@ -65,6 +69,8 @@ contract CCIPAdapter is IBaseAdapter, CCIPReceiver {
         return router.getFee(targetChain, message);
     }
 
-    /// @dev enable to receive native token
-    receive() external payable {}
+    /// @inheritdoc IBaseAdapter
+    function getFeeToken() public pure override returns (address) {
+        return address(0);
+    }
 }

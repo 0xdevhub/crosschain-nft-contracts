@@ -4,6 +4,8 @@ pragma solidity 0.8.21;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBaseAdapter {
+    error NativeTokenNotSupported();
+
     event MessageSent(bytes indexed data_);
 
     event MessageReceived(bytes indexed data_);
@@ -11,4 +13,6 @@ interface IBaseAdapter {
     function getFee(bytes memory calldata_) external view returns (uint256);
 
     function sendMessage(bytes memory calldata_) external returns (bytes memory);
+
+    function getFeeToken() external view returns (address);
 }
