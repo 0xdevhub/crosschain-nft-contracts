@@ -9,7 +9,7 @@ import {
   deployCCIPAdapterFixture,
   deployCCIPRouterMockFixture
 } from './fixture'
-import { IBaseAdapter, IBridge } from '@/typechain'
+import { IBridge } from '@/typechain'
 
 describe('CCIPAdapter', function () {
   it('should return router address', async function () {
@@ -31,7 +31,7 @@ describe('CCIPAdapter', function () {
     expect(router).to.be.equal(routerAddress)
   })
 
-  it('should set bridge address', async function () {
+  it('should return bridge address', async function () {
     const bridgeAddress = '0x00000000000000000000000000000000000000B8'
     const accessManagementAddress = ethers.ZeroAddress
     const routerAddress = '0x00000000000000000000000000000000000000D2'
@@ -69,7 +69,7 @@ describe('CCIPAdapter', function () {
     expect(feeToken).to.be.equal(ethers.ZeroAddress)
   })
 
-  it('should return the required amount fee for sending message', async function () {
+  it('should return amount fee for sending message', async function () {
     const bridgeAddress = ethers.ZeroAddress
     const accessManagementAddress = ethers.ZeroAddress
     const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
@@ -177,7 +177,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should receive message from router', async function () {
-    const [owner] = await ethers.getSigners()
+    const [, otherSideCaller] = await ethers.getSigners()
     const bridgeAddress = ethers.ZeroAddress
 
     const { mockCCIPRouterAddress } = await loadFixture(
@@ -208,14 +208,14 @@ describe('CCIPAdapter', function () {
     const payload: Client.Any2EVMMessageStruct = {
       messageId: ethers.encodeBytes32String('messsage_id'),
       sourceChainSelector: 80_001n,
-      sender: abiCoder.encode(['address'], [ethers.ZeroAddress]),
+      sender: abiCoder.encode(['address'], [otherSideCaller.address]),
       data: abiCoder.encode(['string'], ['hello']),
       destTokenAmounts: []
     }
 
     const expectedMessage: IBridge.MessageReceiveStruct = {
       fromChain: payload.sourceChainSelector,
-      sender: ethers.ZeroAddress,
+      sender: otherSideCaller.address, // it will get the decoded version of the sender
       data: payload.data
     }
 
@@ -227,4 +227,86 @@ describe('CCIPAdapter', function () {
         expectedMessage.data
       ])
   })
+
+  it('should send message to router', async function () {
+    const bridgeAddress = ethers.ZeroAddress
+
+    const { mockCCIPRouterAddress } = await loadFixture(
+      deployCCIPRouterMockFixture
+    )
+
+    const { accessManagement, accessManagementAddress } = await loadFixture(
+      deployAccessManagementFixture
+    )
+
+    const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+      deployCCIPAdapterFixture.bind(
+        null,
+        bridgeAddress,
+        accessManagementAddress,
+        mockCCIPRouterAddress
+      )
+    )
+
+    await accessManagement.setTargetFunctionRole(
+      ccipAdapterAddress,
+      [ccipAdapter.interface.getFunction('sendMessage').selector],
+      0n // admin role
+    )
+
+    const payload: IBridge.MessageSendStruct = {
+      toChain: 80_001,
+      receiver: ethers.ZeroAddress,
+      data: '0x'
+    }
+
+    await expect(ccipAdapter.sendMessage(payload))
+      .to.emit(ccipAdapter, 'MessageSent')
+      .withArgs([payload.toChain, payload.receiver, payload.data])
+  })
+
+  it('should revert sending message to router wihout fee amount', async function () {
+    const bridgeAddress = ethers.ZeroAddress
+
+    const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
+      deployCCIPRouterMockFixture
+    )
+
+    const { accessManagement, accessManagementAddress } = await loadFixture(
+      deployAccessManagementFixture
+    )
+
+    const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+      deployCCIPAdapterFixture.bind(
+        null,
+        bridgeAddress,
+        accessManagementAddress,
+        mockCCIPRouterAddress
+      )
+    )
+
+    await accessManagement.setTargetFunctionRole(
+      ccipAdapterAddress,
+      [ccipAdapter.interface.getFunction('sendMessage').selector],
+      0n // admin role
+    )
+
+    const payload: IBridge.MessageSendStruct = {
+      toChain: 80_001,
+      receiver: ethers.ZeroAddress,
+      data: '0x'
+    }
+
+    const expectedAmount = 200_000
+
+    await mockCCIPRouter.setFee(expectedAmount)
+
+    await expect(
+      ccipAdapter.sendMessage(payload, {
+        value: expectedAmount - 1
+      })
+    ).to.be.revertedWithCustomError(ccipAdapter, 'InsufficientFeeTokenAmount')
+  })
+
+  it('should revert if try to call fallback function', async function () {})
 })

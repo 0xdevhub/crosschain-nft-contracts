@@ -75,8 +75,9 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     /// @inheritdoc BaseAdapter
-    function _sendMessage(IBridge.MessageSend memory payload) internal override {
-        _ccipSend(uint64(payload.toChain), payload.receiver, payload.data);
+    function _sendMessage(IBridge.MessageSend memory payload, uint256 quotedFee_) internal override {
+        _ccipSend(uint64(payload.toChain), payload.receiver, payload.data, quotedFee_);
+
         emit IBaseAdapter.MessageSent(payload);
     }
 
@@ -86,11 +87,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
      * @param receiver_ receiver address
      * @param data_ encoded message data
      */
-    function _ccipSend(uint64 toChain, address receiver_, bytes memory data_) private {
-        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(receiver_, data_);
-
-        uint256 fees = _getFee(toChain, evm2AnyMessage);
-
-        IRouterClient(router()).ccipSend{value: fees}(toChain, evm2AnyMessage);
+    function _ccipSend(uint64 toChain, address receiver_, bytes memory data_, uint256 quotedFee_) private {
+        IRouterClient(router()).ccipSend{value: quotedFee_}(toChain, _buildCCIPMessage(receiver_, data_));
     }
 }

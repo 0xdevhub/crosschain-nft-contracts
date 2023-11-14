@@ -29,8 +29,14 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
 
     /// @inheritdoc IBaseAdapter
     /// @dev only bridge can call sendMessage
-    function sendMessage(IBridge.MessageSend memory payload_) external override restricted {
-        _sendMessage(payload_);
+    function sendMessage(IBridge.MessageSend memory payload_) external payable override restricted {
+        uint256 quotedFee = getFee(payload_);
+
+        if (msg.value < quotedFee) {
+            revert InsufficientFeeTokenAmount();
+        }
+
+        _sendMessage(payload_, quotedFee);
         emit IBaseAdapter.MessageSent(payload_);
     }
 
@@ -38,7 +44,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
      * @notice {override} to send crosschain message
      * @param payload_ data to send to router
      */
-    function _sendMessage(IBridge.MessageSend memory payload_) internal virtual;
+    function _sendMessage(IBridge.MessageSend memory payload_, uint256 quotedFee_) internal virtual;
 
     /**
      * @notice {override} to receive crosschain message
@@ -50,11 +56,9 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
         emit IBaseAdapter.MessageReceived(payload_);
     }
 
-    /// @dev enable to receive native token
+    /// @dev prevent to receive native token
     receive() external payable {
-        if (feeToken() != address(0)) {
-            revert IBaseAdapter.NativeTokenNotSupported();
-        }
+        revert();
     }
 
     /// @dev prevent fallback calls

@@ -33,6 +33,10 @@ contract MockCCIPRouter is IRouterClient {
         uint64 destinationChainSelector,
         Client.EVM2AnyMessage calldata message
     ) external payable returns (bytes32) {
+        if (msg.value < s_fee) {
+            revert InsufficientFeeTokenAmount();
+        }
+
         emit MessageReceived(destinationChainSelector, message);
 
         return bytes32(0);

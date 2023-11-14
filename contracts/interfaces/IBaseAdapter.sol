@@ -4,8 +4,7 @@ pragma solidity 0.8.21;
 import {IBridge} from "../interfaces/IBridge.sol";
 
 interface IBaseAdapter {
-    /// @dev error message for native token not supported
-    error NativeTokenNotSupported();
+    error InsufficientFeeTokenAmount();
 
     /// @dev emit when message sent
     event MessageSent(IBridge.MessageSend data_);
@@ -38,5 +37,5 @@ interface IBaseAdapter {
      * @notice {override} to send crosschain message
      * @param payload_ data to send to router
      */
-    function sendMessage(IBridge.MessageSend memory payload_) external;
+    function sendMessage(IBridge.MessageSend memory payload_) external payable;
 }

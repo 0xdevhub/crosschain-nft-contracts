@@ -28,7 +28,7 @@ contract MockAdapter is BaseAdapter {
         emit IBaseAdapter.MessageReceived(payload_);
     }
 
-    function _sendMessage(IBridge.MessageSend memory payload_) internal override restricted {
+    function _sendMessage(IBridge.MessageSend memory payload_, uint256 /*quotedFee*/) internal override restricted {
         emit IBaseAdapter.MessageSent(payload_);
     }
 }
