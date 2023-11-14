@@ -8,14 +8,11 @@ import {IBridge} from "./interfaces/IBridge.sol";
 contract Bridge is IBridge, AccessManaged {
     address private s_adapter;
 
-    mapping(uint256 => IBridge.MessageSend) public s_sentMessages;
-    mapping(uint256 => IBridge.MessageReceive) public s_receivedMessages;
-
     constructor(address accessManagement_, address adapter_) AccessManaged(accessManagement_) {
         _setAdapter(adapter_);
     }
 
-    function _setAdapter(address adapter_) internal {
+    function _setAdapter(address adapter_) private {
         s_adapter = adapter_;
 
         emit IBridge.AdapterChanged(adapter_);

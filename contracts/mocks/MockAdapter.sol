@@ -16,7 +16,7 @@ contract MockAdapter is BaseAdapter {
         return s_router;
     }
 
-    function getFee(bytes memory /* calldata_ */) public pure override returns (uint256) {
+    function getFee(IBridge.MessageSend memory /*payload_*/) public pure override returns (uint256) {
         return 0;
     }
 
@@ -24,11 +24,11 @@ contract MockAdapter is BaseAdapter {
         return address(0);
     }
 
-    function receiveMessage(IBridge.MessageReceive memory calldata_) external restricted {
-        emit IBaseAdapter.MessageReceived(calldata_);
+    function receiveMessage(IBridge.MessageReceive memory payload_) external restricted {
+        emit IBaseAdapter.MessageReceived(payload_);
     }
 
-    function _sendMessage(IBridge.MessageSend memory calldata_) internal override restricted {
-        emit IBaseAdapter.MessageSent(calldata_);
+    function _sendMessage(IBridge.MessageSend memory payload_) internal override restricted {
+        emit IBaseAdapter.MessageSent(payload_);
     }
 }

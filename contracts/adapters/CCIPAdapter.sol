@@ -16,15 +16,38 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     ) BaseAdapter(bridge_, accessManagement_) CCIPReceiver(router_) {}
 
     /// @inheritdoc IBaseAdapter
-    function router() public view override returns (address) {
-        return this.getRouter();
+    function getFee(IBridge.MessageSend memory payload_) public view override returns (uint256) {
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(payload_.receiver, payload_.data);
+
+        return _getFee(uint64(payload_.toChain), evm2AnyMessage);
+    }
+
+    /**
+     * @notice build CCIP message
+     * @param receiver_ address of receiver
+     * @param data_ encoded message data
+     */
+    function _buildCCIPMessage(
+        address receiver_,
+        bytes memory data_
+    ) private pure returns (Client.EVM2AnyMessage memory) {
+        return
+            Client.EVM2AnyMessage({
+                receiver: abi.encode(receiver_),
+                data: data_,
+                tokenAmounts: new Client.EVMTokenAmount[](0),
+                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
+                feeToken: feeToken()
+            });
+    }
+
+    function _getFee(uint64 toChain, Client.EVM2AnyMessage memory evm2AnyMessage) internal view returns (uint256) {
+        return IRouterClient(router()).getFee(toChain, evm2AnyMessage);
     }
 
     /// @inheritdoc IBaseAdapter
-    function getFee(bytes memory payload) public view override returns (uint256) {
-        (uint64 toChain, Client.EVM2AnyMessage memory message) = abi.decode(payload, (uint64, Client.EVM2AnyMessage));
-
-        return IRouterClient(this.router()).getFee(toChain, message);
+    function router() public view override returns (address) {
+        return getRouter();
     }
 
     /// @inheritdoc IBaseAdapter
@@ -66,27 +89,8 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     function _ccipSend(uint64 toChain, address receiver_, bytes memory data_) private {
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(receiver_, data_);
 
-        uint256 fees = getFee(abi.encode(toChain, evm2AnyMessage));
+        uint256 fees = _getFee(toChain, evm2AnyMessage);
 
         IRouterClient(router()).ccipSend{value: fees}(toChain, evm2AnyMessage);
-    }
-
-    /**
-     * @notice build CCIP message
-     * @param receiver_ address of receiver
-     * @param data_ encoded message data
-     */
-    function _buildCCIPMessage(
-        address receiver_,
-        bytes memory data_
-    ) private pure returns (Client.EVM2AnyMessage memory) {
-        return
-            Client.EVM2AnyMessage({
-                receiver: abi.encode(receiver_),
-                data: data_,
-                tokenAmounts: new Client.EVMTokenAmount[](0),
-                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
-                feeToken: feeToken()
-            });
     }
 }

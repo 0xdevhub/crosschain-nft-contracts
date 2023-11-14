@@ -22,7 +22,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     function router() public view virtual returns (address);
 
     /// @inheritdoc IBaseAdapter
-    function getFee(bytes memory payload_) public view virtual override returns (uint256);
+    function getFee(IBridge.MessageSend memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
     function feeToken() public view virtual override returns (address);
