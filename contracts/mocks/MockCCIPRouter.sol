@@ -30,15 +30,9 @@ contract MockCCIPRouter is IRouterClient {
     }
 
     function ccipSend(
-        uint64 destinationChainSelector,
-        Client.EVM2AnyMessage calldata message
+        uint64 /*destinationChainSelector*/,
+        Client.EVM2AnyMessage calldata /*message*/
     ) external payable returns (bytes32) {
-        if (msg.value < s_fee) {
-            revert InsufficientFeeTokenAmount();
-        }
-
-        emit MessageReceived(destinationChainSelector, message);
-
         return bytes32(0);
     }
 }
