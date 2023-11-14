@@ -8,10 +8,10 @@ interface IBaseAdapter {
     error NativeTokenNotSupported();
 
     /// @dev emit when message sent
-    event MessageSent(IBridge.MessageSend indexed data_);
+    event MessageSent(IBridge.MessageSend data_);
 
     /// @dev emit when message received
-    event MessageReceived(IBridge.MessageReceive indexed data_);
+    event MessageReceived(IBridge.MessageReceive data_);
 
     /**
      * @notice {override} to get router address
