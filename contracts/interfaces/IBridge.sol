@@ -40,7 +40,7 @@ interface IBridge {
 
     /**
      * @notice receive message from adapter
-     * @param calldata_ encoded data received from adapter
+     * @param calldata_ data received from adapter
      */
     function commitOffRamp(MessageReceive memory calldata_) external;
 }

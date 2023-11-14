@@ -36,13 +36,13 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
 
     /**
      * @notice {override} to send crosschain message
-     * @param payload_ encoded data to send to router
+     * @param payload_ data to send to router
      */
     function _sendMessage(IBridge.MessageSend memory payload_) internal virtual;
 
     /**
      * @notice {override} to receive crosschain message
-     * @param payload_ encoded data to send to bridge
+     * @param payload_ data to send to bridge
      */
     function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
         IBridge(s_bridge).commitOffRamp(payload_);
