@@ -28,3 +28,5 @@ export async function getContractAddress(contract: BaseContract) {
 export async function getContractFactory<T>(name: string): Promise<T> {
   return await (ethers.getContractFactory(name) as T)
 }
+
+export const abiCoder = ethers.AbiCoder.defaultAbiCoder()

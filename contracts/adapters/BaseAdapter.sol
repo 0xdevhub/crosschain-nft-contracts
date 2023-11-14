@@ -52,17 +52,17 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
      */
     function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
         // @todo: implement offramp
-        // IBridge(s_bridge).commitOffRamp(payload_);
+        IBridge(s_bridge).commitOffRamp(payload_);
         emit IBaseAdapter.MessageReceived(payload_);
     }
 
     /// @dev prevent to receive native token
     receive() external payable {
-        revert();
+        revert DepositNotAllowed();
     }
 
     /// @dev prevent fallback calls
     fallback() external payable {
-        revert();
+        revert FallbackNotAllowed();
     }
 }

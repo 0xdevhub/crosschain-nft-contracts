@@ -4,7 +4,12 @@ pragma solidity 0.8.21;
 import {IBridge} from "../interfaces/IBridge.sol";
 
 interface IBaseAdapter {
+    /// @dev emitted when not enough fee token amount
     error InsufficientFeeTokenAmount();
+
+    error FallbackNotAllowed();
+
+    error DepositNotAllowed();
 
     /// @dev emit when message sent
     event MessageSent(IBridge.MessageSend data_);
