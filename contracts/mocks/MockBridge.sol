@@ -15,12 +15,6 @@ contract MockBridge is IBridge {
     function adapter() external view override returns (address) {}
 
     /// @inheritdoc IBridge
-    function lockAndMintERC721() external override {}
-
-    /// @inheritdoc IBridge
-    function burnAndUnlockERC721() external override {}
-
-    /// @inheritdoc IBridge
     function commitOffRamp(IBridge.MessageReceive memory calldata_) external override {
         emit IBridge.MessageReceived(calldata_);
     }
