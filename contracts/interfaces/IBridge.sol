@@ -24,19 +24,15 @@ interface IBridge {
     event MessageReceived(MessageReceive indexed message_);
 
     /**
-     * @notice get adapter address for crosschain message
+     * @notice adapter address for crosschain message
      */
     function adapter() external view returns (address);
 
     /**
-     * @notice set adapter for crosschain message
+     * @notice update adapter for crosschain message
      * @param adapter_ new adapter address
      */
     function setAdapter(address adapter_) external;
-
-    function lockAndMintERC721() external;
-
-    function burnAndUnlockERC721() external;
 
     /**
      * @notice receive message from adapter

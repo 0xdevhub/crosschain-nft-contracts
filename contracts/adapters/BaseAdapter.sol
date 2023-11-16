@@ -51,7 +51,6 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
      * @param payload_ data to send to bridge
      */
     function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
-        // @todo: implement offramp
         IBridge(s_bridge).commitOffRamp(payload_);
         emit IBaseAdapter.MessageReceived(payload_);
     }

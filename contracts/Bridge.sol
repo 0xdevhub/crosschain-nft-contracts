@@ -5,6 +5,11 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 
+/// todo: set wrapped asset or create wrapped on lock
+/// todo: isAllowedSender
+/// todo: isAllowedSourceChain
+/// todo: setGasLimit (default 200_000)
+
 contract Bridge is IBridge, AccessManaged {
     address private s_adapter;
 
@@ -18,6 +23,8 @@ contract Bridge is IBridge, AccessManaged {
         emit IBridge.AdapterChanged(adapter_);
     }
 
+    /// ================== SETTINGS =========================
+
     /// @inheritdoc IBridge
     function setAdapter(address adapter_) public override restricted {
         _setAdapter(adapter_);
@@ -28,15 +35,11 @@ contract Bridge is IBridge, AccessManaged {
         return s_adapter;
     }
 
-    /// @inheritdoc IBridge
-    function lockAndMintERC721() external override {}
-
-    /// @inheritdoc IBridge
-    function burnAndUnlockERC721() external override {}
+    /// ================== ON/OFFRAMP =========================
 
     /**
      * @notice send message to adapter
-     * @param calldata_ encoded data to send to adapter
+     * @param calldata_ data to send to adapter
      */
     function _commitOnRamp(IBridge.MessageSend memory calldata_) private {
         IBaseAdapter(s_adapter).sendMessage(calldata_);
@@ -44,6 +47,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
+    /// @dev only adapter can call
     function commitOffRamp(IBridge.MessageReceive memory calldata_) external override restricted {
         /// todo: handle offramp message
         emit IBridge.MessageReceived(calldata_);

@@ -265,7 +265,7 @@ describe('CCIPAdapter', function () {
       .withArgs([payload.toChain, payload.receiver, payload.data])
   })
 
-  it('should revert sending message to router wihout fee amount', async function () {
+  it('should revert sending message to router without fee amount', async function () {
     const bridgeAddress = ethers.ZeroAddress
 
     const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
