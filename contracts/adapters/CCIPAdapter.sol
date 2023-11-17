@@ -73,7 +73,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     function _sendMessage(IBridge.MessageSend memory payload, uint256 quotedFee_) internal override {
         _ccipSend(uint64(payload.toChain), payload.receiver, payload.data, quotedFee_);
 
-        emit IBaseAdapter.MessageSent(payload);
+        emit IBaseAdapter.MessageSent(payload.toChain, payload.receiver, payload.data);
     }
 
     /**

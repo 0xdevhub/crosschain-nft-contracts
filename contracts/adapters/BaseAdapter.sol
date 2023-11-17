@@ -40,7 +40,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
         }
 
         _sendMessage(payload_, quotedFee);
-        emit IBaseAdapter.MessageSent(payload_);
+        emit IBaseAdapter.MessageSent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
     /**
@@ -55,7 +55,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
      */
     function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
         IBridge(s_bridge).receiveFromChain(payload_);
-        emit IBaseAdapter.MessageReceived(payload_);
+        emit IBaseAdapter.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     /// @dev prevent to receive native token

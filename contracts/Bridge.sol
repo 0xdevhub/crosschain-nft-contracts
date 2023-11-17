@@ -10,10 +10,6 @@ contract Bridge is IBridge, AccessManaged {
     /// @dev nativeChainId => adapterChainId => adapter
     mapping(uint256 => IBridge.AdapterSettings) public s_adapters;
 
-    /**
-     * @notice initialize bridge
-     * @param accessManagement_ address of access management contract
-     */
     constructor(address accessManagement_) AccessManaged(accessManagement_) {}
 
     modifier checkAdapter(uint256 nativeChainId_) {
@@ -23,7 +19,6 @@ contract Bridge is IBridge, AccessManaged {
         _;
     }
 
-    /// ================== SETTINGS =========================
     /// @inheritdoc IBridge
     function setAdapter(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external restricted {
         s_adapters[nativeChainId_] = IBridge.AdapterSettings({adapterChainId: adapterChainId_, adapter: adapter_});
@@ -36,7 +31,6 @@ contract Bridge is IBridge, AccessManaged {
         return s_adapters[nativeChainId_];
     }
 
-    /// ================== OFFRAMP =========================
     /// @inheritdoc IBridge
     function transferToChain(
         uint256 toChain_,
@@ -45,9 +39,9 @@ contract Bridge is IBridge, AccessManaged {
         uint256 tokenId_
     ) external payable checkAdapter(toChain_) {
         AdapterSettings memory chainAdapter = adapters(toChain_);
-
         address adapter = chainAdapter.adapter;
 
+        /// todo: encode baseURI and other data aswell
         bytes memory data = abi.encode(token_, tokenId_);
 
         IBridge.MessageSend memory payload = IBridge.MessageSend({
@@ -57,7 +51,6 @@ contract Bridge is IBridge, AccessManaged {
         });
 
         uint256 quotedFees = IBaseAdapter(adapter).getFee(payload);
-
         if (quotedFees > msg.value) {
             revert IBridge.InsufficientFeeTokenAmount();
         }
@@ -66,7 +59,7 @@ contract Bridge is IBridge, AccessManaged {
 
         _transferToChain(adapter, payload);
 
-        emit IBridge.TransferedToChain(toChain_, receiver_, token_, tokenId_);
+        emit IBridge.MessageSent(payload.toChain, payload.receiver, payload.data);
     }
 
     /**
@@ -75,17 +68,15 @@ contract Bridge is IBridge, AccessManaged {
      */
     function _transferToChain(address adapter_, IBridge.MessageSend memory payload_) private {
         IBaseAdapter(adapter_).sendMessage(payload_);
-        emit IBridge.MessageSent(payload_);
     }
 
     /// todo: isAllowedSender
     /// todo: isAllowedSourceChain
     /// todo: set wrapped asset or create wrapped on lock
-
     /// @inheritdoc IBridge
     /// @dev only adapter can call
     function receiveFromChain(IBridge.MessageReceive memory payload_) external override restricted {
-        emit IBridge.MessageReceived(payload_);
+        emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     /// @inheritdoc IBridge

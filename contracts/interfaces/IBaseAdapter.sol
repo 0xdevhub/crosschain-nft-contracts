@@ -14,10 +14,10 @@ interface IBaseAdapter {
     error DepositNotAllowed();
 
     /// @dev emit when message sent
-    event MessageSent(IBridge.MessageSend data_);
+    event MessageSent(uint256 toChain, address receiver, bytes data);
 
     /// @dev emit when message received
-    event MessageReceived(IBridge.MessageReceive data_);
+    event MessageReceived(uint256 fromChain, address sender, bytes data);
 
     /**
      * @notice {override} to get router address

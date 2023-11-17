@@ -10,7 +10,7 @@ import {
   deployMockContractGeneralFixture,
   deployMockNFTFixture
 } from './fixture'
-import { getSigners } from '@/scripts/utils'
+import { abiCoder, getSigners } from '@/scripts/utils'
 import { ethers } from 'hardhat'
 
 describe('Bridge', function () {
@@ -181,6 +181,11 @@ describe('Bridge', function () {
     await mockNFT.mint(tokenId)
     await mockNFT.approve(bridgeAddress, tokenId)
 
+    const encodedData = abiCoder.encode(
+      ['address', 'uint256'],
+      [mockNFTAddress, tokenId]
+    )
+
     await expect(
       bridge.transferToChain(
         nativeChainId,
@@ -189,11 +194,11 @@ describe('Bridge', function () {
         tokenId
       )
     )
-      .to.emit(bridge, 'TransferedToChain')
-      .withArgs(nativeChainId, receiver.address, mockNFTAddress, tokenId)
+      .to.emit(bridge, 'MessageSent')
+      .withArgs(adapterChainId, receiver.address, encodedData)
   })
 
-  it('should revert if transfer NFT directly to bridge contract', async function () {
+  it('should revert if call safe transfer from another contract', async function () {
     const { mockNFT, mockNFTAddress } = await loadFixture(deployMockNFTFixture)
 
     const { bridge, bridgeAddress } = await loadFixture(

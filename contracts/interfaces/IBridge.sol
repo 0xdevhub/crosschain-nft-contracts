@@ -2,10 +2,9 @@
 pragma solidity 0.8.21;
 
 interface IBridge {
-    struct MessageSend {
-        uint256 toChain;
-        address receiver;
-        bytes data;
+    struct AdapterSettings {
+        uint256 adapterChainId;
+        address adapter;
     }
 
     struct MessageReceive {
@@ -14,9 +13,10 @@ interface IBridge {
         bytes data;
     }
 
-    struct AdapterSettings {
-        uint256 adapterChainId;
-        address adapter;
+    struct MessageSend {
+        uint256 toChain;
+        address receiver;
+        bytes data;
     }
 
     /// @dev emitted when try to transfer to contract
@@ -32,13 +32,10 @@ interface IBridge {
     event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed adapterChainId_, address adapter_);
 
     /// @dev Emitted when message is sent
-    event MessageSent(MessageSend indexed message_);
+    event MessageSent(uint256 toChain, address receiver, bytes data);
 
     /// @dev Emitted when message is received
-    event MessageReceived(MessageReceive indexed message_);
-
-    /// @dev Emitted when NFT is transfered to another chain
-    event TransferedToChain(uint256 indexed toChain_, address indexed receiver_, address token_, uint256 tokenId_);
+    event MessageReceived(uint256 fromChain, address sender, bytes data);
 
     /**
      * @notice set adapter address from native chainId and abstracted chainId
@@ -74,5 +71,5 @@ interface IBridge {
      * @notice receive message from adapter
      * @param payload_ data received from adapter
      */
-    function receiveFromChain(MessageReceive memory payload_) external;
+    function receiveFromChain(IBridge.MessageReceive memory payload_) external;
 }
