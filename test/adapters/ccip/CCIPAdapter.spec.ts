@@ -7,11 +7,11 @@ import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
 
 import {
   deployCCIPAdapterFixture,
-  deployCCIPRouterMockFixture
+  deployCCIPRouterMockFixture,
+  deployMockBridgeFixture
 } from './fixture'
 import { IBridge } from '@/typechain'
 import { abiCoder } from '@/scripts/utils'
-import { deployMockBridgeFixture } from '@/test/bridge/fixture'
 
 describe('CCIPAdapter', function () {
   it('should return router address', async function () {

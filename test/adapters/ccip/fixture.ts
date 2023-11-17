@@ -1,5 +1,18 @@
 import { getContractAddress, getContractFactory } from '@/scripts/utils'
-import { CCIPAdapter__factory, MockCCIPRouter__factory } from '@/typechain'
+import {
+  CCIPAdapter__factory,
+  MockCCIPRouter__factory,
+  MockBridge__factory
+} from '@/typechain'
+
+export async function deployMockBridgeFixture() {
+  const MockBridge = await getContractFactory<MockBridge__factory>('MockBridge')
+
+  const mockBridge = await MockBridge.deploy()
+  const mockBridgeAddress = await getContractAddress(mockBridge)
+
+  return { mockBridge, mockBridgeAddress }
+}
 
 export async function deployCCIPRouterMockFixture() {
   const MockCCIPRouter =
