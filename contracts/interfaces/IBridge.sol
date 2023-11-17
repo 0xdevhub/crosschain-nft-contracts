@@ -15,12 +15,12 @@ interface IBridge {
     }
 
     struct AdapterSettings {
-        uint256 abstractedChainId;
+        uint256 adapterChainId;
         address adapter;
     }
 
     /// @notice Emitted when adapter is changed
-    event AdapterChanged(uint256 indexed nativeChainId_, uint256 indexed abstractedChainId_, address adapter_);
+    event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed adapterChainId_, address adapter_);
 
     /// @notice Emitted when message is sent
     event MessageSent(MessageSend indexed message_);
@@ -39,10 +39,10 @@ interface IBridge {
     /**
      * @notice set adapter address from native chainId and abstracted chainId
      * @param nativeChainId_ native chain id
-     * @param abstractedChainId_ abstracted chain id
+     * @param adapterChainId_ abstracted chain id
      * @param adapter_ address of adapter
      */
-    function setAdapter(uint256 nativeChainId_, uint256 abstractedChainId_, address adapter_) external;
+    function setAdapter(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external;
 
     /**
      * @notice get adapter address by native chainId
@@ -61,8 +61,14 @@ interface IBridge {
     function transferToChain(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 
     /**
-     * @notice receive message from adapter
-     * @param calldata_ data received from adapter
+     * @notice receive NFT transfers
+     * @param operator address which called safeTransferFrom function
      */
-    function receiveFromChain(MessageReceive memory calldata_) external;
+    function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
+
+    /**
+     * @notice receive message from adapter
+     * @param payload_ data received from adapter
+     */
+    function receiveFromChain(MessageReceive memory payload_) external;
 }

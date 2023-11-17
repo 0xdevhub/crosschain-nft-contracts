@@ -32,12 +32,12 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const abstractedChainId = 80_001
+    const adapterChainId = 80_001
 
     await expect(
       bridge
         .connect(unknown)
-        .setAdapter(nativeChainId, abstractedChainId, adapterAddress)
+        .setAdapter(nativeChainId, adapterChainId, adapterAddress)
     ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
   })
 
@@ -49,16 +49,33 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const abstractedChainId = 80_001
+    const adapterChainId = 80_001
 
-    await bridge.setAdapter(nativeChainId, abstractedChainId, adapterAddress)
+    await bridge.setAdapter(nativeChainId, adapterChainId, adapterAddress)
 
     const adapter = await bridge.adapters(nativeChainId)
 
-    expect([adapter.abstractedChainId, adapter.adapter]).to.deep.equal([
-      abstractedChainId,
+    expect([adapter.adapterChainId, adapter.adapter]).to.deep.equal([
+      adapterChainId,
       adapterAddress
     ])
+  })
+
+  it('should emit event when adapter is set', async function () {
+    const adapterAddress = '0x00000000000000000000000000000000000000D2'
+
+    const { bridge } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+    const adapterChainId = 80_001
+
+    await expect(
+      bridge.setAdapter(nativeChainId, adapterChainId, adapterAddress)
+    )
+      .to.emit(bridge, 'AdapterSet')
+      .withArgs(nativeChainId, adapterChainId, adapterAddress)
   })
 
   it('should revert if chain does not have any adapter', async function () {
@@ -92,7 +109,7 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const abstractedChainId = 12334124515
+    const adapterChainId = 12334124515
 
     const { mockAdapterAddress, mockAdapter } = await loadFixture(
       deployMockAdapterFixture
@@ -100,11 +117,7 @@ describe('Bridge', function () {
 
     await mockAdapter.setFee(200_000)
 
-    await bridge.setAdapter(
-      nativeChainId,
-      abstractedChainId,
-      mockAdapterAddress
-    )
+    await bridge.setAdapter(nativeChainId, adapterChainId, mockAdapterAddress)
 
     await expect(
       bridge.transferToChain(
@@ -126,19 +139,15 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const abstractedChainId = 12334124515
+    const adapterChainId = 12334124515
 
     const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
 
-    await bridge.setAdapter(
-      nativeChainId,
-      abstractedChainId,
-      mockAdapterAddress
-    )
+    await bridge.setAdapter(nativeChainId, adapterChainId, mockAdapterAddress)
 
     const tokenId = 1
     await mockNFT.mint(tokenId)
-    await mockNFT.setApprovalForAll(bridgeAddress, true)
+    await mockNFT.approve(bridgeAddress, tokenId)
 
     await bridge.transferToChain(
       nativeChainId,
@@ -149,5 +158,37 @@ describe('Bridge', function () {
 
     const nftOwner = await mockNFT.ownerOf(tokenId)
     expect(nftOwner).to.be.equal(bridgeAddress)
+  })
+
+  it('should emit event when NFT is transferred to bridge contract', async function () {
+    const [receiver] = await getSigners()
+
+    const { mockNFT, mockNFTAddress } = await loadFixture(deployMockNFTFixture)
+
+    const { bridge, bridgeAddress } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+    const adapterChainId = 12334124515
+
+    const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
+
+    await bridge.setAdapter(nativeChainId, adapterChainId, mockAdapterAddress)
+
+    const tokenId = 1
+    await mockNFT.mint(tokenId)
+    await mockNFT.approve(bridgeAddress, tokenId)
+
+    await expect(
+      bridge.transferToChain(
+        nativeChainId,
+        receiver.address,
+        mockNFTAddress,
+        tokenId
+      )
+    )
+      .to.emit(bridge, 'TransferedToChain')
+      .withArgs(nativeChainId, receiver.address, mockNFTAddress, tokenId)
   })
 })

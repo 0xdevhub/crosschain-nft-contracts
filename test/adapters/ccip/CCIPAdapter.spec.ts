@@ -301,7 +301,7 @@ describe('CCIPAdapter', function () {
     ).to.be.revertedWithCustomError(ccipAdapter, 'InsufficientFeeTokenAmount')
   })
 
-  it('should revert on transfer native tokens', async function () {
+  it('should revert on call transfer native tokens', async function () {
     const [owner] = await getSigners()
 
     const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)

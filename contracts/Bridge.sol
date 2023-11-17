@@ -4,10 +4,10 @@ pragma solidity 0.8.21;
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract Bridge is IBridge, AccessManaged {
-    /// @dev nativeChainId => abstractedChainId => adapter
+    /// @dev nativeChainId => adapterChainId => adapter
     mapping(uint256 => IBridge.AdapterSettings) public s_adapters;
 
     /**
@@ -25,13 +25,10 @@ contract Bridge is IBridge, AccessManaged {
 
     /// ================== SETTINGS =========================
     /// @inheritdoc IBridge
-    function setAdapter(uint256 nativeChainId_, uint256 abstractedChainId_, address adapter_) external restricted {
-        s_adapters[nativeChainId_] = IBridge.AdapterSettings({
-            abstractedChainId: abstractedChainId_,
-            adapter: adapter_
-        });
+    function setAdapter(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external restricted {
+        s_adapters[nativeChainId_] = IBridge.AdapterSettings({adapterChainId: adapterChainId_, adapter: adapter_});
 
-        emit IBridge.AdapterChanged(nativeChainId_, abstractedChainId_, adapter_);
+        emit IBridge.AdapterSet(nativeChainId_, adapterChainId_, adapter_);
     }
 
     /// @inheritdoc IBridge
@@ -47,17 +44,25 @@ contract Bridge is IBridge, AccessManaged {
         address token_,
         uint256 tokenId_
     ) external payable checkAdapter(toChain_) {
-        address adapter = adapters(toChain_).adapter;
+        AdapterSettings memory chainAdapter = adapters(toChain_);
+
+        address adapter = chainAdapter.adapter;
 
         bytes memory data = abi.encode(token_, tokenId_);
-        IBridge.MessageSend memory payload = IBridge.MessageSend({toChain: toChain_, receiver: receiver_, data: data});
+
+        IBridge.MessageSend memory payload = IBridge.MessageSend({
+            toChain: chainAdapter.adapterChainId,
+            receiver: receiver_,
+            data: data
+        });
 
         uint256 quotedFees = IBaseAdapter(adapter).getFee(payload);
+
         if (quotedFees > msg.value) {
             revert IBridge.InsufficientFeeTokenAmount();
         }
 
-        IERC721(token_).transferFrom(msg.sender, address(this), tokenId_);
+        IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
 
         _transferToChain(adapter, payload);
 
@@ -79,8 +84,12 @@ contract Bridge is IBridge, AccessManaged {
 
     /// @inheritdoc IBridge
     /// @dev only adapter can call
-    function receiveFromChain(IBridge.MessageReceive memory calldata_) external override restricted {
-        /// todo: handle offramp message
-        emit IBridge.MessageReceived(calldata_);
+    function receiveFromChain(IBridge.MessageReceive memory payload_) external override restricted {
+        emit IBridge.MessageReceived(payload_);
+    }
+
+    function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4) {
+        require(operator == address(this), "can only bridge tokens via transferNFT method");
+        return type(IERC721Receiver).interfaceId;
     }
 }
