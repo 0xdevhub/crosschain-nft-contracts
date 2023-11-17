@@ -36,6 +36,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
                 receiver: abi.encode(receiver_),
                 data: data_,
                 tokenAmounts: new Client.EVMTokenAmount[](0),
+                /// todo: adapter settings
                 extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
                 feeToken: feeToken()
             });
@@ -48,12 +49,6 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     /// @inheritdoc IBaseAdapter
     function router() public view override returns (address) {
         return getRouter();
-    }
-
-    /// @inheritdoc IBaseAdapter
-    /// @dev pay fees using native token
-    function feeToken() public pure override returns (address) {
-        return address(0);
     }
 
     /// @inheritdoc CCIPReceiver

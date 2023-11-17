@@ -14,8 +14,13 @@ interface IBridge {
         bytes data;
     }
 
+    struct AdapterSettings {
+        uint256 abstractedChainId;
+        address adapter;
+    }
+
     /// @notice Emitted when adapter is changed
-    event AdapterChanged(address indexed adapter_);
+    event AdapterChanged(uint256 indexed nativeChainId_, uint256 indexed abstractedChainId_, address adapter_);
 
     /// @notice Emitted when message is sent
     event MessageSent(MessageSend indexed message_);
@@ -23,20 +28,39 @@ interface IBridge {
     /// @notice Emitted when message is received
     event MessageReceived(MessageReceive indexed message_);
 
-    /**
-     * @notice adapter address for crosschain message
-     */
-    function adapter() external view returns (address);
+    /// @dev emitted when not enough fee token amount
+    error InsufficientFeeTokenAmount();
+
+    /// @dev emitted when adapter not found
+    error AdapterNotFound(uint256 nativeChainId_);
 
     /**
-     * @notice update adapter for crosschain message
-     * @param adapter_ new adapter address
+     * @notice set adapter address from native chainId and abstracted chainId
+     * @param nativeChainId_ native chain id
+     * @param abstractedChainId_ abstracted chain id
+     * @param adapter_ address of adapter
      */
-    function setAdapter(address adapter_) external;
+    function setAdapter(uint256 nativeChainId_, uint256 abstractedChainId_, address adapter_) external;
+
+    /**
+     * @notice get adapter address by native chainId
+     * @param nativeChainId_ native chain id
+     * @return adapter struct
+     */
+    function adapters(uint256 nativeChainId_) external view returns (IBridge.AdapterSettings memory);
+
+    /**
+     * @notice transfer NFT sending crosschain message through adapter
+     * @param toChain_ native chainId target
+     * @param receiver_ receiver address
+     * @param token_ token address of collection
+     * @param tokenId_ token id to transfer
+     */
+    function transferToChain(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 
     /**
      * @notice receive message from adapter
      * @param calldata_ data received from adapter
      */
-    function commitOffRamp(MessageReceive memory calldata_) external;
+    function receiveFromChain(MessageReceive memory calldata_) external;
 }

@@ -14,13 +14,9 @@ contract MockCCIPRouter is IRouterClient {
         s_fee = fee_;
     }
 
-    function isChainSupported(uint64 /*chainSelector */) external pure returns (bool supported) {
-        return true;
-    }
+    function isChainSupported(uint64 /*chainSelector */) external pure returns (bool supported) {}
 
-    function getSupportedTokens(uint64 /* chainSelector */) external pure returns (address[] memory tokens) {
-        return new address[](0);
-    }
+    function getSupportedTokens(uint64 /* chainSelector */) external pure returns (address[] memory tokens) {}
 
     function getFee(
         uint64 /*destinationChainSelector*/,

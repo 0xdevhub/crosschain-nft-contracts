@@ -1,11 +1,12 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
-import { ethers } from 'hardhat'
 import { AccessManagement } from '@/typechain/contracts/AccessManagement'
 
 import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
 
-import { deployBridgeFixture } from './fixture'
+import { deployBridgeFixture, deployMockAdapterFixture } from './fixture'
+import { getSigners } from '@/scripts/utils'
+import { ethers } from 'hardhat'
 
 describe('Bridge', function () {
   let accessManagement: AccessManagement
@@ -18,26 +19,95 @@ describe('Bridge', function () {
     accessManagementAddress = fixture.accessManagementAddress
   })
 
-  it('should return adapter as zero address if not set', async function () {
-    const adapterAddress = ethers.ZeroAddress
-    const fixture = await loadFixture(
-      deployBridgeFixture.bind(this, accessManagementAddress)
-    )
-
-    const adapter = await fixture.bridge.adapter()
-    expect(adapter).to.be.equal(adapterAddress)
-  })
-
-  it('should set adapter address', async function () {
+  it('should revert call to set adapter address when unkown sender', async function () {
+    const [, unknown] = await getSigners()
     const adapterAddress = '0x00000000000000000000000000000000000000D2'
 
     const { bridge } = await loadFixture(
       deployBridgeFixture.bind(this, accessManagementAddress)
     )
 
-    await bridge.setAdapter(adapterAddress)
+    const nativeChainId = 137
+    const abstractedChainId = 80_001
 
-    const adapter = await bridge.adapter()
-    expect(adapter).to.be.equal(adapterAddress)
+    await expect(
+      bridge
+        .connect(unknown)
+        .setAdapter(nativeChainId, abstractedChainId, adapterAddress)
+    ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
+  })
+
+  it('should set adapter by native chain id', async function () {
+    const adapterAddress = '0x00000000000000000000000000000000000000D2'
+
+    const { bridge } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+    const abstractedChainId = 80_001
+
+    await bridge.setAdapter(nativeChainId, abstractedChainId, adapterAddress)
+
+    const adapter = await bridge.adapters(nativeChainId)
+
+    expect([adapter.abstractedChainId, adapter.adapter]).to.deep.equal([
+      abstractedChainId,
+      adapterAddress
+    ])
+  })
+
+  it('should revert if chain does not have any adapter', async function () {
+    const fakeNFTAddress = ethers.ZeroAddress
+    const fakeNFTTokenId = 0
+    const [receiver] = await getSigners()
+    const { bridge } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+
+    await expect(
+      bridge.transferToChain(
+        nativeChainId,
+        receiver.address,
+        fakeNFTAddress,
+        fakeNFTTokenId
+      )
+    ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
+  })
+
+  it('should revert if the amount sent as fee token is insufficient', async function () {
+    const fakeNFTAddress = ethers.ZeroAddress
+    const fakeNFTTokenId = 0
+
+    const [receiver] = await getSigners()
+
+    const { bridge } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+    const abstractedChainId = 12334124515
+    const { mockAdapterAddress, mockAdapter } = await loadFixture(
+      deployMockAdapterFixture
+    )
+
+    await mockAdapter.setFee(200_000)
+
+    await bridge.setAdapter(
+      nativeChainId,
+      abstractedChainId,
+      mockAdapterAddress
+    )
+
+    await expect(
+      bridge.transferToChain(
+        nativeChainId,
+        receiver.address,
+        fakeNFTAddress,
+        fakeNFTTokenId
+      )
+    ).to.be.revertedWithCustomError(bridge, 'InsufficientFeeTokenAmount')
   })
 })

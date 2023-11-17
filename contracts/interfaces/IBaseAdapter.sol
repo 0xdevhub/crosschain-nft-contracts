@@ -7,8 +7,10 @@ interface IBaseAdapter {
     /// @dev emitted when not enough fee token amount
     error InsufficientFeeTokenAmount();
 
+    /// @dev emmited when calling fallback function
     error FallbackNotAllowed();
 
+    /// @dev emitted when calling receive function
     error DepositNotAllowed();
 
     /// @dev emit when message sent

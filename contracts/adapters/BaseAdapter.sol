@@ -25,7 +25,10 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     function getFee(IBridge.MessageSend memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
-    function feeToken() public view virtual override returns (address);
+    /// @dev todo: erc20 support
+    function feeToken() public pure override returns (address) {
+        return address(0);
+    }
 
     /// @inheritdoc IBaseAdapter
     /// @dev only bridge can call sendMessage
@@ -51,7 +54,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
      * @param payload_ data to send to bridge
      */
     function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
-        IBridge(s_bridge).commitOffRamp(payload_);
+        IBridge(s_bridge).receiveFromChain(payload_);
         emit IBaseAdapter.MessageReceived(payload_);
     }
 

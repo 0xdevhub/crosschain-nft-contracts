@@ -12,7 +12,7 @@ import {
 } from './fixture'
 
 import { IBridge } from '@/typechain'
-import { abiCoder } from '@/scripts/utils'
+import { abiCoder, getSigners } from '@/scripts/utils'
 import { AccessManagement } from '@/typechain/contracts/AccessManagement'
 
 describe('CCIPAdapter', function () {
@@ -27,9 +27,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return router address', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -48,9 +46,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return bridge address', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -69,9 +65,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return fee token as zero address', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -90,9 +84,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return amount fee for sending message', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
       deployMockCCIPRouterFixture
@@ -123,15 +115,13 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert if receive message from unknown sender', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const { mockCCIPRouterAddress } = await loadFixture(
       deployMockCCIPRouterFixture
     )
 
-    const [, developer] = await ethers.getSigners()
+    const [, developer] = await getSigners()
 
     const { ccipAdapter } = await loadFixture(
       deployCCIPAdapterFixture.bind(
@@ -164,15 +154,13 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert if send message from unknown sender', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const { mockCCIPRouterAddress } = await loadFixture(
       deployMockCCIPRouterFixture
     )
 
-    const [, developer] = await ethers.getSigners()
+    const [, developer] = await getSigners()
 
     const { ccipAdapter } = await loadFixture(
       deployCCIPAdapterFixture.bind(
@@ -195,11 +183,9 @@ describe('CCIPAdapter', function () {
   })
 
   it('should receive message from router', async function () {
-    const [, otherSideCaller] = await ethers.getSigners()
+    const [, otherSideCaller] = await getSigners()
 
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const { mockCCIPRouterAddress } = await loadFixture(
       deployMockCCIPRouterFixture
@@ -244,9 +230,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should send message to router', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const { mockCCIPRouterAddress } = await loadFixture(
       deployMockCCIPRouterFixture
@@ -279,9 +263,7 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert sending message to router without fee amount', async function () {
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
       deployMockCCIPRouterFixture
@@ -320,11 +302,9 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert on transfer native tokens', async function () {
-    const [owner] = await ethers.getSigners()
+    const [owner] = await getSigners()
 
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -346,11 +326,9 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert on call fallback function', async function () {
-    const [owner] = await ethers.getSigners()
+    const [owner] = await getSigners()
 
-    const { mockBridgeAddress } = await loadFixture(
-      deployMockBridgeFixture.bind(this, accessManagementAddress)
-    )
+    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
