@@ -57,17 +57,9 @@ contract Bridge is IBridge, AccessManaged {
 
         IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
 
-        _transferToChain(adapter, payload);
+        IBaseAdapter(adapter).sendMessage(payload);
 
         emit IBridge.MessageSent(payload.toChain, payload.receiver, payload.data);
-    }
-
-    /**
-     * @notice send message to adapter
-     * @param payload_ data to send to adapter
-     */
-    function _transferToChain(address adapter_, IBridge.MessageSend memory payload_) private {
-        IBaseAdapter(adapter_).sendMessage(payload_);
     }
 
     /// todo: isAllowedSender

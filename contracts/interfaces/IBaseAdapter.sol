@@ -14,10 +14,10 @@ interface IBaseAdapter {
     error DepositNotAllowed();
 
     /// @dev emit when message sent
-    event MessageSent(uint256 toChain, address receiver, bytes data);
+    event MessageSent(uint256 toChain_, address receiver_, bytes data_);
 
     /// @dev emit when message received
-    event MessageReceived(uint256 fromChain, address sender, bytes data);
+    event MessageReceived(uint256 fromChain_, address sender_, bytes data_);
 
     /**
      * @notice {override} to get router address
