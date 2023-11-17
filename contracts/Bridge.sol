@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract Bridge is IBridge, AccessManaged {
     /// @dev nativeChainId => abstractedChainId => adapter
@@ -55,16 +56,22 @@ contract Bridge is IBridge, AccessManaged {
         if (quotedFees > msg.value) {
             revert IBridge.InsufficientFeeTokenAmount();
         }
+
+        IERC721(token_).transferFrom(msg.sender, address(this), tokenId_);
+
+        _transferToChain(adapter, payload);
+
+        emit IBridge.TransferedToChain(toChain_, receiver_, token_, tokenId_);
     }
 
     /**
      * @notice send message to adapter
-     * @param calldata_ data to send to adapter
+     * @param payload_ data to send to adapter
      */
-    // function _commitOnRamp(IBridge.MessageSend memory calldata_) private {
-    //     // IBaseAdapter(s_adapter).sendMessage(calldata_);
-    //     emit IBridge.MessageSent(calldata_);
-    // }
+    function _transferToChain(address adapter_, IBridge.MessageSend memory payload_) private {
+        IBaseAdapter(adapter_).sendMessage(payload_);
+        emit IBridge.MessageSent(payload_);
+    }
 
     /// todo: isAllowedSender
     /// todo: isAllowedSourceChain

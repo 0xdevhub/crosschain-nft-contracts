@@ -28,6 +28,8 @@ interface IBridge {
     /// @notice Emitted when message is received
     event MessageReceived(MessageReceive indexed message_);
 
+    event TransferedToChain(uint256 indexed toChain_, address indexed receiver_, address token_, uint256 tokenId_);
+
     /// @dev emitted when not enough fee token amount
     error InsufficientFeeTokenAmount();
 

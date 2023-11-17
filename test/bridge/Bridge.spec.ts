@@ -4,7 +4,11 @@ import { AccessManagement } from '@/typechain/contracts/AccessManagement'
 
 import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
 
-import { deployBridgeFixture, deployMockAdapterFixture } from './fixture'
+import {
+  deployBridgeFixture,
+  deployMockAdapterFixture,
+  deployMockNFTFixture
+} from './fixture'
 import { getSigners } from '@/scripts/utils'
 import { ethers } from 'hardhat'
 
@@ -89,6 +93,7 @@ describe('Bridge', function () {
 
     const nativeChainId = 137
     const abstractedChainId = 12334124515
+
     const { mockAdapterAddress, mockAdapter } = await loadFixture(
       deployMockAdapterFixture
     )
@@ -109,5 +114,40 @@ describe('Bridge', function () {
         fakeNFTTokenId
       )
     ).to.be.revertedWithCustomError(bridge, 'InsufficientFeeTokenAmount')
+  })
+
+  it('should transfer NFT to bridge contract', async function () {
+    const [receiver] = await getSigners()
+
+    const { mockNFT, mockNFTAddress } = await loadFixture(deployMockNFTFixture)
+
+    const { bridge, bridgeAddress } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+    const abstractedChainId = 12334124515
+
+    const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
+
+    await bridge.setAdapter(
+      nativeChainId,
+      abstractedChainId,
+      mockAdapterAddress
+    )
+
+    const tokenId = 1
+    await mockNFT.mint(tokenId)
+    await mockNFT.setApprovalForAll(bridgeAddress, true)
+
+    await bridge.transferToChain(
+      nativeChainId,
+      receiver.address,
+      mockNFTAddress,
+      tokenId
+    )
+
+    const nftOwner = await mockNFT.ownerOf(tokenId)
+    expect(nftOwner).to.be.equal(bridgeAddress)
   })
 })
