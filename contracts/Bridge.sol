@@ -88,8 +88,9 @@ contract Bridge is IBridge, AccessManaged {
         emit IBridge.MessageReceived(payload_);
     }
 
+    /// @inheritdoc IBridge
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4) {
-        require(operator == address(this), "can only bridge tokens via transferNFT method");
+        if (operator != address(this)) revert IBridge.TransferNotAllowed();
         return type(IERC721Receiver).interfaceId;
     }
 }

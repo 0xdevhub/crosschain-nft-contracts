@@ -19,22 +19,26 @@ interface IBridge {
         address adapter;
     }
 
-    /// @notice Emitted when adapter is changed
-    event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed adapterChainId_, address adapter_);
-
-    /// @notice Emitted when message is sent
-    event MessageSent(MessageSend indexed message_);
-
-    /// @notice Emitted when message is received
-    event MessageReceived(MessageReceive indexed message_);
-
-    event TransferedToChain(uint256 indexed toChain_, address indexed receiver_, address token_, uint256 tokenId_);
+    /// @dev emitted when try to transfer to contract
+    error TransferNotAllowed();
 
     /// @dev emitted when not enough fee token amount
     error InsufficientFeeTokenAmount();
 
     /// @dev emitted when adapter not found
     error AdapterNotFound(uint256 nativeChainId_);
+
+    /// @dev Emitted when adapter is changed
+    event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed adapterChainId_, address adapter_);
+
+    /// @dev Emitted when message is sent
+    event MessageSent(MessageSend indexed message_);
+
+    /// @dev Emitted when message is received
+    event MessageReceived(MessageReceive indexed message_);
+
+    /// @dev Emitted when NFT is transfered to another chain
+    event TransferedToChain(uint256 indexed toChain_, address indexed receiver_, address token_, uint256 tokenId_);
 
     /**
      * @notice set adapter address from native chainId and abstracted chainId

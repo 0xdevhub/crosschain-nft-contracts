@@ -7,6 +7,7 @@ import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
 import {
   deployBridgeFixture,
   deployMockAdapterFixture,
+  deployMockContractGeneralFixture,
   deployMockNFTFixture
 } from './fixture'
 import { getSigners } from '@/scripts/utils'
@@ -190,5 +191,29 @@ describe('Bridge', function () {
     )
       .to.emit(bridge, 'TransferedToChain')
       .withArgs(nativeChainId, receiver.address, mockNFTAddress, tokenId)
+  })
+
+  it('should revert if transfer NFT directly to bridge contract', async function () {
+    const { mockNFT, mockNFTAddress } = await loadFixture(deployMockNFTFixture)
+
+    const { bridge, bridgeAddress } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const tokenId = 1
+    await mockNFT.mint(tokenId)
+
+    const { mockContractGeneral, mockContractGeneralAddress } =
+      await loadFixture(deployMockContractGeneralFixture)
+
+    mockNFT.approve(mockContractGeneralAddress, tokenId)
+
+    await expect(
+      mockContractGeneral.transferNFTViaContract(
+        mockNFTAddress,
+        tokenId,
+        bridgeAddress
+      )
+    ).to.be.revertedWithCustomError(bridge, 'TransferNotAllowed')
   })
 })
