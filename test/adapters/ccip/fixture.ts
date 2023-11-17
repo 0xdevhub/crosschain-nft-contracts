@@ -5,16 +5,15 @@ import {
   MockBridge__factory
 } from '@/typechain'
 
-export async function deployMockBridgeFixture() {
+export async function deployMockBridgeFixture(accessManagementAddress: string) {
   const MockBridge = await getContractFactory<MockBridge__factory>('MockBridge')
-
-  const mockBridge = await MockBridge.deploy()
+  const mockBridge = await MockBridge.deploy(accessManagementAddress)
   const mockBridgeAddress = await getContractAddress(mockBridge)
 
   return { mockBridge, mockBridgeAddress }
 }
 
-export async function deployCCIPRouterMockFixture() {
+export async function deployMockCCIPRouterFixture() {
   const MockCCIPRouter =
     await getContractFactory<MockCCIPRouter__factory>('MockCCIPRouter')
 

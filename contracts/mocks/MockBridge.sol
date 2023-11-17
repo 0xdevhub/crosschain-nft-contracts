@@ -5,14 +5,28 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IBaseAdapter} from "../interfaces/IBaseAdapter.sol";
 import {IBridge} from "../interfaces/IBridge.sol";
 
-contract MockBridge is IBridge {
+contract MockBridge is IBridge, AccessManaged {
     address private s_adapter;
 
-    /// @inheritdoc IBridge
-    function setAdapter(address adapter_) public override {}
+    constructor(address accessManagement_) AccessManaged(accessManagement_) {}
+
+    /// ================== SETTINGS =========================
 
     /// @inheritdoc IBridge
-    function adapter() external view override returns (address) {}
+    function setAdapter(address adapter_) public override restricted {
+        _setAdapter(adapter_);
+    }
+
+    function _setAdapter(address adapter_) private {
+        s_adapter = adapter_;
+
+        emit IBridge.AdapterChanged(adapter_);
+    }
+
+    /// @inheritdoc IBridge
+    function adapter() external view override returns (address) {
+        return s_adapter;
+    }
 
     /// @inheritdoc IBridge
     function commitOffRamp(IBridge.MessageReceive memory calldata_) external override {

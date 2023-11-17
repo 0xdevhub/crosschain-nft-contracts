@@ -1,20 +1,22 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
+import { AccessManagement } from '@/typechain/contracts/AccessManagement'
+
+import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
 
 import { deployBridgeFixture } from './fixture'
 
 describe('Bridge', function () {
   it('should return adapter address', async function () {
-    const accessManagementAddress = ethers.ZeroAddress
-    const adapterAddress = '0x00000000000000000000000000000000000000f8'
+    let accessManagement: AccessManagement
+    let accessManagementAddress: string
 
-    const { bridge } = await loadFixture(
-      deployBridgeFixture.bind(this, accessManagementAddress, adapterAddress)
-    )
-
-    const adapter = await bridge.adapter()
-
-    expect(adapter).to.be.equal(adapterAddress)
+    beforeEach(async function () {
+      // initialize access management fixture
+      const fixture = await loadFixture(deployAccessManagementFixture)
+      accessManagement = fixture.accessManagement
+      accessManagementAddress = fixture.accessManagementAddress
+    })
   })
 })

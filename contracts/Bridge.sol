@@ -13,13 +13,14 @@ import {IBridge} from "./interfaces/IBridge.sol";
 contract Bridge is IBridge, AccessManaged {
     address private s_adapter;
 
-    constructor(address accessManagement_, address adapter_) AccessManaged(accessManagement_) {
-        _setAdapter(adapter_);
-    }
+    /**
+     * @notice initialize bridge
+     * @param accessManagement_ address of access management contract
+     */
+    constructor(address accessManagement_) AccessManaged(accessManagement_) {}
 
     function _setAdapter(address adapter_) private {
         s_adapter = adapter_;
-
         emit IBridge.AdapterChanged(adapter_);
     }
 

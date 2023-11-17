@@ -7,16 +7,30 @@ import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
 
 import {
   deployCCIPAdapterFixture,
-  deployCCIPRouterMockFixture,
+  deployMockCCIPRouterFixture,
   deployMockBridgeFixture
 } from './fixture'
+
 import { IBridge } from '@/typechain'
 import { abiCoder } from '@/scripts/utils'
+import { AccessManagement } from '@/typechain/contracts/AccessManagement'
 
 describe('CCIPAdapter', function () {
+  let accessManagement: AccessManagement
+  let accessManagementAddress: string
+
+  beforeEach(async function () {
+    // initialize access management fixture
+    const fixture = await loadFixture(deployAccessManagementFixture)
+    accessManagement = fixture.accessManagement
+    accessManagementAddress = fixture.accessManagementAddress
+  })
+
   it('should return router address', async function () {
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
-    const accessManagementAddress = ethers.ZeroAddress
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
+
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
     const { ccipAdapter } = await loadFixture(
@@ -34,8 +48,10 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return bridge address', async function () {
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
-    const accessManagementAddress = ethers.ZeroAddress
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
+
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
     const { ccipAdapter } = await loadFixture(
@@ -53,8 +69,10 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return fee token as zero address', async function () {
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
-    const accessManagementAddress = ethers.ZeroAddress
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
+
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
     const { ccipAdapter } = await loadFixture(
@@ -72,10 +90,12 @@ describe('CCIPAdapter', function () {
   })
 
   it('should return amount fee for sending message', async function () {
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
-    const accessManagementAddress = ethers.ZeroAddress
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
+
     const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
-      deployCCIPRouterMockFixture
+      deployMockCCIPRouterFixture
     )
 
     const { ccipAdapter } = await loadFixture(
@@ -103,17 +123,15 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert if receive message from unknown sender', async function () {
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
 
     const { mockCCIPRouterAddress } = await loadFixture(
-      deployCCIPRouterMockFixture
+      deployMockCCIPRouterFixture
     )
 
     const [, developer] = await ethers.getSigners()
-
-    const { accessManagementAddress } = await loadFixture(
-      deployAccessManagementFixture
-    )
 
     const { ccipAdapter } = await loadFixture(
       deployCCIPAdapterFixture.bind(
@@ -146,17 +164,15 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert if send message from unknown sender', async function () {
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
 
     const { mockCCIPRouterAddress } = await loadFixture(
-      deployCCIPRouterMockFixture
+      deployMockCCIPRouterFixture
     )
 
     const [, developer] = await ethers.getSigners()
-
-    const { accessManagementAddress } = await loadFixture(
-      deployAccessManagementFixture
-    )
 
     const { ccipAdapter } = await loadFixture(
       deployCCIPAdapterFixture.bind(
@@ -180,14 +196,13 @@ describe('CCIPAdapter', function () {
 
   it('should receive message from router', async function () {
     const [, otherSideCaller] = await ethers.getSigners()
-    const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
-    const { mockCCIPRouterAddress } = await loadFixture(
-      deployCCIPRouterMockFixture
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
     )
 
-    const { accessManagement, accessManagementAddress } = await loadFixture(
-      deployAccessManagementFixture
+    const { mockCCIPRouterAddress } = await loadFixture(
+      deployMockCCIPRouterFixture
     )
 
     const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
@@ -229,20 +244,18 @@ describe('CCIPAdapter', function () {
   })
 
   it('should send message to router', async function () {
-    const bridgeAddress = ethers.ZeroAddress
-
-    const { mockCCIPRouterAddress } = await loadFixture(
-      deployCCIPRouterMockFixture
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
     )
 
-    const { accessManagement, accessManagementAddress } = await loadFixture(
-      deployAccessManagementFixture
+    const { mockCCIPRouterAddress } = await loadFixture(
+      deployMockCCIPRouterFixture
     )
 
     const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
       deployCCIPAdapterFixture.bind(
         this,
-        bridgeAddress,
+        mockBridgeAddress,
         accessManagementAddress,
         mockCCIPRouterAddress
       )
@@ -266,20 +279,18 @@ describe('CCIPAdapter', function () {
   })
 
   it('should revert sending message to router without fee amount', async function () {
-    const bridgeAddress = ethers.ZeroAddress
-
-    const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
-      deployCCIPRouterMockFixture
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
     )
 
-    const { accessManagement, accessManagementAddress } = await loadFixture(
-      deployAccessManagementFixture
+    const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
+      deployMockCCIPRouterFixture
     )
 
     const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
       deployCCIPAdapterFixture.bind(
         this,
-        bridgeAddress,
+        mockBridgeAddress,
         accessManagementAddress,
         mockCCIPRouterAddress
       )
@@ -310,14 +321,17 @@ describe('CCIPAdapter', function () {
 
   it('should revert on transfer native tokens', async function () {
     const [owner] = await ethers.getSigners()
-    const bridgeAddress = ethers.ZeroAddress
-    const accessManagementAddress = ethers.ZeroAddress
+
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
+
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
     const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
       deployCCIPAdapterFixture.bind(
         this,
-        bridgeAddress,
+        mockBridgeAddress,
         accessManagementAddress,
         routerAddress
       )
@@ -333,14 +347,17 @@ describe('CCIPAdapter', function () {
 
   it('should revert on call fallback function', async function () {
     const [owner] = await ethers.getSigners()
-    const bridgeAddress = ethers.ZeroAddress
-    const accessManagementAddress = ethers.ZeroAddress
+
+    const { mockBridgeAddress } = await loadFixture(
+      deployMockBridgeFixture.bind(this, accessManagementAddress)
+    )
+
     const routerAddress = '0x00000000000000000000000000000000000000D2'
 
     const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
       deployCCIPAdapterFixture.bind(
         this,
-        bridgeAddress,
+        mockBridgeAddress,
         accessManagementAddress,
         routerAddress
       )
