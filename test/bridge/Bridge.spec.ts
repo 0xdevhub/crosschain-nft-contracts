@@ -88,7 +88,7 @@ describe('Bridge', function () {
     const nativeChainId = 137
 
     await expect(
-      bridge.transferERC721(
+      bridge.bridgeERC721(
         nativeChainId,
         receiver.address,
         fakeNFTAddress,
@@ -121,7 +121,7 @@ describe('Bridge', function () {
     await mockNFT.approve(bridgeAddress, tokenId)
 
     await expect(
-      bridge.transferERC721(
+      bridge.bridgeERC721(
         nativeChainId,
         receiver.address,
         mockNFTAddress,
@@ -150,7 +150,7 @@ describe('Bridge', function () {
     await mockNFT.mint(tokenId)
     await mockNFT.approve(bridgeAddress, tokenId)
 
-    await bridge.transferERC721(
+    await bridge.bridgeERC721(
       nativeChainId,
       receiver.address,
       mockNFTAddress,
@@ -161,7 +161,7 @@ describe('Bridge', function () {
     expect(nftOwner).to.be.equal(bridgeAddress)
   })
 
-  it('should receive NFT on transferERC721', async function () {
+  it('should receive NFT on bridgeERC721', async function () {
     const [receiver] = await getSigners()
 
     const { mockNFT, mockNFTAddress } = await loadFixture(deployMockNFTFixture)
@@ -181,7 +181,7 @@ describe('Bridge', function () {
     await mockNFT.mint(tokenId)
     await mockNFT.approve(bridgeAddress, tokenId)
 
-    await bridge.transferERC721(
+    await bridge.bridgeERC721(
       nativeChainId,
       receiver.address,
       mockNFTAddress,
@@ -193,7 +193,7 @@ describe('Bridge', function () {
   })
 
   /// todo: implement burn for wrapped NFTs
-  // it('should burn NFT on transferERC721 when wrapped', async function () {})
+  // it('should burn NFT on bridgeERC721 when wrapped', async function () {})
 
   it('should emit event when NFT is transferred to bridge contract', async function () {
     const [receiver] = await getSigners()
@@ -228,7 +228,7 @@ describe('Bridge', function () {
     )
 
     await expect(
-      bridge.transferERC721(
+      bridge.bridgeERC721(
         nativeChainId,
         receiver.address,
         mockNFTAddress,

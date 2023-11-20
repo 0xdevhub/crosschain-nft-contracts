@@ -31,7 +31,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function transferERC721(
+    function bridgeERC721(
         uint256 toChain_,
         address receiver_,
         address token_,

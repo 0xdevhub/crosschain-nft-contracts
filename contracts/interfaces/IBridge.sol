@@ -61,7 +61,7 @@ interface IBridge {
      * @param token_ token address of collection
      * @param tokenId_ token id to transfer
      */
-    function transferERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
+    function bridgeERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 
     /**
      * @notice receive NFT transfers
