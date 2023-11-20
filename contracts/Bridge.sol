@@ -10,16 +10,34 @@ import "hardhat/console.sol";
 contract Bridge is IBridge, AccessManaged {
     uint256 private immutable s_chainId;
 
-    mapping(uint256 => IBridge.ChainSettings) public s_chainSettings;
+    /// @dev evm chain settings
+    mapping(uint256 => IBridge.ChainSettings) public s_evmChainSettings;
+
+    /// @dev nonEvm chain to Evm
+    mapping(uint256 => uint256) public s_nonEvmChains;
 
     constructor(address accessManagement_, uint256 chainId_) AccessManaged(accessManagement_) {
         s_chainId = chainId_;
     }
 
     /// @dev validate if chain settings are available
-    modifier checkChainSettings(uint256 evmChainId_) {
-        if (s_chainSettings[evmChainId_].adapter == address(0)) {
+    modifier checkEvmChainAdapterIsValid(uint256 evmChainId_) {
+        if (s_evmChainSettings[evmChainId_].adapter == address(0)) {
             revert IBridge.AdapterNotFound(evmChainId_);
+        }
+        _;
+    }
+
+    modifier checkEvmChainIdIsEnabled(uint256 evmChainId_) {
+        if (!s_evmChainSettings[evmChainId_].isEnabled) {
+            revert IBridge.AdapterNotEnabled(evmChainId_);
+        }
+        _;
+    }
+
+    modifier checkEvmChainByRampType(uint256 evmChainId_, IBridge.RampType rampType_) {
+        if (s_evmChainSettings[evmChainId_].rampType != rampType_) {
+            revert IBridge.RampTypeNotAllowed();
         }
         _;
     }
@@ -37,28 +55,42 @@ contract Bridge is IBridge, AccessManaged {
         IBridge.RampType rampType_,
         bool isEnabled_
     ) external restricted {
-        s_chainSettings[evmChainId_] = IBridge.ChainSettings({
+        s_evmChainSettings[evmChainId_] = IBridge.ChainSettings({
             nonEvmChainId: nonEvmChainId_,
             adapter: adapter_,
             rampType: rampType_,
             isEnabled: isEnabled_
         });
 
+        /// @dev keep track of nonEvm to Evm chain
+        _setNotEvmChainId(nonEvmChainId_, evmChainId_);
+
         emit IBridge.ChainSettingsSet(evmChainId_, nonEvmChainId_, adapter_);
+    }
+
+    function _setNotEvmChainId(uint256 nonEvmChainId_, uint256 evmChainId_) private {
+        s_nonEvmChains[nonEvmChainId_] = evmChainId_;
     }
 
     /// @inheritdoc IBridge
     function getChainSettings(uint256 evmChainId_) public view returns (IBridge.ChainSettings memory) {
-        return s_chainSettings[evmChainId_];
+        return s_evmChainSettings[evmChainId_];
     }
 
+    /// todo: check if to chain is allowed and enabled
     /// @inheritdoc IBridge
     function bridgeERC721(
         uint256 toChain_,
         address receiver_,
         address token_,
         uint256 tokenId_
-    ) external payable checkChainSettings(toChain_) {
+    )
+        external
+        payable
+        checkEvmChainAdapterIsValid(toChain_)
+        checkEvmChainIdIsEnabled(toChain_)
+        checkEvmChainByRampType(toChain_, IBridge.RampType.OnRamp)
+    {
         ChainSettings memory chainSettings = getChainSettings(toChain_);
 
         IBridge.MessageSend memory payload = _getPayload(chainSettings.nonEvmChainId, token_, tokenId_, receiver_);
@@ -113,7 +145,16 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function commitOffRamp(IBridge.MessageReceive memory payload_) external override restricted {
+    function commitOffRamp(
+        IBridge.MessageReceive memory payload_
+    )
+        external
+        override
+        checkEvmChainAdapterIsValid(s_nonEvmChains[payload_.fromChain])
+        checkEvmChainIdIsEnabled(s_nonEvmChains[payload_.fromChain])
+        checkEvmChainByRampType(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp)
+        restricted
+    {
         emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
     }
 

@@ -49,6 +49,12 @@ interface IBridge {
     /// @dev emitted when adapter not found
     error AdapterNotFound(uint256 evmChainId_);
 
+    /// @dev emitted when adapter not enabled
+    error AdapterNotEnabled(uint256 evmChainId_);
+
+    /// @dev emitted when adapter ramp type is not valid
+    error RampTypeNotAllowed();
+
     /// @dev Emitted when adapter is changed
     event ChainSettingsSet(uint256 indexed evmChainId_, uint256 indexed chainId_, address adapter_);
 
