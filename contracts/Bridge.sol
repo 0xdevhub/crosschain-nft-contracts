@@ -7,9 +7,13 @@ import {IBridge} from "./interfaces/IBridge.sol";
 import {ERC721, IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract Bridge is IBridge, AccessManaged {
+    uint256 public immutable chainId;
+
     mapping(uint256 => IBridge.ChainSettings) public s_chainSettings;
 
-    constructor(address accessManagement_) AccessManaged(accessManagement_) {}
+    constructor(address accessManagement_, uint256 chainId_) AccessManaged(accessManagement_) {
+        chainId = chainId_;
+    }
 
     modifier checkChainSettings(uint256 nativeChainId_) {
         if (s_chainSettings[nativeChainId_].adapter == address(0)) {
@@ -39,11 +43,11 @@ contract Bridge is IBridge, AccessManaged {
     ) external payable checkChainSettings(toChain_) {
         ChainSettings memory chainSettings = getChainSettings(toChain_);
 
-        IBaseAdapter adapter = IBaseAdapter(chainSettings.adapter);
-
         IBridge.MessageSend memory payload = _getPayload(chainSettings.chainId, token_, tokenId_, receiver_);
 
+        IBaseAdapter adapter = IBaseAdapter(chainSettings.adapter);
         uint256 quotedFees = adapter.getFee(payload);
+
         if (quotedFees > msg.value) {
             revert IBridge.InsufficientFeeTokenAmount();
         }

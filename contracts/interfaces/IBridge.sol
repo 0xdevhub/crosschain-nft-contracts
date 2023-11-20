@@ -9,6 +9,15 @@ interface IBridge {
         uint256 chainId;
         address adapter;
     }
+    /// todo: set wrapped asset manually/auto
+    /// todo: define struct for messages to check lock/unlock burn/mint
+    struct ERC721TokenData {
+        uint256 originChainId;
+        address originAddress;
+        address token;
+        uint256 tokenId;
+        string tokenURI;
+    }
 
     struct MessageReceive {
         uint256 fromChain;

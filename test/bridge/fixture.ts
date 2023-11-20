@@ -35,9 +35,12 @@ export async function deployMockNFTFixture(name = 'MyNFT', symbol = 'MNFT') {
   return { mockNFT, mockNFTAddress }
 }
 
-export async function deployBridgeFixture(accessManagementAddress: string) {
+export async function deployBridgeFixture(
+  accessManagementAddress: string,
+  chainId: number = 137
+) {
   const Bridge = await getContractFactory<Bridge__factory>('Bridge')
-  const bridge = await Bridge.deploy(accessManagementAddress)
+  const bridge = await Bridge.deploy(accessManagementAddress, chainId)
   const bridgeAddress = await getContractAddress(bridge)
 
   return { bridge, bridgeAddress }
