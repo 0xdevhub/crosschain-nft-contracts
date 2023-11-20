@@ -36,7 +36,6 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
                 receiver: abi.encode(receiver_),
                 data: data_,
                 tokenAmounts: new Client.EVMTokenAmount[](0),
-                /// todo: adapter settings
                 extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
                 feeToken: feeToken()
             });

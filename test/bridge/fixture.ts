@@ -6,6 +6,11 @@ import {
   MockNFT__factory
 } from '@/typechain'
 
+export enum RampType {
+  OnRamp,
+  OffRamp
+}
+
 export async function deployMockContractGeneralFixture() {
   const MockContractGeneral =
     await getContractFactory<MockContractGeneral__factory>(

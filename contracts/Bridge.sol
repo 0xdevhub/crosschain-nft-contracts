@@ -4,34 +4,52 @@ pragma solidity 0.8.21;
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
-import {ERC721, IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "hardhat/console.sol";
 
 contract Bridge is IBridge, AccessManaged {
-    uint256 public immutable chainId;
+    uint256 private immutable s_chainId;
 
     mapping(uint256 => IBridge.ChainSettings) public s_chainSettings;
 
     constructor(address accessManagement_, uint256 chainId_) AccessManaged(accessManagement_) {
-        chainId = chainId_;
+        s_chainId = chainId_;
     }
 
-    modifier checkChainSettings(uint256 nativeChainId_) {
-        if (s_chainSettings[nativeChainId_].adapter == address(0)) {
-            revert IBridge.AdapterNotFound(nativeChainId_);
+    /// @dev validate if chain settings are available
+    modifier checkChainSettings(uint256 evmChainId_) {
+        if (s_chainSettings[evmChainId_].adapter == address(0)) {
+            revert IBridge.AdapterNotFound(evmChainId_);
         }
         _;
     }
 
     /// @inheritdoc IBridge
-    function setChainSetting(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external restricted {
-        s_chainSettings[nativeChainId_] = IBridge.ChainSettings({chainId: adapterChainId_, adapter: adapter_});
-
-        emit IBridge.ChainSettingsSet(nativeChainId_, adapterChainId_, adapter_);
+    function chainId() public view returns (uint256) {
+        return s_chainId;
     }
 
     /// @inheritdoc IBridge
-    function getChainSettings(uint256 nativeChainId_) public view returns (IBridge.ChainSettings memory) {
-        return s_chainSettings[nativeChainId_];
+    function setChainSetting(
+        uint256 evmChainId_,
+        uint256 nonEvmChainId_,
+        address adapter_,
+        IBridge.RampType rampType_,
+        bool isEnabled_
+    ) external restricted {
+        s_chainSettings[evmChainId_] = IBridge.ChainSettings({
+            nonEvmChainId: nonEvmChainId_,
+            adapter: adapter_,
+            rampType: rampType_,
+            isEnabled: isEnabled_
+        });
+
+        emit IBridge.ChainSettingsSet(evmChainId_, nonEvmChainId_, adapter_);
+    }
+
+    /// @inheritdoc IBridge
+    function getChainSettings(uint256 evmChainId_) public view returns (IBridge.ChainSettings memory) {
+        return s_chainSettings[evmChainId_];
     }
 
     /// @inheritdoc IBridge
@@ -43,9 +61,10 @@ contract Bridge is IBridge, AccessManaged {
     ) external payable checkChainSettings(toChain_) {
         ChainSettings memory chainSettings = getChainSettings(toChain_);
 
-        IBridge.MessageSend memory payload = _getPayload(chainSettings.chainId, token_, tokenId_, receiver_);
+        IBridge.MessageSend memory payload = _getPayload(chainSettings.nonEvmChainId, token_, tokenId_, receiver_);
 
         IBaseAdapter adapter = IBaseAdapter(chainSettings.adapter);
+
         uint256 quotedFees = adapter.getFee(payload);
 
         if (quotedFees > msg.value) {
@@ -63,21 +82,23 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     function _getPayload(
-        uint256 adapterChainId_,
+        uint256 nonEvmChainId_,
         address token_,
         uint256 tokenId_,
         address receiver_
     ) internal view returns (IBridge.MessageSend memory) {
         IERC721Metadata tokenMetadata = IERC721Metadata(token_);
+
         string memory name = tokenMetadata.name();
         string memory symbol = tokenMetadata.symbol();
         string memory tokenURI = tokenMetadata.tokenURI(tokenId_);
-        bytes memory data = _getPayloadData(token_, tokenId_, name, symbol, tokenURI);
 
-        return IBridge.MessageSend({toChain: adapterChainId_, receiver: receiver_, data: data});
+        bytes memory data = _getEncodedPayloadData(token_, tokenId_, name, symbol, tokenURI);
+
+        return IBridge.MessageSend({toChain: nonEvmChainId_, receiver: receiver_, data: data});
     }
 
-    function _getPayloadData(
+    function _getEncodedPayloadData(
         address token_,
         uint256 tokenId_,
         string memory name_,
