@@ -4,31 +4,30 @@ pragma solidity 0.8.21;
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
-import {ERC721, IERC721, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721, IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract Bridge is IBridge, AccessManaged {
-    /// @dev nativeChainId => chainId => adapter
-    mapping(uint256 => IBridge.AdapterSettings) public s_adapters;
+    mapping(uint256 => IBridge.ChainSettings) public s_chainSettings;
 
     constructor(address accessManagement_) AccessManaged(accessManagement_) {}
 
-    modifier checkAdapter(uint256 nativeChainId_) {
-        if (s_adapters[nativeChainId_].adapter == address(0)) {
+    modifier checkChainSettings(uint256 nativeChainId_) {
+        if (s_chainSettings[nativeChainId_].adapter == address(0)) {
             revert IBridge.AdapterNotFound(nativeChainId_);
         }
         _;
     }
 
     /// @inheritdoc IBridge
-    function setAdapter(uint256 nativeChainId_, uint256 chainId_, address adapter_) external restricted {
-        s_adapters[nativeChainId_] = IBridge.AdapterSettings({chainId: chainId_, adapter: adapter_});
+    function setChainSetting(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external restricted {
+        s_chainSettings[nativeChainId_] = IBridge.ChainSettings({chainId: adapterChainId_, adapter: adapter_});
 
-        emit IBridge.AdapterSet(nativeChainId_, chainId_, adapter_);
+        emit IBridge.ChainSettingsSet(nativeChainId_, adapterChainId_, adapter_);
     }
 
     /// @inheritdoc IBridge
-    function adapters(uint256 nativeChainId_) public view returns (IBridge.AdapterSettings memory) {
-        return s_adapters[nativeChainId_];
+    function getChainSettings(uint256 nativeChainId_) public view returns (IBridge.ChainSettings memory) {
+        return s_chainSettings[nativeChainId_];
     }
 
     /// @inheritdoc IBridge
@@ -37,18 +36,12 @@ contract Bridge is IBridge, AccessManaged {
         address receiver_,
         address token_,
         uint256 tokenId_
-    ) external payable checkAdapter(toChain_) {
-        AdapterSettings memory chainAdapter = adapters(toChain_);
+    ) external payable checkChainSettings(toChain_) {
+        ChainSettings memory chainSettings = getChainSettings(toChain_);
 
-        IBaseAdapter adapter = IBaseAdapter(chainAdapter.adapter);
+        IBaseAdapter adapter = IBaseAdapter(chainSettings.adapter);
 
-        uint256 chainId = chainAdapter.chainId;
-
-        ERC721 token = ERC721(token_);
-
-        bytes memory data = abi.encode(token_, tokenId_, token.name(), token.symbol(), token.tokenURI(tokenId_));
-
-        IBridge.MessageSend memory payload = IBridge.MessageSend({toChain: chainId, receiver: receiver_, data: data});
+        IBridge.MessageSend memory payload = _getPayload(chainSettings.chainId, token_, tokenId_, receiver_);
 
         uint256 quotedFees = adapter.getFee(payload);
         if (quotedFees > msg.value) {
@@ -60,6 +53,32 @@ contract Bridge is IBridge, AccessManaged {
         adapter.sendMessage(payload);
 
         emit IBridge.MessageSent(payload.toChain, payload.receiver, payload.data);
+    }
+
+    function _getPayload(
+        uint256 chainId_,
+        address token_,
+        uint256 tokenId_,
+        address receiver_
+    ) internal view returns (IBridge.MessageSend memory) {
+        IERC721Metadata tokenMetadata = IERC721Metadata(token_);
+        string memory name = tokenMetadata.name();
+        string memory symbol = tokenMetadata.symbol();
+        string memory tokenURI = tokenMetadata.tokenURI(tokenId_);
+
+        bytes memory data = _getPayloadData(token_, tokenId_, name, symbol, tokenURI);
+
+        return IBridge.MessageSend({toChain: chainId_, receiver: receiver_, data: data});
+    }
+
+    function _getPayloadData(
+        address token_,
+        uint256 tokenId_,
+        string memory name_,
+        string memory symbol_,
+        string memory tokenURI_
+    ) internal pure returns (bytes memory) {
+        return abi.encode(token_, tokenId_, name_, symbol_, tokenURI_);
     }
 
     /// todo: isAllowedSender

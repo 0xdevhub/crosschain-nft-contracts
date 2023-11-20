@@ -24,7 +24,7 @@ describe('Bridge', function () {
     accessManagementAddress = fixture.accessManagementAddress
   })
 
-  it('should revert call to set adapter address when unkown sender', async function () {
+  it('should revert call to set chain settings address when unkown sender', async function () {
     const [, unknown] = await getSigners()
     const adapterAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -36,11 +36,13 @@ describe('Bridge', function () {
     const chainId = 80_001
 
     await expect(
-      bridge.connect(unknown).setAdapter(nativeChainId, chainId, adapterAddress)
+      bridge
+        .connect(unknown)
+        .setChainSetting(nativeChainId, chainId, adapterAddress)
     ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
   })
 
-  it('should set adapter by native chain id', async function () {
+  it('should set chain settings by native chain id', async function () {
     const adapterAddress = '0x00000000000000000000000000000000000000D2'
 
     const { bridge } = await loadFixture(
@@ -50,9 +52,9 @@ describe('Bridge', function () {
     const nativeChainId = 137
     const chainId = 80_001
 
-    await bridge.setAdapter(nativeChainId, chainId, adapterAddress)
+    await bridge.setChainSetting(nativeChainId, chainId, adapterAddress)
 
-    const adapter = await bridge.adapters(nativeChainId)
+    const adapter = await bridge.getChainSettings(nativeChainId)
 
     expect([adapter.chainId, adapter.adapter]).to.deep.equal([
       chainId,
@@ -60,7 +62,7 @@ describe('Bridge', function () {
     ])
   })
 
-  it('should emit event when adapter is set', async function () {
+  it('should emit event when chain settings is set', async function () {
     const adapterAddress = '0x00000000000000000000000000000000000000D2'
 
     const { bridge } = await loadFixture(
@@ -70,8 +72,8 @@ describe('Bridge', function () {
     const nativeChainId = 137
     const chainId = 80_001
 
-    await expect(bridge.setAdapter(nativeChainId, chainId, adapterAddress))
-      .to.emit(bridge, 'AdapterSet')
+    await expect(bridge.setChainSetting(nativeChainId, chainId, adapterAddress))
+      .to.emit(bridge, 'ChainSettingsSet')
       .withArgs(nativeChainId, chainId, adapterAddress)
   })
 
@@ -112,7 +114,7 @@ describe('Bridge', function () {
     )
 
     await mockAdapter.setFee(200_000)
-    await bridge.setAdapter(nativeChainId, chainId, mockAdapterAddress)
+    await bridge.setChainSetting(nativeChainId, chainId, mockAdapterAddress)
 
     const tokenId = 1
     await mockNFT.mint(tokenId)
@@ -142,7 +144,7 @@ describe('Bridge', function () {
 
     const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
 
-    await bridge.setAdapter(nativeChainId, chainId, mockAdapterAddress)
+    await bridge.setChainSetting(nativeChainId, chainId, mockAdapterAddress)
 
     const tokenId = 1
     await mockNFT.mint(tokenId)
@@ -159,6 +161,40 @@ describe('Bridge', function () {
     expect(nftOwner).to.be.equal(bridgeAddress)
   })
 
+  it('should receive NFT on transferERC721', async function () {
+    const [receiver] = await getSigners()
+
+    const { mockNFT, mockNFTAddress } = await loadFixture(deployMockNFTFixture)
+
+    const { bridge, bridgeAddress } = await loadFixture(
+      deployBridgeFixture.bind(this, accessManagementAddress)
+    )
+
+    const nativeChainId = 137
+    const chainId = 12334124515
+
+    const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
+
+    await bridge.setChainSetting(nativeChainId, chainId, mockAdapterAddress)
+
+    const tokenId = 1
+    await mockNFT.mint(tokenId)
+    await mockNFT.approve(bridgeAddress, tokenId)
+
+    await bridge.transferERC721(
+      nativeChainId,
+      receiver.address,
+      mockNFTAddress,
+      tokenId
+    )
+
+    const nftOwner = await mockNFT.ownerOf(tokenId)
+    expect(nftOwner).to.be.equal(bridgeAddress)
+  })
+
+  /// todo: implement burn for wrapped NFTs
+  // it('should burn NFT on transferERC721 when wrapped', async function () {})
+
   it('should emit event when NFT is transferred to bridge contract', async function () {
     const [receiver] = await getSigners()
 
@@ -173,7 +209,7 @@ describe('Bridge', function () {
 
     const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
 
-    await bridge.setAdapter(nativeChainId, chainId, mockAdapterAddress)
+    await bridge.setChainSetting(nativeChainId, chainId, mockAdapterAddress)
 
     const tokenId = 1
     await mockNFT.mint(tokenId)

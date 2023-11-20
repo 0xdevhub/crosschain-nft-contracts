@@ -2,7 +2,9 @@
 pragma solidity 0.8.21;
 
 interface IBridge {
-    struct AdapterSettings {
+    struct ChainSettings {
+        /// todo: check if is enabled to use
+        /// todo: check if adapter requires transfer to the contract
         uint256 chainId;
         address adapter;
     }
@@ -29,7 +31,7 @@ interface IBridge {
     error AdapterNotFound(uint256 nativeChainId_);
 
     /// @dev Emitted when adapter is changed
-    event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed chainId_, address adapter_);
+    event ChainSettingsSet(uint256 indexed nativeChainId_, uint256 indexed chainId_, address adapter_);
 
     /// @dev Emitted when message is sent
     event MessageSent(uint256 toChain, address receiver, bytes data);
@@ -37,20 +39,9 @@ interface IBridge {
     /// @dev Emitted when message is received
     event MessageReceived(uint256 fromChain, address sender, bytes data);
 
-    /**
-     * @notice set adapter address from native chainId and abstracted chainId
-     * @param nativeChainId_ native chain id
-     * @param chainId_ abstracted chain id
-     * @param adapter_ address of adapter
-     */
-    function setAdapter(uint256 nativeChainId_, uint256 chainId_, address adapter_) external;
+    function setChainSetting(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external;
 
-    /**
-     * @notice get adapter address by native chainId
-     * @param nativeChainId_ native chain id
-     * @return adapter struct
-     */
-    function adapters(uint256 nativeChainId_) external view returns (IBridge.AdapterSettings memory);
+    function getChainSettings(uint256 nativeChainId_) external view returns (IBridge.ChainSettings memory);
 
     /**
      * @notice transfer NFT sending crosschain message through adapter
