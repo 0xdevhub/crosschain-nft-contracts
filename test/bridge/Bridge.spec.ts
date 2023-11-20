@@ -27,6 +27,17 @@ describe('Bridge', function () {
   })
 
   describe('Settings', () => {
+    it('should deployed chain id', async function () {
+      const deployedChainId = 1372
+
+      const { bridge } = await loadFixture(
+        deployBridgeFixture.bind(this, accessManagementAddress, deployedChainId)
+      )
+
+      const chainId = await bridge.chainId()
+
+      expect(chainId).to.be.equal(deployedChainId)
+    })
     it('should set chain settings by evm chain id', async function () {
       const adapterAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -369,6 +380,25 @@ describe('Bridge', function () {
 
   describe('Commit OffRamp', () => {
     describe('Checks', () => {
+      it('should revert if adapter is not valid', async function () {
+        const [receiver] = await getSigners()
+        const { bridge } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress)
+        )
+
+        const nonevmChainId = 137125125
+
+        const payload = {
+          fromChain: nonevmChainId,
+          sender: receiver.address,
+          data: '0x'
+        }
+
+        await expect(
+          bridge.commitOffRamp(payload)
+        ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
+      })
+
       it('should revert call commit offramp when unkown caller', async function () {
         const [, unknown] = await getSigners()
 
