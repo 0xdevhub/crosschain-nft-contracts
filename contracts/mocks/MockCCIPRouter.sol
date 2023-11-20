@@ -29,6 +29,16 @@ contract MockCCIPRouter is IRouterClient {
         uint64 /*destinationChainSelector*/,
         Client.EVM2AnyMessage calldata /*message*/
     ) external payable returns (bytes32) {
+        /// @dev only for test purpose
+        payable(address(this)).transfer(msg.value);
         return bytes32(0);
     }
+
+    /// @dev only for test purpose
+    function balance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /// @dev only for test purpose
+    receive() external payable {}
 }

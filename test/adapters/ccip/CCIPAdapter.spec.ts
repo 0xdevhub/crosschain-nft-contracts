@@ -215,7 +215,7 @@ describe('CCIPAdapter', function () {
   it('should send message to router', async function () {
     const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
-    const { mockCCIPRouterAddress } = await loadFixture(
+    const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
       deployMockCCIPRouterFixture
     )
 
@@ -234,13 +234,20 @@ describe('CCIPAdapter', function () {
       0n // admin role
     )
 
+    const expectedAmount = 200_000
+    await mockCCIPRouter.setFee(expectedAmount)
+
     const payload = {
       toChain: 80_001,
       receiver: ethers.ZeroAddress,
       data: '0x'
     }
 
-    await expect(ccipAdapter.sendMessage(payload))
+    await expect(
+      ccipAdapter.sendMessage(payload, {
+        value: expectedAmount
+      })
+    )
       .to.emit(ccipAdapter, 'MessageSent')
       .withArgs(payload.toChain, payload.receiver, payload.data)
   })
