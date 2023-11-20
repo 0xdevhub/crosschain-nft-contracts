@@ -48,15 +48,18 @@ contract Bridge is IBridge, AccessManaged {
             revert IBridge.InsufficientFeeTokenAmount();
         }
 
-        IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
-
-        adapter.sendMessage(payload);
+        _receiveERC721(token_, tokenId_);
+        _commitOnRamp(adapter, payload);
 
         emit IBridge.MessageSent(payload.toChain, payload.receiver, payload.data);
     }
 
+    function _receiveERC721(address token_, uint256 tokenId_) private {
+        IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
+    }
+
     function _getPayload(
-        uint256 chainId_,
+        uint256 adapterChainId_,
         address token_,
         uint256 tokenId_,
         address receiver_
@@ -65,10 +68,9 @@ contract Bridge is IBridge, AccessManaged {
         string memory name = tokenMetadata.name();
         string memory symbol = tokenMetadata.symbol();
         string memory tokenURI = tokenMetadata.tokenURI(tokenId_);
-
         bytes memory data = _getPayloadData(token_, tokenId_, name, symbol, tokenURI);
 
-        return IBridge.MessageSend({toChain: chainId_, receiver: receiver_, data: data});
+        return IBridge.MessageSend({toChain: adapterChainId_, receiver: receiver_, data: data});
     }
 
     function _getPayloadData(
@@ -81,11 +83,11 @@ contract Bridge is IBridge, AccessManaged {
         return abi.encode(token_, tokenId_, name_, symbol_, tokenURI_);
     }
 
-    /// todo: isAllowedSender
-    /// todo: isAllowedSourceChain
-    /// todo: set wrapped asset or create wrapped on lock
+    function _commitOnRamp(IBaseAdapter adapter_, IBridge.MessageSend memory payload_) private {
+        adapter_.sendMessage(payload_);
+    }
+
     /// @inheritdoc IBridge
-    /// @dev only adapter can call
     function commitOffRamp(IBridge.MessageReceive memory payload_) external override restricted {
         emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
     }

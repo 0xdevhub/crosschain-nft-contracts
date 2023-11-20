@@ -5,6 +5,7 @@ interface IBridge {
     struct ChainSettings {
         /// todo: check if is enabled to use
         /// todo: check if adapter requires transfer to the contract
+        /// todo: fees to use the transfer service
         uint256 chainId;
         address adapter;
     }
@@ -39,8 +40,18 @@ interface IBridge {
     /// @dev Emitted when message is received
     event MessageReceived(uint256 fromChain, address sender, bytes data);
 
+    /**
+     * @notice set chain settings
+     * @param nativeChainId_ native chain id to set
+     * @param adapterChainId_ adapter chain id to set
+     * @param adapter_ adapter address to set
+     */
     function setChainSetting(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external;
 
+    /**
+     * @notice get chain settings
+     * @param nativeChainId_ native chain id to get settings
+     */
     function getChainSettings(uint256 nativeChainId_) external view returns (IBridge.ChainSettings memory);
 
     /**
@@ -62,5 +73,8 @@ interface IBridge {
      * @notice receive message from adapter
      * @param payload_ data received from adapter
      */
+    /// todo: isAllowedSender
+    /// todo: isAllowedSourceChain
+    /// todo: set wrapped asset or create wrapped on lock
     function commitOffRamp(IBridge.MessageReceive memory payload_) external;
 }

@@ -31,7 +31,6 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    /// @dev only bridge can call sendMessage
     function sendMessage(IBridge.MessageSend memory payload_) external payable override restricted {
         uint256 quotedFee = getFee(payload_);
 
