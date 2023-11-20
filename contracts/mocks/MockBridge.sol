@@ -10,7 +10,7 @@ contract MockBridge {
 
     event MessageReceived(MessageReceive indexed message_);
 
-    function receiveFromChain(MessageReceive memory calldata_) external {
+    function commitOffRamp(MessageReceive memory calldata_) external {
         emit MessageReceived(calldata_);
     }
 }

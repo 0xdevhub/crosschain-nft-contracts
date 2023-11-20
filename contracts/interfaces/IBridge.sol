@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 interface IBridge {
     struct AdapterSettings {
-        uint256 adapterChainId;
+        uint256 chainId;
         address adapter;
     }
 
@@ -29,7 +29,7 @@ interface IBridge {
     error AdapterNotFound(uint256 nativeChainId_);
 
     /// @dev Emitted when adapter is changed
-    event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed adapterChainId_, address adapter_);
+    event AdapterSet(uint256 indexed nativeChainId_, uint256 indexed chainId_, address adapter_);
 
     /// @dev Emitted when message is sent
     event MessageSent(uint256 toChain, address receiver, bytes data);
@@ -40,10 +40,10 @@ interface IBridge {
     /**
      * @notice set adapter address from native chainId and abstracted chainId
      * @param nativeChainId_ native chain id
-     * @param adapterChainId_ abstracted chain id
+     * @param chainId_ abstracted chain id
      * @param adapter_ address of adapter
      */
-    function setAdapter(uint256 nativeChainId_, uint256 adapterChainId_, address adapter_) external;
+    function setAdapter(uint256 nativeChainId_, uint256 chainId_, address adapter_) external;
 
     /**
      * @notice get adapter address by native chainId
@@ -59,7 +59,7 @@ interface IBridge {
      * @param token_ token address of collection
      * @param tokenId_ token id to transfer
      */
-    function transferToChain(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
+    function transferERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 
     /**
      * @notice receive NFT transfers
@@ -71,5 +71,5 @@ interface IBridge {
      * @notice receive message from adapter
      * @param payload_ data received from adapter
      */
-    function receiveFromChain(IBridge.MessageReceive memory payload_) external;
+    function commitOffRamp(IBridge.MessageReceive memory payload_) external;
 }

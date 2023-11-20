@@ -33,12 +33,10 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const adapterChainId = 80_001
+    const chainId = 80_001
 
     await expect(
-      bridge
-        .connect(unknown)
-        .setAdapter(nativeChainId, adapterChainId, adapterAddress)
+      bridge.connect(unknown).setAdapter(nativeChainId, chainId, adapterAddress)
     ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
   })
 
@@ -50,14 +48,14 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const adapterChainId = 80_001
+    const chainId = 80_001
 
-    await bridge.setAdapter(nativeChainId, adapterChainId, adapterAddress)
+    await bridge.setAdapter(nativeChainId, chainId, adapterAddress)
 
     const adapter = await bridge.adapters(nativeChainId)
 
-    expect([adapter.adapterChainId, adapter.adapter]).to.deep.equal([
-      adapterChainId,
+    expect([adapter.chainId, adapter.adapter]).to.deep.equal([
+      chainId,
       adapterAddress
     ])
   })
@@ -70,13 +68,11 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const adapterChainId = 80_001
+    const chainId = 80_001
 
-    await expect(
-      bridge.setAdapter(nativeChainId, adapterChainId, adapterAddress)
-    )
+    await expect(bridge.setAdapter(nativeChainId, chainId, adapterAddress))
       .to.emit(bridge, 'AdapterSet')
-      .withArgs(nativeChainId, adapterChainId, adapterAddress)
+      .withArgs(nativeChainId, chainId, adapterAddress)
   })
 
   it('should revert if chain does not have any adapter', async function () {
@@ -90,7 +86,7 @@ describe('Bridge', function () {
     const nativeChainId = 137
 
     await expect(
-      bridge.transferToChain(
+      bridge.transferERC721(
         nativeChainId,
         receiver.address,
         fakeNFTAddress,
@@ -100,32 +96,34 @@ describe('Bridge', function () {
   })
 
   it('should revert if the amount sent as fee token is insufficient', async function () {
-    const fakeNFTAddress = ethers.ZeroAddress
-    const fakeNFTTokenId = 0
+    const { mockNFTAddress, mockNFT } = await loadFixture(deployMockNFTFixture)
 
     const [receiver] = await getSigners()
 
-    const { bridge } = await loadFixture(
+    const { bridge, bridgeAddress } = await loadFixture(
       deployBridgeFixture.bind(this, accessManagementAddress)
     )
 
     const nativeChainId = 137
-    const adapterChainId = 12334124515
+    const chainId = 12334124515
 
     const { mockAdapterAddress, mockAdapter } = await loadFixture(
       deployMockAdapterFixture
     )
 
     await mockAdapter.setFee(200_000)
+    await bridge.setAdapter(nativeChainId, chainId, mockAdapterAddress)
 
-    await bridge.setAdapter(nativeChainId, adapterChainId, mockAdapterAddress)
+    const tokenId = 1
+    await mockNFT.mint(tokenId)
+    await mockNFT.approve(bridgeAddress, tokenId)
 
     await expect(
-      bridge.transferToChain(
+      bridge.transferERC721(
         nativeChainId,
         receiver.address,
-        fakeNFTAddress,
-        fakeNFTTokenId
+        mockNFTAddress,
+        tokenId
       )
     ).to.be.revertedWithCustomError(bridge, 'InsufficientFeeTokenAmount')
   })
@@ -140,17 +138,17 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const adapterChainId = 12334124515
+    const chainId = 12334124515
 
     const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
 
-    await bridge.setAdapter(nativeChainId, adapterChainId, mockAdapterAddress)
+    await bridge.setAdapter(nativeChainId, chainId, mockAdapterAddress)
 
     const tokenId = 1
     await mockNFT.mint(tokenId)
     await mockNFT.approve(bridgeAddress, tokenId)
 
-    await bridge.transferToChain(
+    await bridge.transferERC721(
       nativeChainId,
       receiver.address,
       mockNFTAddress,
@@ -171,23 +169,30 @@ describe('Bridge', function () {
     )
 
     const nativeChainId = 137
-    const adapterChainId = 12334124515
+    const chainId = 12334124515
 
     const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
 
-    await bridge.setAdapter(nativeChainId, adapterChainId, mockAdapterAddress)
+    await bridge.setAdapter(nativeChainId, chainId, mockAdapterAddress)
 
     const tokenId = 1
     await mockNFT.mint(tokenId)
     await mockNFT.approve(bridgeAddress, tokenId)
 
+    // , 'string', 'string', 'string'
     const encodedData = abiCoder.encode(
-      ['address', 'uint256'],
-      [mockNFTAddress, tokenId]
+      ['address', 'uint256', 'string', 'string', 'string'],
+      [
+        mockNFTAddress,
+        tokenId,
+        await mockNFT.name(),
+        await mockNFT.symbol(),
+        await mockNFT.tokenURI(tokenId)
+      ]
     )
 
     await expect(
-      bridge.transferToChain(
+      bridge.transferERC721(
         nativeChainId,
         receiver.address,
         mockNFTAddress,
@@ -195,7 +200,7 @@ describe('Bridge', function () {
       )
     )
       .to.emit(bridge, 'MessageSent')
-      .withArgs(adapterChainId, receiver.address, encodedData)
+      .withArgs(chainId, receiver.address, encodedData)
   })
 
   it('should revert if call safe transfer from another contract', async function () {
