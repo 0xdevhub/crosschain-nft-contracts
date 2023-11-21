@@ -7,8 +7,6 @@ import {IBridge} from "./interfaces/IBridge.sol";
 import {IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {WERC721} from "./wrapped/WERC721.sol";
 
-import "hardhat/console.sol";
-
 contract Bridge is IBridge, AccessManaged {
     uint256 private immutable s_chainId;
 
@@ -18,7 +16,7 @@ contract Bridge is IBridge, AccessManaged {
     /// @dev nonEvmChainId -> evmChainId
     mapping(uint256 => uint256) public s_nonEvmChains;
 
-    mapping(address => WrappedERC721) public s_wrappedTokens;
+    mapping(address => WrappedERC721) public s_wrappedERC721Tokens;
 
     constructor(address accessManagement_, uint256 chainId_) AccessManaged(accessManagement_) {
         s_chainId = chainId_;
@@ -171,21 +169,21 @@ contract Bridge is IBridge, AccessManaged {
         bytes memory bytecode = abi.encodePacked(type(WERC721).creationCode, constructorArgs);
         bytes32 salt = keccak256(abi.encodePacked(payload_.fromChain, messageData.token));
 
-        address wrappedToken;
+        address wrappedERC721Token;
 
         assembly {
-            wrappedToken := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
+            wrappedERC721Token := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
 
-            if iszero(extcodesize(wrappedToken)) {
+            if iszero(extcodesize(wrappedERC721Token)) {
                 revert(0, 0)
             }
         }
 
-        _setWrappedToken(wrappedToken, payload_.fromChain, messageData.token);
+        _setWrappedERC721Token(wrappedERC721Token, payload_.fromChain, messageData.token);
 
-        WERC721(wrappedToken).safeMint(payload_.sender, messageData.tokenId, messageData.tokenURI);
+        WERC721(wrappedERC721Token).safeMint(payload_.sender, messageData.tokenId, messageData.tokenURI);
 
-        emit IBridge.WrappedCreated(payload_.fromChain, messageData.token, wrappedToken);
+        emit IBridge.WrappedCreated(payload_.fromChain, messageData.token, wrappedERC721Token);
     }
 
     function _getDecodedPayloadData(bytes memory data_) internal pure returns (IBridge.MessageData memory) {
@@ -197,8 +195,8 @@ contract Bridge is IBridge, AccessManaged {
         return IBridge.MessageData({token: token, tokenId: tokenId, name: name, symbol: symbol, tokenURI: tokenURI});
     }
 
-    function _setWrappedToken(address token_, uint256 originChainId_, address originAddress_) private {
-        s_wrappedTokens[token_] = WrappedERC721({originChainId: originChainId_, originAddress: originAddress_});
+    function _setWrappedERC721Token(address token_, uint256 originChainId_, address originAddress_) private {
+        s_wrappedERC721Tokens[token_] = WrappedERC721({originChainId: originChainId_, originAddress: originAddress_});
     }
 
     /// @inheritdoc IBridge
