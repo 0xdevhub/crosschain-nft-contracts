@@ -435,6 +435,8 @@ describe('Bridge', function () {
       expect(wrappedTokenOwner).to.be.equal(expectedOwner.address)
     })
 
+    it('should emit event on receive Wrapped ERC721 from bridge contract', async function () {})
+
     describe('Checks', () => {
       it('should revert call commit offramp when unkown caller', async function () {
         const [, unknown] = await getSigners()

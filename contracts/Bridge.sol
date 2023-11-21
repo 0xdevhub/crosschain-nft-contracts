@@ -154,14 +154,17 @@ contract Bridge is IBridge, AccessManaged {
         checkEvmChainIdIsEnabled(s_nonEvmChains[payload_.fromChain])
         checkEvmChainIdByRampType(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp)
     {
+        emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
+
         /// todo: check if the incoming chain is same as the contract itself
         /// todo: check if chain id is same as the one in the payload then transfer to receiver, since it is locked here
         /// ELSE
         /// todo: check if theres one wrapped already created or create wrapped ERC721 token
-        /// todo: mint the token id to the receiver
 
-        emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
+        _createWrapped(payload_);
+    }
 
+    function _createWrapped(IBridge.MessageReceive memory payload_) private {
         IBridge.MessageData memory messageData = _getDecodedPayloadData(payload_.data);
 
         bytes memory constructorArgs = abi.encode(messageData.name, messageData.symbol);
