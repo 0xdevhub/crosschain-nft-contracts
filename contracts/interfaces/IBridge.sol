@@ -18,15 +18,10 @@ interface IBridge {
     }
 
     /// todo: define struct for messages to check lock/unlock burn/mint
-    // struct ERC721TokenData {
-    //     uint256 originChainId;
-    //     address originAddress;
-    //     address token;
-    //     uint256 tokenId;
-    //     string name;
-    //     string symbol;
-    //     string tokenURI;
-    // }
+    struct WrappedERC721 {
+        uint256 originChainId;
+        address originAddress;
+    }
 
     struct MessageReceive {
         uint256 fromChain;
@@ -40,33 +35,22 @@ interface IBridge {
         bytes data;
     }
 
-    /// @dev emitted when try to transfer to contract
     error TransferNotAllowed();
 
-    /// @dev emitted when not enough fee token amount
     error InsufficientFeeTokenAmount();
 
-    /// @dev emitted when adapter not found
     error AdapterNotFound(uint256 evmChainId_);
 
-    /// @dev emitted when adapter not enabled
     error AdapterNotEnabled(uint256 evmChainId_);
 
-    /// @dev emitted when adapter ramp type is not valid
     error RampTypeNotAllowed();
 
-    /// @dev Emitted when adapter is changed
     event ChainSettingsSet(uint256 indexed evmChainId_, uint256 indexed chainId_, address adapter_);
 
-    /// @dev Emitted when message is sent
     event MessageSent(uint256 toChain, address receiver, bytes data);
 
-    /// @dev Emitted when message is received
     event MessageReceived(uint256 fromChain, address sender, bytes data);
 
-    /**
-     * @notice get chain id of the contract
-     */
     function chainId() external view returns (uint256);
 
     function setChainSetting(
@@ -79,11 +63,9 @@ interface IBridge {
 
     function getChainSettings(uint256 evmChainId_) external view returns (IBridge.ChainSettings memory);
 
-    function bridgeERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
+    function sendERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 
-    /// todo: isAllowedAdapter
-    /// todo: isAllowedChain
-    function commitOffRamp(IBridge.MessageReceive memory payload_) external;
+    function receiveERC721(IBridge.MessageReceive memory payload_) external;
 }

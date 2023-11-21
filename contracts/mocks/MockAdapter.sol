@@ -19,6 +19,6 @@ contract MockAdapter {
     function sendMessage(IBridge.MessageSend memory payload_) external payable {}
 
     function receiveMessage(IBridge.MessageReceive memory payload_, address bridge_) external {
-        IBridge(bridge_).commitOffRamp(payload_);
+        IBridge(bridge_).receiveERC721(payload_);
     }
 }

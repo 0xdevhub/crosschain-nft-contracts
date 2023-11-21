@@ -80,7 +80,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function bridgeERC721(
+    function sendERC721(
         uint256 toChain_,
         address receiver_,
         address token_,
@@ -98,10 +98,7 @@ contract Bridge is IBridge, AccessManaged {
 
         IBaseAdapter adapter = IBaseAdapter(chainSettings.adapter);
 
-        uint256 quotedFees = adapter.getFee(payload);
-        if (quotedFees > msg.value) {
-            revert IBridge.InsufficientFeeTokenAmount();
-        }
+        if (adapter.getFee(payload) > msg.value) revert IBridge.InsufficientFeeTokenAmount();
 
         IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
         adapter.sendMessage(payload);
@@ -143,7 +140,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function commitOffRamp(
+    function receiveERC721(
         IBridge.MessageReceive memory payload_
     )
         external
