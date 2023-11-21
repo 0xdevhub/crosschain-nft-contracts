@@ -402,7 +402,7 @@ describe('Bridge', function () {
       it('should revert call commit offramp when unkown caller', async function () {
         const [, unknown] = await getSigners()
 
-        const { bridge } = await loadFixture(
+        const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
 
@@ -410,7 +410,7 @@ describe('Bridge', function () {
         const nonEvmChainId = 12334124515
         const isEnabled = true
 
-        const { mockAdapterAddress } = await loadFixture(
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
           deployMockAdapterFixture
         )
 
@@ -427,13 +427,14 @@ describe('Bridge', function () {
           sender: ethers.ZeroAddress,
           data: '0x'
         }
+
         await expect(
-          bridge.connect(unknown).commitOffRamp(payload)
+          mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
       })
 
       it('should revert if adapter ramp type is not valid', async function () {
-        const { bridge } = await loadFixture(
+        const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
 
@@ -441,7 +442,7 @@ describe('Bridge', function () {
         const nonEvmChainId = 12334124515
         const isEnabled = true
 
-        const { mockAdapterAddress } = await loadFixture(
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
           deployMockAdapterFixture
         )
 
@@ -459,12 +460,12 @@ describe('Bridge', function () {
           data: '0x'
         }
         await expect(
-          bridge.commitOffRamp(payload)
+          mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
       })
 
       it('should revert if adapter is not enabled', async function () {
-        const { bridge } = await loadFixture(
+        const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
 
@@ -472,7 +473,7 @@ describe('Bridge', function () {
         const nonEvmChainId = 12334124515
         const isEnabled = false
 
-        const { mockAdapterAddress } = await loadFixture(
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
           deployMockAdapterFixture
         )
 
@@ -490,7 +491,7 @@ describe('Bridge', function () {
           data: '0x'
         }
         await expect(
-          bridge.commitOffRamp(payload)
+          mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
       })
     })

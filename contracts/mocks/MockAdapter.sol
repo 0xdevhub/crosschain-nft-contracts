@@ -16,7 +16,9 @@ contract MockAdapter {
         return s_fee;
     }
 
-    function sendMessage(IBridge.MessageSend memory payload_) external payable {
-        emit MessageSent(payload_);
+    function sendMessage(IBridge.MessageSend memory payload_) external payable {}
+
+    function receiveMessage(IBridge.MessageReceive memory payload_, address bridge_) external {
+        IBridge(bridge_).commitOffRamp(payload_);
     }
 }
