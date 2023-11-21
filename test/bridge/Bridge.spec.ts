@@ -435,7 +435,66 @@ describe('Bridge', function () {
       expect(wrappedTokenOwner).to.be.equal(expectedOwner.address)
     })
 
-    it('should emit event on receive Wrapped ERC721 from bridge contract', async function () {})
+    it('should emit event on receive Wrapped ERC721 from bridge contract', async function () {
+      const [expectedOwner] = await getSigners()
+
+      const { mockNFT, mockNFTAddress } =
+        await loadFixture(deployMockNFTFixture)
+      const { bridge, bridgeAddress } = await loadFixture(
+        deployBridgeFixture.bind(this, accessManagementAddress)
+      )
+
+      const evmChainId = 1
+      const nonEvmChainId = 123456789
+      const isEnabled = true
+
+      const { mockAdapterAddress, mockAdapter } = await loadFixture(
+        deployMockAdapterFixture
+      )
+
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OffRamp,
+        isEnabled
+      )
+
+      const name = await mockNFT.name()
+      const symbol = await mockNFT.symbol()
+      const tokenId = 1
+
+      await mockNFT.mint(tokenId)
+
+      const tokenURI = await mockNFT.tokenURI(tokenId)
+
+      const encodedData = abiCoder.encode(
+        ['address', 'uint256', 'string', 'string', 'string'],
+        [mockNFTAddress, tokenId, name, symbol, tokenURI]
+      )
+
+      const payload = {
+        fromChain: nonEvmChainId,
+        sender: expectedOwner.address,
+        data: encodedData
+      }
+
+      const bridgeRole = 2n // its just mock, not real value
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(bridgeRole, mockAdapterAddress, 0)
+
+      /// grant function role  to bridge contract
+      await accessManagement.setTargetFunctionRole(
+        bridgeAddress,
+        [bridge.interface.getFunction('receiveERC721').selector],
+        bridgeRole
+      )
+
+      await expect(mockAdapter.receiveMessage(payload, bridgeAddress))
+        .to.emit(bridge, 'MessageReceived')
+        .withArgs(evmChainId, expectedOwner.address, encodedData)
+    })
 
     describe('Checks', () => {
       it('should revert call commit offramp when unkown caller', async function () {
@@ -579,7 +638,6 @@ describe('Bridge', function () {
           mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
       })
-      // expect(nftOwner).to.be.equal(expectedOwner.address)
     })
   })
 })

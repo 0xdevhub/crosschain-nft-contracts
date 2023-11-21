@@ -154,7 +154,7 @@ contract Bridge is IBridge, AccessManaged {
         checkEvmChainIdIsEnabled(s_nonEvmChains[payload_.fromChain])
         checkEvmChainIdByRampType(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp)
     {
-        emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
+        emit IBridge.MessageReceived(s_nonEvmChains[payload_.fromChain], payload_.sender, payload_.data);
 
         /// todo: check if the incoming chain is same as the contract itself
         /// todo: check if chain id is same as the one in the payload then transfer to receiver, since it is locked here
