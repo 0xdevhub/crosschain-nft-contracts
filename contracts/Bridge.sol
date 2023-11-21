@@ -5,10 +5,11 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IBridge} from "./interfaces/IBridge.sol";
 import {IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {WERC721} from "./wrapped/WERC721.sol";
+
+import "hardhat/console.sol";
 
 contract Bridge is IBridge, AccessManaged {
-    /// todo: set wrapped asset manually/auto
-
     uint256 private immutable s_chainId;
 
     /// @dev evmChainId -> settings
@@ -17,11 +18,13 @@ contract Bridge is IBridge, AccessManaged {
     /// @dev nonEvmChainId -> evmChainId
     mapping(uint256 => uint256) public s_nonEvmChains;
 
+    mapping(address => WrappedERC721) public s_wrappedTokens;
+
     constructor(address accessManagement_, uint256 chainId_) AccessManaged(accessManagement_) {
         s_chainId = chainId_;
     }
 
-    modifier checkEvmChainAdapterIsValid(uint256 evmChainId_) {
+    modifier checkEvmChainIdAdapterIsValid(uint256 evmChainId_) {
         IBridge.ChainSettings memory chainSettings = s_evmChainSettings[evmChainId_];
 
         if (chainSettings.adapter == address(0)) {
@@ -37,7 +40,7 @@ contract Bridge is IBridge, AccessManaged {
         _;
     }
 
-    modifier checkEvmChainByRampType(uint256 evmChainId_, IBridge.RampType rampType_) {
+    modifier checkEvmChainIdByRampType(uint256 evmChainId_, IBridge.RampType rampType_) {
         if (s_evmChainSettings[evmChainId_].rampType != rampType_) {
             revert IBridge.RampTypeNotAllowed();
         }
@@ -88,9 +91,9 @@ contract Bridge is IBridge, AccessManaged {
     )
         external
         payable
-        checkEvmChainAdapterIsValid(toChain_)
+        checkEvmChainIdAdapterIsValid(toChain_)
         checkEvmChainIdIsEnabled(toChain_)
-        checkEvmChainByRampType(toChain_, IBridge.RampType.OnRamp)
+        checkEvmChainIdByRampType(toChain_, IBridge.RampType.OnRamp)
     {
         ChainSettings memory chainSettings = getChainSettings(toChain_);
 
@@ -100,7 +103,9 @@ contract Bridge is IBridge, AccessManaged {
 
         if (adapter.getFee(payload) > msg.value) revert IBridge.InsufficientFeeTokenAmount();
 
+        /// @todo: check if its wrapped, then burn instead of transfer
         IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
+
         adapter.sendMessage(payload);
 
         emit IBridge.MessageSent(payload.toChain, payload.receiver, payload.data);
@@ -128,7 +133,6 @@ contract Bridge is IBridge, AccessManaged {
             });
     }
 
-    /// @dev encode token details to reuse it in the other chain
     function _getEncodedPayloadData(
         address token_,
         uint256 tokenId_,
@@ -146,9 +150,9 @@ contract Bridge is IBridge, AccessManaged {
         external
         override
         restricted
-        checkEvmChainAdapterIsValid(s_nonEvmChains[payload_.fromChain])
+        checkEvmChainIdAdapterIsValid(s_nonEvmChains[payload_.fromChain])
         checkEvmChainIdIsEnabled(s_nonEvmChains[payload_.fromChain])
-        checkEvmChainByRampType(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp)
+        checkEvmChainIdByRampType(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp)
     {
         /// todo: check if the incoming chain is same as the contract itself
         /// todo: check if chain id is same as the one in the payload then transfer to receiver, since it is locked here
@@ -157,6 +161,41 @@ contract Bridge is IBridge, AccessManaged {
         /// todo: mint the token id to the receiver
 
         emit IBridge.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
+
+        IBridge.MessageData memory messageData = _getDecodedPayloadData(payload_.data);
+
+        bytes memory constructorArgs = abi.encode(messageData.name, messageData.symbol);
+        bytes memory bytecode = abi.encodePacked(type(WERC721).creationCode, constructorArgs);
+        bytes32 salt = keccak256(abi.encodePacked(payload_.fromChain, messageData.token));
+
+        address wrappedToken;
+
+        assembly {
+            wrappedToken := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
+
+            if iszero(extcodesize(wrappedToken)) {
+                revert(0, 0)
+            }
+        }
+
+        _setWrappedToken(wrappedToken, payload_.fromChain, messageData.token);
+
+        WERC721(wrappedToken).safeMint(payload_.sender, messageData.tokenId, messageData.tokenURI);
+
+        emit IBridge.WrappedCreated(payload_.fromChain, messageData.token, wrappedToken);
+    }
+
+    function _getDecodedPayloadData(bytes memory data_) internal pure returns (IBridge.MessageData memory) {
+        (address token, uint256 tokenId, string memory name, string memory symbol, string memory tokenURI) = abi.decode(
+            data_,
+            (address, uint256, string, string, string)
+        );
+
+        return IBridge.MessageData({token: token, tokenId: tokenId, name: name, symbol: symbol, tokenURI: tokenURI});
+    }
+
+    function _setWrappedToken(address token_, uint256 originChainId_, address originAddress_) private {
+        s_wrappedTokens[token_] = WrappedERC721({originChainId: originChainId_, originAddress: originAddress_});
     }
 
     /// @inheritdoc IBridge

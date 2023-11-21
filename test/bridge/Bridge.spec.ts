@@ -404,7 +404,7 @@ describe('Bridge', function () {
 
       const payload = {
         fromChain: nonEvmChainId,
-        sender: ethers.ZeroAddress,
+        sender: expectedOwner.address,
         data: encodedData
       }
 
@@ -420,10 +420,19 @@ describe('Bridge', function () {
         bridgeRole
       )
 
-      await mockAdapter.receiveMessage(payload, bridgeAddress)
+      const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
+      const receipt = await tx.wait()
+      const filter = bridge.filters.WrappedCreated
+      const logs = await bridge.queryFilter(filter, receipt?.blockHash)
+      const [, , wrappedTokenAddres] = logs[0].args
 
-      /// get wrapped token using the original token address
-      /// check if wrapped token is owned by the expected owner
+      const wrappedToken = await ethers.getContractAt(
+        'ERC721',
+        wrappedTokenAddres
+      )
+      const wrappedTokenOwner = await wrappedToken.ownerOf(tokenId)
+
+      expect(wrappedTokenOwner).to.be.equal(expectedOwner.address)
     })
 
     describe('Checks', () => {

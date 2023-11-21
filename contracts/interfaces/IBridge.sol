@@ -8,16 +8,16 @@ interface IBridge {
     }
 
     struct ChainSettings {
-        /// todo: check if adapter requires transfer to the contract (e> not necessary now)
-        /// todo: fees to use the transfer service (e> could be another struct)
-        /// todo: adapter settings (eg: gas limit) (e> could be bytes)
+        /// @todo: check if adapter requires transfer to the contract (e> not necessary now)
+        /// @todo: fees to use the transfer service (e> could be another struct)
+        /// @todo: adapter settings (eg: gas limit) (e> could be bytes)
         uint256 nonEvmChainId;
         address adapter;
         RampType rampType;
         bool isEnabled;
     }
 
-    /// todo: define struct for messages to check lock/unlock burn/mint
+    /// @todo: define struct for messages to check lock/unlock burn/mint
     struct WrappedERC721 {
         uint256 originChainId;
         address originAddress;
@@ -35,6 +35,14 @@ interface IBridge {
         bytes data;
     }
 
+    struct MessageData {
+        address token;
+        uint256 tokenId;
+        string name;
+        string symbol;
+        string tokenURI;
+    }
+
     error TransferNotAllowed();
 
     error InsufficientFeeTokenAmount();
@@ -50,6 +58,8 @@ interface IBridge {
     event MessageSent(uint256 toChain, address receiver, bytes data);
 
     event MessageReceived(uint256 fromChain, address sender, bytes data);
+
+    event WrappedCreated(uint256 indexed originChainId_, address indexed originAddress_, address wrappedAddress_);
 
     function chainId() external view returns (uint256);
 
