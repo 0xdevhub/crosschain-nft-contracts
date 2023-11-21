@@ -380,25 +380,6 @@ describe('Bridge', function () {
 
   describe('Commit OffRamp', () => {
     describe('Checks', () => {
-      it('should revert if adapter is not valid', async function () {
-        const [receiver] = await getSigners()
-        const { bridge } = await loadFixture(
-          deployBridgeFixture.bind(this, accessManagementAddress)
-        )
-
-        const nonevmChainId = 137125125
-
-        const payload = {
-          fromChain: nonevmChainId,
-          sender: receiver.address,
-          data: '0x'
-        }
-
-        await expect(
-          bridge.commitOffRamp(payload)
-        ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
-      })
-
       it('should revert call commit offramp when unkown caller', async function () {
         const [, unknown] = await getSigners()
 
@@ -429,39 +410,28 @@ describe('Bridge', function () {
         }
 
         await expect(
-          mockAdapter.receiveMessage(payload, bridgeAddress)
+          mockAdapter.connect(unknown).receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
       })
 
-      it('should revert if adapter ramp type is not valid', async function () {
-        const { bridge, bridgeAddress } = await loadFixture(
+      it('should revert if adapter is not valid', async function () {
+        const [invalidSender] = await getSigners()
+
+        const { bridge } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
 
-        const evmChainId = 137
-        const nonEvmChainId = 12334124515
-        const isEnabled = true
-
-        const { mockAdapterAddress, mockAdapter } = await loadFixture(
-          deployMockAdapterFixture
-        )
-
-        await bridge.setChainSetting(
-          evmChainId,
-          nonEvmChainId,
-          mockAdapterAddress,
-          RampType.OnRamp,
-          isEnabled
-        )
+        const nonevmChainId = 137125125
 
         const payload = {
-          fromChain: nonEvmChainId,
-          sender: ethers.ZeroAddress,
+          fromChain: nonevmChainId,
+          sender: invalidSender.address,
           data: '0x'
         }
+
         await expect(
-          mockAdapter.receiveMessage(payload, bridgeAddress)
-        ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
+          bridge.commitOffRamp(payload)
+        ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
       })
 
       it('should revert if adapter is not enabled', async function () {
@@ -469,8 +439,8 @@ describe('Bridge', function () {
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
 
-        const evmChainId = 137
-        const nonEvmChainId = 12334124515
+        const evmChainId = 1
+        const nonEvmChainId = 123456789
         const isEnabled = false
 
         const { mockAdapterAddress, mockAdapter } = await loadFixture(
@@ -490,9 +460,66 @@ describe('Bridge', function () {
           sender: ethers.ZeroAddress,
           data: '0x'
         }
+
+        const bridgeRole = 2n
+
+        /// grant role to bridge contract to call commitOffRamp
+        await accessManagement.grantRole(bridgeRole, mockAdapterAddress, 0)
+
+        /// grant access to bridge contract to call commitOffRamp
+        await accessManagement.setTargetFunctionRole(
+          bridgeAddress,
+          [bridge.interface.getFunction('commitOffRamp').selector],
+          bridgeRole
+        )
+
         await expect(
           mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
+      })
+
+      it('should revert if adapter ramp type is not valid', async function () {
+        const { bridge, bridgeAddress } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress)
+        )
+
+        const evmChainId = 1
+        const nonEvmChainId = 123456789
+        const isEnabled = true
+
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
+          deployMockAdapterFixture
+        )
+
+        await bridge.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          mockAdapterAddress,
+          RampType.OnRamp,
+          isEnabled
+        )
+
+        const payload = {
+          fromChain: nonEvmChainId,
+          sender: ethers.ZeroAddress,
+          data: '0x'
+        }
+
+        const bridgeRole = 2n
+
+        /// grant role to bridge contract to call commitOffRamp
+        await accessManagement.grantRole(bridgeRole, mockAdapterAddress, 0)
+
+        /// grant access to bridge contract to call commitOffRamp
+        await accessManagement.setTargetFunctionRole(
+          bridgeAddress,
+          [bridge.interface.getFunction('commitOffRamp').selector],
+          bridgeRole
+        )
+
+        await expect(
+          mockAdapter.receiveMessage(payload, bridgeAddress)
+        ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
       })
     })
   })

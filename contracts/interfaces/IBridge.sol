@@ -69,14 +69,6 @@ interface IBridge {
      */
     function chainId() external view returns (uint256);
 
-    /// todo: set wrapped asset manually/auto
-
-    /**
-     * @notice set chain settings
-     * @param evmChainId_ native chain id to set
-     * @param adapterChainId_ adapter chain id to set
-     * @param adapter_ adapter address to set
-     */
     function setChainSetting(
         uint256 evmChainId_,
         uint256 adapterChainId_,
@@ -85,31 +77,12 @@ interface IBridge {
         bool isEnabled_
     ) external;
 
-    /**
-     * @notice get chain settings
-     * @param evmChainId_ native chain id to get settings
-     */
     function getChainSettings(uint256 evmChainId_) external view returns (IBridge.ChainSettings memory);
 
-    /**
-     * @notice transfer NFT sending crosschain message through adapter
-     * @param toChain_ native chainId target
-     * @param receiver_ receiver address
-     * @param token_ token address of collection
-     * @param tokenId_ token id to transfer
-     */
     function bridgeERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 
-    /**
-     * @notice receive NFT transfers only by contract itself
-     * @param operator address which called safeTransferFrom function
-     */
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 
-    /**
-     * @notice receive message from adapter
-     * @param payload_ data received from adapter
-     */
     /// todo: isAllowedAdapter
     /// todo: isAllowedChain
     function commitOffRamp(IBridge.MessageReceive memory payload_) external;
