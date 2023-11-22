@@ -2,15 +2,15 @@
 pragma solidity 0.8.21;
 
 contract MockBridge {
-    struct MessageReceive {
+    struct ERC721Receive {
         uint256 fromChain;
         address sender;
         bytes data;
     }
 
-    event MessageReceived(MessageReceive indexed message_);
+    event ERC721Received(ERC721Receive indexed message_);
 
-    function receiveERC721(MessageReceive memory calldata_) external {
-        emit MessageReceived(calldata_);
+    function receiveERC721(ERC721Receive memory calldata_) external {
+        emit ERC721Received(calldata_);
     }
 }

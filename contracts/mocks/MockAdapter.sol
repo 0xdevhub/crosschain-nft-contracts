@@ -6,19 +6,19 @@ import {IBridge} from "../interfaces/IBridge.sol";
 contract MockAdapter {
     uint256 private s_fee;
 
-    event MessageSent(IBridge.MessageSend data_);
+    event ERC721Sent(IBridge.ERC721Send data_);
 
     function setFee(uint256 fee_) external {
         s_fee = fee_;
     }
 
-    function getFee(IBridge.MessageSend memory /*payload*/) public view returns (uint256) {
+    function getFee(IBridge.ERC721Send memory /*payload*/) public view returns (uint256) {
         return s_fee;
     }
 
-    function sendMessage(IBridge.MessageSend memory payload_) external payable {}
+    function sendMessage(IBridge.ERC721Send memory payload_) external payable {}
 
-    function receiveMessage(IBridge.MessageReceive memory payload_, address bridge_) external {
+    function receiveMessage(IBridge.ERC721Receive memory payload_, address bridge_) external {
         IBridge(bridge_).receiveERC721(payload_);
     }
 }

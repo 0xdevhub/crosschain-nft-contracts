@@ -14,10 +14,10 @@ interface IBaseAdapter {
     error DepositNotAllowed();
 
     /// @dev emit when message sent
-    event MessageSent(uint256 toChain_, address receiver_, bytes data_);
+    event ERC721Sent(uint256 toChain_, address receiver_, bytes data_);
 
     /// @dev emit when message received
-    event MessageReceived(uint256 fromChain_, address sender_, bytes data_);
+    event ERC721Receive(uint256 fromChain_, address sender_, bytes data_);
 
     /**
      * @notice {override} to get router address
@@ -38,11 +38,11 @@ interface IBaseAdapter {
      * @notice {override} to return the required fee amount
      * @param payload_ data to send to router
      */
-    function getFee(IBridge.MessageSend memory payload_) external view returns (uint256);
+    function getFee(IBridge.ERC721Send memory payload_) external view returns (uint256);
 
     /**
      * @notice {override} to send crosschain message
      * @param payload_ data to send to router
      */
-    function sendMessage(IBridge.MessageSend memory payload_) external payable;
+    function sendMessage(IBridge.ERC721Send memory payload_) external payable;
 }

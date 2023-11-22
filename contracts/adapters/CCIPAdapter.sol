@@ -16,7 +16,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     ) BaseAdapter(bridge_, accessManagement_) CCIPReceiver(router_) {}
 
     /// @inheritdoc IBaseAdapter
-    function getFee(IBridge.MessageSend memory payload_) public view override returns (uint256) {
+    function getFee(IBridge.ERC721Send memory payload_) public view override returns (uint256) {
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(payload_.receiver, payload_.data);
 
         return _getFee(uint64(payload_.toChain), evm2AnyMessage);
@@ -59,7 +59,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     /// @inheritdoc CCIPReceiver
     /// @dev override ccip receive and implement _receiveMessage from BaseAdapter
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
-        IBridge.MessageReceive memory payload = IBridge.MessageReceive({
+        IBridge.ERC721Receive memory payload = IBridge.ERC721Receive({
             fromChain: any2EvmMessage.sourceChainSelector,
             sender: abi.decode(any2EvmMessage.sender, (address)),
             data: any2EvmMessage.data
@@ -69,10 +69,10 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     /// @inheritdoc BaseAdapter
-    function _sendMessage(IBridge.MessageSend memory payload, uint256 quotedFee_) internal override {
+    function _sendMessage(IBridge.ERC721Send memory payload, uint256 quotedFee_) internal override {
         _ccipSend(uint64(payload.toChain), payload.receiver, payload.data, quotedFee_);
 
-        emit IBaseAdapter.MessageSent(payload.toChain, payload.receiver, payload.data);
+        emit IBaseAdapter.ERC721Sent(payload.toChain, payload.receiver, payload.data);
     }
 
     /**

@@ -124,16 +124,15 @@ describe('Bridge', function () {
 
   describe('Commit OnRamp', () => {
     it('should transfer ERC721 to bridge contract', async function () {
-      const [receiver] = await getSigners()
+      const evmChainId = 137
 
       const { mockNFT, mockNFTAddress } =
         await loadFixture(deployMockNFTFixture)
 
       const { bridge, bridgeAddress } = await loadFixture(
-        deployBridgeFixture.bind(this, accessManagementAddress)
+        deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
       )
 
-      const evmChainId = 137
       const nonEvmChainId = 12334124515
       const isEnabled = true
 
@@ -151,20 +150,14 @@ describe('Bridge', function () {
       await mockNFT.mint(tokenId)
       await mockNFT.approve(bridgeAddress, tokenId)
 
-      await bridge.sendERC721(
-        evmChainId,
-        receiver.address,
-        mockNFTAddress,
-        tokenId
-      )
+      await bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
 
       const nftOwner = await mockNFT.ownerOf(tokenId)
       expect(nftOwner).to.be.equal(bridgeAddress)
     })
 
     it('should emit event on transfer ERC721 to bridge contract', async function () {
-      const [receiver] = await getSigners()
-
+      const [currentOwner] = await getSigners()
       const { mockNFT, mockNFTAddress } =
         await loadFixture(deployMockNFTFixture)
 
@@ -191,11 +184,13 @@ describe('Bridge', function () {
       await mockNFT.approve(bridgeAddress, tokenId)
 
       const encodedData = abiCoder.encode(
-        ['uint256', 'address', 'uint256', 'bytes'],
+        ['address', 'bytes', 'bytes'],
         [
-          evmChainId,
-          mockNFTAddress,
-          tokenId,
+          currentOwner.address,
+          abiCoder.encode(
+            ['uint256', 'address', 'uint256'],
+            [evmChainId, mockNFTAddress, tokenId]
+          ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
@@ -207,25 +202,22 @@ describe('Bridge', function () {
         ]
       )
 
-      await expect(
-        bridge.sendERC721(evmChainId, receiver.address, mockNFTAddress, tokenId)
-      )
-        .to.emit(bridge, 'MessageSent')
-        .withArgs(nonEvmChainId, receiver.address, encodedData)
+      await expect(bridge.sendERC721(evmChainId, mockNFTAddress, tokenId))
+        .to.emit(bridge, 'ERC721Sent')
+        .withArgs(evmChainId, mockAdapterAddress, encodedData)
     })
 
     describe('Checks', () => {
       it('should revert if the amount sent as fee token is insufficient', async function () {
+        const evmChainId = 137
+
         const { mockNFTAddress, mockNFT } =
           await loadFixture(deployMockNFTFixture)
 
-        const [receiver] = await getSigners()
-
         const { bridge, bridgeAddress } = await loadFixture(
-          deployBridgeFixture.bind(this, accessManagementAddress)
+          deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
         )
 
-        const evmChainId = 137
         const nonEvmChainId = 12334124515
         const isEnabled = true
 
@@ -247,12 +239,7 @@ describe('Bridge', function () {
         await mockNFT.approve(bridgeAddress, tokenId)
 
         await expect(
-          bridge.sendERC721(
-            evmChainId,
-            receiver.address,
-            mockNFTAddress,
-            tokenId
-          )
+          bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
         ).to.be.revertedWithCustomError(bridge, 'InsufficientFeeTokenAmount')
       })
 
@@ -292,12 +279,7 @@ describe('Bridge', function () {
         const evmChainId = 137
 
         await expect(
-          bridge.sendERC721(
-            evmChainId,
-            receiver.address,
-            fakeNFTAddress,
-            fakeNFTTokenId
-          )
+          bridge.sendERC721(evmChainId, fakeNFTAddress, fakeNFTTokenId)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
       })
 
@@ -330,7 +312,7 @@ describe('Bridge', function () {
         await mockNFT.approve(bridgeAddress, tokenId)
 
         await expect(
-          bridge.sendERC721(evmChainId, bridgeAddress, mockNFTAddress, tokenId)
+          bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
       })
 
@@ -363,15 +345,15 @@ describe('Bridge', function () {
         await mockNFT.approve(bridgeAddress, tokenId)
 
         await expect(
-          bridge.sendERC721(evmChainId, bridgeAddress, mockNFTAddress, tokenId)
+          bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
         ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
       })
     })
   })
 
   describe('Commit OffRamp', () => {
-    it('should transfer ERC721 to receiver', async function () {
-      const [expectedOwner] = await getSigners()
+    it('should create and transfer ERC721 wrapped to receiver', async function () {
+      const [currentOwner] = await getSigners()
 
       const { mockNFT, mockNFTAddress } =
         await loadFixture(deployMockNFTFixture)
@@ -399,11 +381,13 @@ describe('Bridge', function () {
       await mockNFT.mint(tokenId)
 
       const encodedData = abiCoder.encode(
-        ['uint256', 'address', 'uint256', 'bytes'],
+        ['address', 'bytes', 'bytes'],
         [
-          evmChainId,
-          mockNFTAddress,
-          tokenId,
+          currentOwner.address,
+          abiCoder.encode(
+            ['uint256', 'address', 'uint256'],
+            [evmChainId, mockNFTAddress, tokenId]
+          ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
@@ -417,7 +401,7 @@ describe('Bridge', function () {
 
       const payload = {
         fromChain: nonEvmChainId,
-        sender: expectedOwner.address,
+        sender: mockAdapterAddress,
         data: encodedData
       }
 
@@ -435,7 +419,7 @@ describe('Bridge', function () {
 
       const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
       const receipt = await tx.wait()
-      const filter = bridge.filters.WrappedCreated
+      const filter = bridge.filters.ERC721WrappedCreated
       const logs = await bridge.queryFilter(filter, receipt?.blockHash)
       const [, , wrappedTokenAddres] = logs[0].args
 
@@ -445,11 +429,13 @@ describe('Bridge', function () {
       )
       const wrappedTokenOwner = await wrappedToken.ownerOf(tokenId)
 
-      expect(wrappedTokenOwner).to.be.equal(expectedOwner.address)
+      expect(wrappedTokenOwner).to.be.equal(currentOwner.address)
     })
 
+    it('should transfer ERC721 to receiver without create erc721 wrapped when its origin chain', async function () {})
+
     it('should emit event on receive Wrapped ERC721 from bridge contract', async function () {
-      const [expectedOwner] = await getSigners()
+      const [currentOwner] = await getSigners()
 
       const { mockNFT, mockNFTAddress } =
         await loadFixture(deployMockNFTFixture)
@@ -474,15 +460,16 @@ describe('Bridge', function () {
       )
 
       const tokenId = 1
-
       await mockNFT.mint(tokenId)
 
       const encodedData = abiCoder.encode(
-        ['uint256', 'address', 'uint256', 'bytes'],
+        ['address', 'bytes', 'bytes'],
         [
-          evmChainId,
-          mockNFTAddress,
-          tokenId,
+          currentOwner.address,
+          abiCoder.encode(
+            ['uint256', 'address', 'uint256'],
+            [evmChainId, mockNFTAddress, tokenId]
+          ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
@@ -496,7 +483,7 @@ describe('Bridge', function () {
 
       const payload = {
         fromChain: nonEvmChainId,
-        sender: expectedOwner.address,
+        sender: mockAdapterAddress,
         data: encodedData
       }
 
@@ -513,8 +500,8 @@ describe('Bridge', function () {
       )
 
       await expect(mockAdapter.receiveMessage(payload, bridgeAddress))
-        .to.emit(bridge, 'MessageReceived')
-        .withArgs(evmChainId, expectedOwner.address, encodedData)
+        .to.emit(bridge, 'ERC721Received')
+        .withArgs(evmChainId, mockAdapterAddress, encodedData)
     })
 
     describe('Checks', () => {

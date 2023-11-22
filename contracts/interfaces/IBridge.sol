@@ -15,31 +15,36 @@ interface IBridge {
         bool isEnabled;
     }
 
-    struct WrappedERC721 {
+    struct ERC721Wrapped {
         uint256 originChainId;
         address originAddress;
     }
 
-    struct MessageReceive {
+    struct ERC721Receive {
         uint256 fromChain;
         address sender;
-        bytes data;
+        bytes data; // ERC721Data
     }
 
-    struct MessageSend {
+    struct ERC721Send {
         uint256 toChain;
         address receiver;
-        bytes data;
+        bytes data; // ERC721Data
     }
 
-    struct MessageData {
+    struct ERC721Data {
+        address receiver;
+        bytes token; // @dev ERC721Token
+        bytes metadata; // @dev ERC721Metadata
+    }
+
+    struct ERC721Token {
         uint256 evmChainId;
         address token;
         uint256 tokenId;
-        bytes metadata;
     }
 
-    struct Metadata {
+    struct ERC721Metadata {
         string name;
         string symbol;
         string tokenURI;
@@ -55,19 +60,19 @@ interface IBridge {
 
     error RampTypeNotAllowed();
 
-    event EvmChainSettingsSet(uint256 indexed evmChainId_, uint256 indexed chainId_, address adapter_);
+    event EvmChainSettingsSet(uint256 indexed evmChainId_, uint256 indexed nonEvmChainId_, address adapter_);
 
-    event MessageSent(uint256 toChain, address receiver, bytes data);
+    event ERC721Sent(uint256 evmChainId_, address receiver_, bytes data_);
 
-    event MessageReceived(uint256 fromChain, address sender, bytes data);
+    event ERC721Received(uint256 evmChainId_, address sender_, bytes data_);
 
-    event WrappedCreated(uint256 indexed originChainId_, address indexed originAddress_, address wrappedAddress_);
+    event ERC721WrappedCreated(uint256 indexed originChainId_, address indexed originAddress_, address wrappedAddress_);
 
     function chainId() external view returns (uint256);
 
     function setChainSetting(
         uint256 evmChainId_,
-        uint256 adapterChainId_,
+        uint256 nonEvmChainId_,
         address adapter_,
         IBridge.RampType rampType_,
         bool isEnabled_
@@ -75,9 +80,11 @@ interface IBridge {
 
     function getChainSettings(uint256 evmChainId_) external view returns (IBridge.EvmChainSettings memory);
 
-    function sendERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
+    function sendERC721(uint256 evmChainId_, address token_, uint256 tokenId_) external payable;
 
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 
-    function receiveERC721(IBridge.MessageReceive memory payload_) external;
+    function receiveERC721(IBridge.ERC721Receive memory payload_) external;
+
+    function setERC721WrappedToken(address token_, uint256 originChainId_, address originAddress_) external;
 }

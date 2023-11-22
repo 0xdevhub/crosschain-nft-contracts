@@ -1,4 +1,4 @@
-import { Client } from '@/typechain/@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver'
+import { Client } from '@/typechain/@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMERC721Receiver'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
@@ -147,7 +147,7 @@ describe('CCIPAdapter', function () {
       }
 
       await expect(ccipAdapter.ccipReceive(payload))
-        .to.emit(ccipAdapter, 'MessageReceived')
+        .to.emit(ccipAdapter, 'ERC721Receive')
         .withArgs(
           payload.sourceChainSelector,
           otherSideCaller.address,
@@ -229,7 +229,7 @@ describe('CCIPAdapter', function () {
           value: expectedAmount
         })
       )
-        .to.emit(ccipAdapter, 'MessageSent')
+        .to.emit(ccipAdapter, 'ERC721Sent')
         .withArgs(payload.toChain, payload.receiver, payload.data)
     })
 

@@ -7,7 +7,7 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 contract MockCCIPRouter is IRouterClient {
     uint256 public s_fee;
 
-    event MessageReceived(uint64 indexed destinationChainSelector, Client.EVM2AnyMessage indexed evm2AnyMessage);
+    event ERC721Receive(uint64 indexed destinationChainSelector, Client.EVM2AnyMessage indexed evm2AnyMessage);
 
     /// @dev only for test purpose
     function setFee(uint256 fee_) external {

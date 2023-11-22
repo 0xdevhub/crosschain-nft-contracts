@@ -22,7 +22,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     function router() public view virtual returns (address);
 
     /// @inheritdoc IBaseAdapter
-    function getFee(IBridge.MessageSend memory payload_) public view virtual override returns (uint256);
+    function getFee(IBridge.ERC721Send memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
     /// @dev todo: erc20 support
@@ -31,7 +31,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function sendMessage(IBridge.MessageSend memory payload_) external payable override restricted {
+    function sendMessage(IBridge.ERC721Send memory payload_) external payable override restricted {
         uint256 quotedFee = getFee(payload_);
 
         if (msg.value < quotedFee) {
@@ -39,22 +39,22 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
         }
 
         _sendMessage(payload_, quotedFee);
-        emit IBaseAdapter.MessageSent(payload_.toChain, payload_.receiver, payload_.data);
+        emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
     /**
      * @notice {override} to send crosschain message
      * @param payload_ data to send to router
      */
-    function _sendMessage(IBridge.MessageSend memory payload_, uint256 quotedFee_) internal virtual;
+    function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal virtual;
 
     /**
      * @notice {override} to receive crosschain message
      * @param payload_ data to send to bridge
      */
-    function _receiveMessage(IBridge.MessageReceive memory payload_) internal virtual {
+    function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual {
         IBridge(s_bridge).receiveERC721(payload_);
-        emit IBaseAdapter.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
+        emit IBaseAdapter.ERC721Receive(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     /// @dev prevent to receive native token
