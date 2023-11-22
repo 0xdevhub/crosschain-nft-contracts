@@ -7,7 +7,7 @@ interface IBridge {
         OffRamp
     }
 
-    struct ChainSettings {
+    struct EvmChainSettings {
         /// @todo: adapter settings (eg: gas limit) (e> could be bytes)
         uint256 nonEvmChainId;
         address adapter;
@@ -55,7 +55,7 @@ interface IBridge {
 
     error RampTypeNotAllowed();
 
-    event ChainSettingsSet(uint256 indexed evmChainId_, uint256 indexed chainId_, address adapter_);
+    event EvmChainSettingsSet(uint256 indexed evmChainId_, uint256 indexed chainId_, address adapter_);
 
     event MessageSent(uint256 toChain, address receiver, bytes data);
 
@@ -73,7 +73,7 @@ interface IBridge {
         bool isEnabled_
     ) external;
 
-    function getChainSettings(uint256 evmChainId_) external view returns (IBridge.ChainSettings memory);
+    function getChainSettings(uint256 evmChainId_) external view returns (IBridge.EvmChainSettings memory);
 
     function sendERC721(uint256 toChain_, address receiver_, address token_, uint256 tokenId_) external payable;
 

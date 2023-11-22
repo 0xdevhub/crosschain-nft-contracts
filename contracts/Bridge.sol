@@ -11,7 +11,7 @@ contract Bridge is IBridge, AccessManaged {
     uint256 private immutable s_chainId;
 
     /// @dev evmChainId -> settings
-    mapping(uint256 => IBridge.ChainSettings) public s_evmChainSettings;
+    mapping(uint256 => IBridge.EvmChainSettings) public s_evmChainSettings;
 
     /// @dev nonEvmChainId -> evmChainId
     mapping(uint256 => uint256) public s_nonEvmChains;
@@ -23,7 +23,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     modifier checkEvmChainIdAdapterIsValid(uint256 evmChainId_) {
-        IBridge.ChainSettings memory chainSettings = s_evmChainSettings[evmChainId_];
+        IBridge.EvmChainSettings memory chainSettings = s_evmChainSettings[evmChainId_];
 
         if (chainSettings.adapter == address(0)) {
             revert IBridge.AdapterNotFound(evmChainId_);
@@ -58,17 +58,16 @@ contract Bridge is IBridge, AccessManaged {
         IBridge.RampType rampType_,
         bool isEnabled_
     ) external restricted {
-        s_evmChainSettings[evmChainId_] = IBridge.ChainSettings({
+        s_evmChainSettings[evmChainId_] = IBridge.EvmChainSettings({
             nonEvmChainId: nonEvmChainId_,
             adapter: adapter_,
             rampType: rampType_,
             isEnabled: isEnabled_
         });
 
-        /// @dev keep track of nonEvm to Evm chain
         _setNonEvmChainIdByEvmChainId(nonEvmChainId_, evmChainId_);
 
-        emit IBridge.ChainSettingsSet(evmChainId_, nonEvmChainId_, adapter_);
+        emit IBridge.EvmChainSettingsSet(evmChainId_, nonEvmChainId_, adapter_);
     }
 
     function _setNonEvmChainIdByEvmChainId(uint256 nonEvmChainId_, uint256 evmChainId_) private {
@@ -76,7 +75,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function getChainSettings(uint256 evmChainId_) public view returns (IBridge.ChainSettings memory) {
+    function getChainSettings(uint256 evmChainId_) public view returns (IBridge.EvmChainSettings memory) {
         return s_evmChainSettings[evmChainId_];
     }
 
@@ -93,7 +92,7 @@ contract Bridge is IBridge, AccessManaged {
         checkEvmChainIdIsEnabled(toChain_)
         checkEvmChainIdByRampType(toChain_, IBridge.RampType.OnRamp)
     {
-        ChainSettings memory chainSettings = getChainSettings(toChain_);
+        EvmChainSettings memory chainSettings = getChainSettings(toChain_);
 
         IBridge.MessageSend memory payload = _getPayload(chainSettings.nonEvmChainId, token_, tokenId_, receiver_);
 
@@ -154,11 +153,17 @@ contract Bridge is IBridge, AccessManaged {
 
         IBridge.MessageData memory data = _getDecodedPayloadData(payload_.data);
 
-        IBridge.Metadata memory metadata = _getDecodedMetadata(data.metadata);
+        address wrappedERC721Token;
 
-        address wrappedERC721Token = _createWrapped(payload_, data.token, metadata.name, metadata.symbol);
-
-        WERC721(wrappedERC721Token).safeMint(payload_.sender, data.tokenId, metadata.tokenURI);
+        if (data.evmChainId == s_chainId) {
+            wrappedERC721Token = data.token;
+            IERC721(data.token).safeTransferFrom(address(this), payload_.sender, data.tokenId);
+        } else {
+            /// @todo: check if wrapped token exists, if not create it
+            IBridge.Metadata memory metadata = _getDecodedMetadata(data.metadata);
+            wrappedERC721Token = _createWrapped(payload_, data.token, metadata.name, metadata.symbol);
+            WERC721(wrappedERC721Token).safeMint(payload_.sender, data.tokenId, metadata.tokenURI);
+        }
 
         emit IBridge.WrappedCreated(s_nonEvmChains[payload_.fromChain], data.token, wrappedERC721Token);
     }

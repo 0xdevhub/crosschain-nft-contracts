@@ -90,7 +90,7 @@ describe('Bridge', function () {
           isEnabled
         )
       )
-        .to.emit(bridge, 'ChainSettingsSet')
+        .to.emit(bridge, 'EvmChainSettingsSet')
         .withArgs(evmChainId, chainId, adapterAddress)
     })
 
