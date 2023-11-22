@@ -18,6 +18,7 @@ interface IBridge {
     struct ERC721Wrapped {
         uint256 originEvmChainId;
         address originAddress;
+        address wrappedAddress;
     }
 
     struct ERC721Receive {
@@ -40,7 +41,7 @@ interface IBridge {
 
     struct ERC721Token {
         uint256 evmChainId;
-        address token;
+        address tokenAddress;
         uint256 tokenId;
     }
 
@@ -66,7 +67,11 @@ interface IBridge {
 
     event ERC721Received(uint256 evmChainId_, address sender_, bytes data_);
 
-    event ERC721WrappedCreated(uint256 indexed originChainId_, address indexed originAddress_, address wrappedAddress_);
+    event ERC721WrappedCreated(
+        uint256 indexed originChainId_,
+        address indexed originalAddress_,
+        address indexed wrappedAddress_
+    );
 
     function chainId() external view returns (uint256);
 
@@ -85,6 +90,4 @@ interface IBridge {
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 
     function receiveERC721(ERC721Receive memory payload_) external;
-
-    // function setERC721WrappedToken(address token_, uint256 originChainId_, address originAddress_) external;
 }

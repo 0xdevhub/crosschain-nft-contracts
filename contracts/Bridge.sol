@@ -140,7 +140,6 @@ contract Bridge is IBridge, AccessManaged {
         checkEvmChainIdIsEnabled(s_evmChainSettings[s_nonEvmChains[payload_.fromChain]][IBridge.RampType.OffRamp])
     {
         uint256 evmChainId = s_nonEvmChains[payload_.fromChain];
-
         IBridge.ERC721Data memory data = _getDecodedERC721Data(payload_.data);
 
         emit IBridge.ERC721Received(evmChainId, payload_.sender, payload_.data);
@@ -150,16 +149,24 @@ contract Bridge is IBridge, AccessManaged {
         address wrappedERC721Token;
 
         if (token.evmChainId == s_chainId) {
-            wrappedERC721Token = token.token;
-            IERC721(token.token).safeTransferFrom(address(this), payload_.sender, token.tokenId);
+            /// @dev unlock and transfer to receiver
+            wrappedERC721Token = token.tokenAddress;
+            IERC721(wrappedERC721Token).safeTransferFrom(address(this), data.receiver, token.tokenId);
         } else {
-            /// @todo: check if wrapped token exists, if not create it
             IBridge.ERC721Metadata memory metadata = _getDecodedERC721Metadata(data.metadata);
-            wrappedERC721Token = _createWrapped(payload_, token.token, metadata.name, metadata.symbol);
+
+            if (s_wrappedERC721Tokens[token.tokenAddress].wrappedAddress == address(0)) {
+                /// @dev create and mint to receiver
+                wrappedERC721Token = _createWrapped(payload_, token.tokenAddress, metadata.name, metadata.symbol);
+            } else {
+                /// @dev reuse wrapped token and mint to receiver
+                wrappedERC721Token = s_wrappedERC721Tokens[token.tokenAddress].wrappedAddress;
+            }
+
             WERC721(wrappedERC721Token).safeMint(data.receiver, token.tokenId, metadata.tokenURI);
         }
 
-        emit IBridge.ERC721WrappedCreated(evmChainId, token.token, wrappedERC721Token);
+        emit IBridge.ERC721WrappedCreated(evmChainId, wrappedERC721Token, token.tokenAddress);
     }
 
     function _getDecodedERC721Data(bytes memory data_) internal pure returns (IBridge.ERC721Data memory) {
@@ -169,9 +176,9 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     function _getDecodedERC721Token(bytes memory token_) internal pure returns (ERC721Token memory) {
-        (uint256 evmChainId, address token, uint256 tokenId) = abi.decode(token_, (uint256, address, uint256));
+        (uint256 evmChainId, address tokenAddress, uint256 tokenId) = abi.decode(token_, (uint256, address, uint256));
 
-        return ERC721Token({evmChainId: evmChainId, token: token, tokenId: tokenId});
+        return ERC721Token({evmChainId: evmChainId, tokenAddress: tokenAddress, tokenId: tokenId});
     }
 
     function _getDecodedERC721Metadata(bytes memory metadata_) internal pure returns (IBridge.ERC721Metadata memory) {
@@ -204,14 +211,15 @@ contract Bridge is IBridge, AccessManaged {
         _setERC721WrappedToken(wrappedERC721Token, s_nonEvmChains[payload_.fromChain], token);
     }
 
-    // function setERC721WrappedToken(address token_, uint256 originEvmChainId, address originAddress_) external restricted {
-    //     _setERC721WrappedToken(token_, originEvmChainId, originAddress_);
-    // }
-
-    function _setERC721WrappedToken(address token_, uint256 originEvmChainId, address originAddress_) private {
-        s_wrappedERC721Tokens[token_] = ERC721Wrapped({
+    function _setERC721WrappedToken(
+        address wrappedAddress_,
+        uint256 originEvmChainId,
+        address originalAddress_
+    ) private {
+        s_wrappedERC721Tokens[originalAddress_] = ERC721Wrapped({
             originEvmChainId: originEvmChainId,
-            originAddress: originAddress_
+            originAddress: originalAddress_,
+            wrappedAddress: wrappedAddress_
         });
     }
 
