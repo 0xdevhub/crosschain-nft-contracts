@@ -191,13 +191,19 @@ describe('Bridge', function () {
       await mockNFT.approve(bridgeAddress, tokenId)
 
       const encodedData = abiCoder.encode(
-        ['address', 'uint256', 'string', 'string', 'string'],
+        ['uint256', 'address', 'uint256', 'bytes'],
         [
+          evmChainId,
           mockNFTAddress,
           tokenId,
-          await mockNFT.name(),
-          await mockNFT.symbol(),
-          await mockNFT.tokenURI(tokenId)
+          abiCoder.encode(
+            ['string', 'string', 'string'],
+            [
+              await mockNFT.name(),
+              await mockNFT.symbol(),
+              await mockNFT.tokenURI(tokenId)
+            ]
+          )
         ]
       )
 
@@ -389,17 +395,24 @@ describe('Bridge', function () {
         isEnabled
       )
 
-      const name = await mockNFT.name()
-      const symbol = await mockNFT.symbol()
       const tokenId = 1
-
       await mockNFT.mint(tokenId)
 
-      const tokenURI = await mockNFT.tokenURI(tokenId)
-
       const encodedData = abiCoder.encode(
-        ['address', 'uint256', 'string', 'string', 'string'],
-        [mockNFTAddress, tokenId, name, symbol, tokenURI]
+        ['uint256', 'address', 'uint256', 'bytes'],
+        [
+          evmChainId,
+          mockNFTAddress,
+          tokenId,
+          abiCoder.encode(
+            ['string', 'string', 'string'],
+            [
+              await mockNFT.name(),
+              await mockNFT.symbol(),
+              await mockNFT.tokenURI(tokenId)
+            ]
+          )
+        ]
       )
 
       const payload = {
@@ -460,17 +473,25 @@ describe('Bridge', function () {
         isEnabled
       )
 
-      const name = await mockNFT.name()
-      const symbol = await mockNFT.symbol()
       const tokenId = 1
 
       await mockNFT.mint(tokenId)
 
-      const tokenURI = await mockNFT.tokenURI(tokenId)
-
       const encodedData = abiCoder.encode(
-        ['address', 'uint256', 'string', 'string', 'string'],
-        [mockNFTAddress, tokenId, name, symbol, tokenURI]
+        ['uint256', 'address', 'uint256', 'bytes'],
+        [
+          evmChainId,
+          mockNFTAddress,
+          tokenId,
+          abiCoder.encode(
+            ['string', 'string', 'string'],
+            [
+              await mockNFT.name(),
+              await mockNFT.symbol(),
+              await mockNFT.tokenURI(tokenId)
+            ]
+          )
+        ]
       )
 
       const payload = {

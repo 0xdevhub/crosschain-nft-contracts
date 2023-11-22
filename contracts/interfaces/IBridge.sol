@@ -8,8 +8,6 @@ interface IBridge {
     }
 
     struct ChainSettings {
-        /// @todo: check if adapter requires transfer to the contract (e> not necessary now)
-        /// @todo: fees to use the transfer service (e> could be another struct)
         /// @todo: adapter settings (eg: gas limit) (e> could be bytes)
         uint256 nonEvmChainId;
         address adapter;
@@ -17,7 +15,6 @@ interface IBridge {
         bool isEnabled;
     }
 
-    /// @todo: define struct for messages to check lock/unlock burn/mint
     struct WrappedERC721 {
         uint256 originChainId;
         address originAddress;
@@ -36,8 +33,13 @@ interface IBridge {
     }
 
     struct MessageData {
+        uint256 evmChainId;
         address token;
         uint256 tokenId;
+        bytes metadata;
+    }
+
+    struct Metadata {
         string name;
         string symbol;
         string tokenURI;
