@@ -22,11 +22,6 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
         return _getFee(uint64(payload_.toChain), evm2AnyMessage);
     }
 
-    /**
-     * @notice build CCIP message
-     * @param receiver_ address of receiver
-     * @param data_ encoded message data
-     */
     function _buildCCIPMessage(
         address receiver_,
         bytes memory data_
@@ -51,13 +46,11 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     /// @inheritdoc CCIPReceiver
-    /// @dev only ccip router can call
     function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
         _ccipReceive(any2EvmMessage);
     }
 
     /// @inheritdoc CCIPReceiver
-    /// @dev override ccip receive and implement _receiveMessage from BaseAdapter
     function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
         IBridge.ERC721Receive memory payload = IBridge.ERC721Receive({
             fromChain: any2EvmMessage.sourceChainSelector,
@@ -75,12 +68,6 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
         emit IBaseAdapter.ERC721Sent(payload.toChain, payload.receiver, payload.data);
     }
 
-    /**
-     * @notice send message to other chain via CCIP
-     * @param toChain target chain id
-     * @param receiver_ receiver address
-     * @param data_ encoded message data
-     */
     function _ccipSend(uint64 toChain, address receiver_, bytes memory data_, uint256 quotedFee_) private {
         IRouterClient(router()).ccipSend{value: quotedFee_}(toChain, _buildCCIPMessage(receiver_, data_));
     }

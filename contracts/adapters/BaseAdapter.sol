@@ -25,7 +25,6 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     function getFee(IBridge.ERC721Send memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
-    /// @dev todo: erc20 support
     function feeToken() public pure override returns (address) {
         return address(0);
     }
@@ -42,16 +41,8 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
         emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
-    /**
-     * @notice {override} to send crosschain message
-     * @param payload_ data to send to router
-     */
     function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal virtual;
 
-    /**
-     * @notice {override} to receive crosschain message
-     * @param payload_ data to send to bridge
-     */
     function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual {
         IBridge(s_bridge).receiveERC721(payload_);
         emit IBaseAdapter.ERC721Receive(payload_.fromChain, payload_.sender, payload_.data);
