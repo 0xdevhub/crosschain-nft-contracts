@@ -10,13 +10,6 @@ import {WERC721} from "./wrapped/WERC721.sol";
 contract Bridge is IBridge, AccessManaged {
     uint256 private immutable s_chainId;
 
-    /// @dev evmChainId -> settings
-    // mapping(uint256 => IBridge.EvmChainSettings) private s_evmChainSettings;
-    /// @dev rampType -> nonEvemChainId -> evmChainSettings
-    // mapping(IBridge.RampType => mapping(uint256 => EvmChainSettings)) private s_nonEvmChainsSettings;
-    /// @dev rampType -> evmChainId -> evmChainSettings
-    // mapping(IBridge.RampType => mapping(uint256 => EvmChainSettings)) private s_evmChainsSettings;
-
     /// @dev evmChainId => rampType => evmChainSettings
     mapping(uint256 => mapping(IBridge.RampType => IBridge.EvmChainSettings)) private s_evmChainSettings;
 
@@ -93,8 +86,13 @@ contract Bridge is IBridge, AccessManaged {
         IBaseAdapter adapter = IBaseAdapter(payload.receiver);
         if (adapter.getFee(payload) > msg.value) revert IBridge.InsufficientFeeTokenAmount();
 
-        /// @todo: check if its wrapped, then burn instead of transfer
-        IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
+        /// @dev check if its wrapped, then burn instead of transfer
+        if (s_wrappedERC721Tokens[token_].wrappedAddress != address(0)) {
+            WERC721(token_).burn(tokenId_);
+        } else {
+            /// @dev transfer to bridge contract to lock
+            IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
+        }
 
         adapter.sendMessage(payload);
 

@@ -162,6 +162,98 @@ describe('Bridge', function () {
       expect(nftOwner).to.be.equal(bridgeAddress)
     })
 
+    it.only('should burn ERC721 when transfer to bridge contract if its origin chain', async function () {
+      const [currentOwner] = await getSigners()
+
+      const { mockNFT, mockNFTAddress } =
+        await loadFixture(deployMockNFTFixture)
+
+      const { bridge, bridgeAddress } = await loadFixture(
+        deployBridgeFixture.bind(this, accessManagementAddress)
+      )
+
+      const evmChainId = 1
+      const nonEvmChainId = 123456789
+      const isEnabled = true
+
+      const { mockAdapterAddress, mockAdapter } = await loadFixture(
+        deployMockAdapterFixture
+      )
+
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OnRamp,
+        isEnabled
+      )
+
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OffRamp,
+        isEnabled
+      )
+
+      const tokenId = 1
+      await mockNFT.mint(tokenId)
+
+      const encodedData = abiCoder.encode(
+        ['address', 'bytes', 'bytes'],
+        [
+          currentOwner.address,
+          abiCoder.encode(
+            ['uint256', 'address', 'uint256'],
+            [evmChainId, mockNFTAddress, tokenId]
+          ),
+          abiCoder.encode(
+            ['string', 'string', 'string'],
+            [
+              await mockNFT.name(),
+              await mockNFT.symbol(),
+              await mockNFT.tokenURI(tokenId)
+            ]
+          )
+        ]
+      )
+
+      const payload = {
+        fromChain: nonEvmChainId,
+        sender: mockAdapterAddress,
+        data: encodedData
+      }
+
+      const bridgeRole = 2n // its just mock, not real value
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(bridgeRole, mockAdapterAddress, 0)
+
+      /// grant function role  to bridge contract
+      await accessManagement.setTargetFunctionRole(
+        bridgeAddress,
+        [bridge.interface.getFunction('receiveERC721').selector],
+        bridgeRole
+      )
+
+      const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
+      const receipt = await tx.wait()
+      const filter = bridge.filters.ERC721WrappedCreated
+      const logs = await bridge.queryFilter(filter, receipt?.blockHash)
+      const [, , wrappedTokenAddress] = logs[0].args
+
+      const wrappedToken = await ethers.getContractAt(
+        'ERC721',
+        wrappedTokenAddress
+      )
+
+      await wrappedToken.approve(bridgeAddress, tokenId)
+      await bridge.sendERC721(evmChainId, wrappedTokenAddress, tokenId)
+
+      const balanceOfNFT = await mockNFT.balanceOf(currentOwner.address)
+      expect(balanceOfNFT).to.be.equal(0)
+    })
+
     it('should emit event on transfer ERC721 to bridge contract', async function () {
       const [currentOwner] = await getSigners()
       const { mockNFT, mockNFTAddress } =
@@ -394,11 +486,11 @@ describe('Bridge', function () {
       const receipt = await tx.wait()
       const filter = bridge.filters.ERC721WrappedCreated
       const logs = await bridge.queryFilter(filter, receipt?.blockHash)
-      const [, , wrappedTokenAddres] = logs[0].args
+      const [, , wrappedTokenAddress] = logs[0].args
 
       const wrappedToken = await ethers.getContractAt(
         'ERC721',
-        wrappedTokenAddres
+        wrappedTokenAddress
       )
       const wrappedTokenOwner = await wrappedToken.ownerOf(tokenId)
 
@@ -501,17 +593,17 @@ describe('Bridge', function () {
       const receipt = await tx.wait()
       const filter = bridge.filters.ERC721WrappedCreated
       const logs = await bridge.queryFilter(filter, receipt?.blockHash)
-      const [, , wrappedTokenAddres] = logs[0].args
+      const [, , wrappedTokenAddress] = logs[0].args
 
       const wrappedToken = await ethers.getContractAt(
         'ERC721',
-        wrappedTokenAddres
+        wrappedTokenAddress
       )
 
       await mockAdapter.receiveMessage(payload2, bridgeAddress)
 
-      // const wrappedTokenOwner = await wrappedToken.ownerOf(tokenId2)
-      // expect(wrappedTokenOwner).to.be.equal(currentOwner.address)
+      const wrappedTokenOwner = await wrappedToken.ownerOf(tokenId2)
+      expect(wrappedTokenOwner).to.be.equal(currentOwner.address)
     })
 
     it('should transfer ERC721 to receiver without create erc721 wrapped when its origin chain', async function () {
