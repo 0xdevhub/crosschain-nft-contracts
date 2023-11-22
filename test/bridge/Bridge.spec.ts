@@ -12,8 +12,14 @@ import {
   deployMockContractGeneralFixture,
   deployMockNFTFixture
 } from './fixture'
-import { abiCoder, getSigners } from '@/scripts/utils'
+import {
+  abiCoder,
+  getContractAddress,
+  getContractFactory,
+  getSigners
+} from '@/scripts/utils'
 import { ethers } from 'hardhat'
+import { MockAdapter__factory } from '@/typechain'
 
 describe('Bridge', function () {
   let accessManagement: AccessManagement
@@ -57,16 +63,16 @@ describe('Bridge', function () {
         isEnabled
       )
 
-      const adapter = await bridge.getChainSettings(evmChainId)
+      const adapter = await bridge.getChainSettings(evmChainId, RampType.OnRamp)
 
       expect({
         adapter: adapterAddress,
         nonEvmChainId: chainId,
-        rampType: RampType.OnRamp
+        isEnabled
       }).to.deep.equal({
         adapter: adapter.adapter,
         nonEvmChainId: adapter.nonEvmChainId,
-        rampType: adapter.rampType
+        isEnabled: adapter.isEnabled
       })
     })
 
@@ -91,7 +97,7 @@ describe('Bridge', function () {
         )
       )
         .to.emit(bridge, 'EvmChainSettingsSet')
-        .withArgs(evmChainId, chainId, adapterAddress)
+        .withArgs(evmChainId, RampType.OnRamp)
     })
 
     describe('Checks', () => {
@@ -315,39 +321,6 @@ describe('Bridge', function () {
           bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
       })
-
-      it('should revert if adapter ramp type is not valid', async function () {
-        const { mockNFT, mockNFTAddress } =
-          await loadFixture(deployMockNFTFixture)
-
-        const { bridge, bridgeAddress } = await loadFixture(
-          deployBridgeFixture.bind(this, accessManagementAddress)
-        )
-
-        const evmChainId = 137
-        const nonEvmChainId = 12334124515
-        const isEnabled = true
-
-        const { mockAdapterAddress } = await loadFixture(
-          deployMockAdapterFixture
-        )
-
-        await bridge.setChainSetting(
-          evmChainId,
-          nonEvmChainId,
-          mockAdapterAddress,
-          RampType.OffRamp,
-          isEnabled
-        )
-
-        const tokenId = 1
-        await mockNFT.mint(tokenId)
-        await mockNFT.approve(bridgeAddress, tokenId)
-
-        await expect(
-          bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
-        ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
-      })
     })
   })
 
@@ -432,9 +405,83 @@ describe('Bridge', function () {
       expect(wrappedTokenOwner).to.be.equal(currentOwner.address)
     })
 
-    it('should transfer ERC721 to receiver without create erc721 wrapped when its origin chain', async function () {})
+    it.skip('should transfer ERC721 to receiver without create erc721 wrapped when its origin chain', async function () {
+      // const [currentOwner] = await getSigners()
+      // const evmChainId = 1
+      // const nonEvmChainId = 123456789
+      // const nonEvmChainIdAnotherChain = 123456788
+      // const isEnabled = true
+      // const { mockNFT, mockNFTAddress } =
+      //   await loadFixture(deployMockNFTFixture)
+      // const { bridge, bridgeAddress } = await loadFixture(
+      //   deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
+      // )
+      // const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
+      // const MockAdapter =
+      //   await getContractFactory<MockAdapter__factory>('MockAdapter')
+      // const mockAdapterAnotherChain = await MockAdapter.deploy()
+      // const mockAdapterAddressAnotherChain = await getContractAddress(
+      //   mockAdapterAnotherChain
+      // )
+      // await bridge.setChainSetting(
+      //   evmChainId,
+      //   nonEvmChainId,
+      //   mockAdapterAddress,
+      //   RampType.OnRamp,
+      //   isEnabled
+      // )
+      // await bridge.setChainSetting(
+      //   evmChainId,
+      //   nonEvmChainIdAnotherChain,
+      //   mockAdapterAddressAnotherChain,
+      //   RampType.OffRamp,
+      //   isEnabled
+      // )
+      // const tokenId = 1
+      // await mockNFT.mint(tokenId)
+      // await mockNFT.approve(bridgeAddress, tokenId)
+      // const encodedData = abiCoder.encode(
+      //   ['address', 'bytes', 'bytes'],
+      //   [
+      //     currentOwner.address,
+      //     abiCoder.encode(
+      //       ['uint256', 'address', 'uint256'],
+      //       [evmChainId, mockNFTAddress, tokenId]
+      //     ),
+      //     abiCoder.encode(
+      //       ['string', 'string', 'string'],
+      //       [
+      //         await mockNFT.name(),
+      //         await mockNFT.symbol(),
+      //         await mockNFT.tokenURI(tokenId)
+      //       ]
+      //     )
+      //   ]
+      // )
+      // const payload = {
+      //   fromChain: nonEvmChainId,
+      //   sender: mockAdapterAddressAnotherChain,
+      //   data: encodedData
+      // }
+      // const bridgeRole = 2n // its just mock, not real value
+      // /// grant role to bridge contract
+      // await accessManagement.grantRole(bridgeRole, mockAdapterAddress, 0)
+      // await accessManagement.grantRole(
+      //   bridgeRole,
+      //   mockAdapterAddressAnotherChain,
+      //   0
+      // )
+      // /// grant function role  to bridge contract
+      // await accessManagement.setTargetFunctionRole(
+      //   bridgeAddress,
+      //   [bridge.interface.getFunction('receiveERC721').selector],
+      //   bridgeRole
+      // )
+      // await bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
+      // await mockAdapterAnotherChain.receiveMessage(payload, bridgeAddress)
+    })
 
-    it('should emit event on receive Wrapped ERC721 from bridge contract', async function () {
+    it('should emit event on receive ERC721 token from bridge contract', async function () {
       const [currentOwner] = await getSigners()
 
       const { mockNFT, mockNFTAddress } =
@@ -535,7 +582,7 @@ describe('Bridge', function () {
         }
 
         await expect(
-          mockAdapter.connect(unknown).receiveMessage(payload, bridgeAddress)
+          mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
       })
 
@@ -601,50 +648,6 @@ describe('Bridge', function () {
         await expect(
           mockAdapter.receiveMessage(payload, bridgeAddress)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
-      })
-
-      it('should revert if adapter ramp type is not valid', async function () {
-        const { bridge, bridgeAddress } = await loadFixture(
-          deployBridgeFixture.bind(this, accessManagementAddress)
-        )
-
-        const evmChainId = 1
-        const nonEvmChainId = 123456789
-        const isEnabled = true
-
-        const { mockAdapterAddress, mockAdapter } = await loadFixture(
-          deployMockAdapterFixture
-        )
-
-        await bridge.setChainSetting(
-          evmChainId,
-          nonEvmChainId,
-          mockAdapterAddress,
-          RampType.OnRamp,
-          isEnabled
-        )
-
-        const payload = {
-          fromChain: nonEvmChainId,
-          sender: ethers.ZeroAddress,
-          data: '0x'
-        }
-
-        const bridgeRole = 2n
-
-        /// grant role to bridge contract to call receiveERC721
-        await accessManagement.grantRole(bridgeRole, mockAdapterAddress, 0)
-
-        /// grant access to bridge contract to call receiveERC721
-        await accessManagement.setTargetFunctionRole(
-          bridgeAddress,
-          [bridge.interface.getFunction('receiveERC721').selector],
-          bridgeRole
-        )
-
-        await expect(
-          mockAdapter.receiveMessage(payload, bridgeAddress)
-        ).to.be.revertedWithCustomError(bridge, 'RampTypeNotAllowed')
       })
     })
   })
