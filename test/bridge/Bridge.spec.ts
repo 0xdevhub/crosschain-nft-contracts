@@ -162,7 +162,7 @@ describe('Bridge', function () {
       expect(nftOwner).to.be.equal(bridgeAddress)
     })
 
-    it.only('should burn ERC721 when transfer to bridge contract if its origin chain', async function () {
+    it('should burn ERC721 when transfer to bridge contract if its origin chain', async function () {
       const [currentOwner] = await getSigners()
 
       const { mockNFT, mockNFTAddress } =
