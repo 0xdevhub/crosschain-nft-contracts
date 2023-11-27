@@ -12,20 +12,6 @@
 - Avalanche Fuji: (soon)
 - Arbitrum Rinkeby: (soon)
 
-#### Deploying contracts
-
-not available
-
-#### Verifing contracts
-
-```shell
-pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
-```
-
-#### Setting chain config
-
-ToDo
-
 ## Getting Started
 
 ```shell
@@ -48,3 +34,17 @@ pnpm test
 pnpm test:watch
 pnpm test:coverage
 ```
+
+### Deploying contracts
+
+ToDo
+
+### Verifing contracts
+
+```shell
+pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
+```
+
+### Setting chain config
+
+ToDo
