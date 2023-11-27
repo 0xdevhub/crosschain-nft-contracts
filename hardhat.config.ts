@@ -11,6 +11,7 @@ import './tasks'
 import { allowedChainsConfig } from '@/config/config'
 import { reduce } from 'lodash'
 import { Chain } from './config/types'
+import { NetworksUserConfig } from 'hardhat/types'
 
 const config: HardhatUserConfig = {
   networks:
@@ -26,12 +27,7 @@ const config: HardhatUserConfig = {
             return acc
           },
 
-          {} as {
-            [key: number]: {
-              url: string
-              accounts: string[]
-            }
-          }
+          {} as NetworksUserConfig
         )
       : {
           localhost: {
@@ -56,7 +52,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY!,
       avalancheFujiTestnet: process.env.AVALANCHE_FUJI_API_KEY!,
-      optimismGoerliTestnet: process.env.OPTIMISM_GOERLI_API_KEY!
+      optimisticGoerli: process.env.OPTIMISM_GOERLI_API_KEY!
     }
   }
 }

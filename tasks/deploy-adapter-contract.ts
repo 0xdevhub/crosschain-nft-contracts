@@ -42,8 +42,7 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
 
       const ccipAdapterAddress = await ccipAdapter.getAddress()
 
-      console.log(`✅ CCIPAdapter deployed: ${ccipAdapterAddress}`)
-
       spinner.stop()
+      console.log(`✅ CCIPAdapter deployed: ${ccipAdapterAddress}`)
     }
   )

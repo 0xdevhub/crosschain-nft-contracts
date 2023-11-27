@@ -68,7 +68,7 @@ export const optimismGoerli: Chain = {
       blockCreated: 49461
     },
     accessManagement: {
-      address: '0x1987F5A465c27dD03d25a029d66a3eD800228EC9',
+      address: '0x0077124A6913476D37405E46fb41F1AA7ce255D7',
       blockCreated: 0
     }
   },
