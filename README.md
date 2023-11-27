@@ -12,12 +12,12 @@
 #### Bridge Contract
 
 - Avalanche Fuji: 0xFA42AbaECF4CA09097099aEa70210DA7f11e579d
-- Optimism Goerli
+- Optimism Goerli: 0xC782c716DeC6A50685A909491b259084C01B2d61
 
 #### CCIPAdapter
 
 - Avalanche Fuji: 0xF922E2032774cCA4b627fB797fB3E4907Ef35b08
-- Optimism Goerli:
+- Optimism Goerli: 0xFA42AbaECF4CA09097099aEa70210DA7f11e579d
 
 ##### CCIPAdapterRouter
 
