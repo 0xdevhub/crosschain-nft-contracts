@@ -34,3 +34,43 @@ export const avalancheFuji: Chain = {
   },
   testnet: true
 }
+
+export const optimismGoerli: Chain = {
+  id: 420,
+  name: 'Optimism Goerli',
+  network: 'optimism-goerli',
+  nativeCurrency: { name: 'Goerli Ether', symbol: 'ETH', decimals: 18 },
+  accounts: evmAccounts,
+  rpcUrls: {
+    protocol: {
+      http: [process.env.PUBLIC_NETWORK_420_HTTP_RPC!]
+    },
+    default: {
+      http: ['https://goerli.optimism.io']
+    },
+    public: {
+      http: ['https://goerli.optimism.io']
+    }
+  },
+  blockExplorers: {
+    etherscan: {
+      name: 'Etherscan',
+      url: 'https://goerli-optimism.etherscan.io'
+    },
+    default: {
+      name: 'Etherscan',
+      url: 'https://goerli-optimism.etherscan.io'
+    }
+  },
+  contracts: {
+    multicall3: {
+      address: '0xca11bde05977b3631167028862be2a173976ca11',
+      blockCreated: 49461
+    },
+    accessManagement: {
+      address: '0x1987F5A465c27dD03d25a029d66a3eD800228EC9',
+      blockCreated: 0
+    }
+  },
+  testnet: true
+}

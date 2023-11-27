@@ -5,12 +5,24 @@
 ## Networks
 
 - Avalanche Fuji (43113)
-- Arbitrum Rinkeby (soon)
+- Optimism Goerli (84531)
 
 ## Contracts
 
-- Avalanche Fuji: (soon)
-- Arbitrum Rinkeby: (soon)
+#### Bridge Contract
+
+- Avalanche Fuji: 0xFA42AbaECF4CA09097099aEa70210DA7f11e579d
+- Optimism Goerli
+
+#### CCIPAdapter
+
+- Avalanche Fuji: 0xF922E2032774cCA4b627fB797fB3E4907Ef35b08
+- Optimism Goerli:
+
+##### CCIPAdapterRouter
+
+- Avalanche Fuji: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
+- Optimism Goerli 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
 
 ## Getting Started
 

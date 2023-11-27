@@ -24,8 +24,7 @@ task('deploy-bridge-contract', 'Deploy bridge contract').setAction(
 
     const bridgeContractAddress = await bridgeContract.getAddress()
 
-    console.log(`✅ Bridge deployed: ${bridgeContractAddress}`)
-
     spinner.stop()
+    console.log(`✅ Bridge deployed: ${bridgeContractAddress}`)
   }
 )
