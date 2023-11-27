@@ -26,6 +26,10 @@ export const avalancheFuji: Chain = {
     multicall3: {
       address: '0xca11bde05977b3631167028862be2a173976ca11',
       blockCreated: 7096959
+    },
+    accessManagement: {
+      address: '0x6815547453B8731A39eB420C11E45D6c685a677C',
+      blockCreated: 0
     }
   },
   testnet: true

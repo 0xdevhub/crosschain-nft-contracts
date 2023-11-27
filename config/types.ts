@@ -4,22 +4,6 @@ export interface NativeCurrency {
   symbol: string
 }
 
-export interface RpcUrls {
-  http: string[]
-}
-
-export interface BlockExplorer {
-  name: string
-  url: string
-}
-
-export interface Contracts {
-  multicall3: {
-    address: string
-    blockCreated: number
-  }
-}
-
 export interface Chain {
   id: number
   name: string
@@ -27,14 +11,21 @@ export interface Chain {
   accounts: string[]
   nativeCurrency: NativeCurrency
   rpcUrls: {
-    [key: string]: RpcUrls
-    default: RpcUrls
-    public: RpcUrls
+    [key: string]: {
+      http: string[]
+    }
   }
   blockExplorers: {
-    etherscan: BlockExplorer
-    default: BlockExplorer
+    [key: string]: {
+      name: string
+      url: string
+    }
   }
-  contracts: Contracts
+  contracts: {
+    [key: string]: {
+      address: string
+      blockCreated: number
+    }
+  }
   testnet: boolean
 }
