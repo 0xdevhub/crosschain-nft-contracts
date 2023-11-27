@@ -9,7 +9,7 @@ export async function getSigners() {
   return await ethers.getSigners()
 }
 
-export async function deployContract(name: string, ...args: unknown[]) {
+export async function deployContract<T>(name: string, ...args: T[]) {
   const Contract = await ethers.getContractFactory(name)
   const contract = await Contract.deploy(...args)
   await contract.waitForDeployment()

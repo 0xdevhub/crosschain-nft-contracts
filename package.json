@@ -10,8 +10,7 @@
   },
   "scripts": {
     "node": "NODE_ENV=development hardhat node",
-    "deploy:localhost": "NODE_ENV=development hardhat run --network localhost scripts/deploy.ts",
-    "deploy:mumbai": "hardhat run --network mumbai scripts/deploy.ts",
+    "verify": "hardhat verify",
     "compile": "hardhat compile",
     "test": "NODE_ENV=development hardhat test",
     "typechain": "hardhat typechain",
@@ -23,7 +22,7 @@
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "@nomicfoundation/hardhat-verify": "^1.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.1.1",
     "@nomiclabs/hardhat-solhint": "^3.0.1",
     "@typechain/ethers-v6": "^0.4.3",
     "@typechain/hardhat": "^8.0.3",
@@ -43,11 +42,14 @@
     "ts-node": ">=8.0.0",
     "tsconfig-paths": "^4.2.0",
     "typechain": "^8.3.2",
-    "typescript": ">=4.5.0"
+    "typescript": ">=4.5.0",
+    "@types/lodash": "^4.14.202",
+    "dotenv": "^16.3.1"
   },
   "dependencies": {
     "@chainlink/contracts-ccip": "^0.7.6",
     "@openzeppelin/contracts": "^5.0.0",
-    "dotenv": "^16.3.1"
+    "cli-spinners": "^2.9.2",
+    "lodash": "^4.17.21"
   }
 }

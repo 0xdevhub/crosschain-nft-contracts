@@ -11,9 +11,18 @@ dependencies:
   '@openzeppelin/contracts':
     specifier: ^5.0.0
     version: 5.0.0
+  '@types/lodash':
+    specifier: ^4.14.202
+    version: 4.14.202
+  cli-spinners:
+    specifier: ^2.9.2
+    version: 2.9.2
   dotenv:
     specifier: ^16.3.1
     version: 16.3.1
+  lodash:
+    specifier: ^4.17.21
+    version: 4.17.21
 
 devDependencies:
   '@nomicfoundation/hardhat-chai-matchers':
@@ -29,7 +38,7 @@ devDependencies:
     specifier: ^3.0.0
     version: 3.0.0(@nomicfoundation/hardhat-chai-matchers@2.0.2)(@nomicfoundation/hardhat-ethers@3.0.4)(@nomicfoundation/hardhat-network-helpers@1.0.9)(@nomicfoundation/hardhat-verify@1.1.1)(@typechain/ethers-v6@0.4.3)(@typechain/hardhat@8.0.3)(@types/chai@4.3.9)(@types/mocha@10.0.3)(@types/node@20.8.9)(chai@4.3.10)(ethers@6.8.0)(hardhat-gas-reporter@1.0.9)(hardhat@2.18.3)(solidity-coverage@0.8.5)(ts-node@10.9.1)(typechain@8.3.2)(typescript@5.2.2)
   '@nomicfoundation/hardhat-verify':
-    specifier: ^1.0.0
+    specifier: ^1.1.1
     version: 1.1.1(hardhat@2.18.3)
   '@nomiclabs/hardhat-solhint':
     specifier: ^3.0.1
@@ -1226,6 +1235,10 @@ packages:
     resolution: {integrity: sha512-V46MYLFp08Wf2mmaBhvgjStM3tPa+2GAdy/iqoX+noX1//zje2x4XmrIU0cAwyClATsTmahbtoQ2EwP7I5WSiA==}
     dev: true
 
+  /@types/lodash@4.14.202:
+    resolution: {integrity: sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ==}
+    dev: false
+
   /@types/lru-cache@5.1.1:
     resolution: {integrity: sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==}
     dev: true
@@ -1794,6 +1807,11 @@ packages:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
     engines: {node: '>=6'}
     dev: true
+
+  /cli-spinners@2.9.2:
+    resolution: {integrity: sha512-ywqV+5MmyL4E7ybXgKys4DugZbX0FC6LnwrhjuykIjnK9k8OQacQ7axGKnjDXWNhns0xot3bZI5h55H8yo9cJg==}
+    engines: {node: '>=6'}
+    dev: false
 
   /cli-table3@0.5.1:
     resolution: {integrity: sha512-7Qg2Jrep1S/+Q3EceiZtQcDPWxhAvBw+ERf1162v4sikJrvojMHFqXt8QIVha8UlH9rgU0BeWPytZ9/TzYqlUw==}
@@ -3209,7 +3227,6 @@ packages:
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: true
 
   /log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
