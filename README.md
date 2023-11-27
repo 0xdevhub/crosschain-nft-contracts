@@ -22,7 +22,7 @@ not available
 pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
 ```
 
-#### Adding new adapter
+#### Setting chain config
 
 ToDo
 
@@ -32,8 +32,6 @@ ToDo
 pnpm compile
 pnpm typechain
 pnpm node
-pnpm deploy:localhost
-pnpm deploy:mumbai
 ```
 
 ## Available scrips by `dlx hardhat`
