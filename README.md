@@ -9,20 +9,17 @@
 
 ## Contracts
 
-#### Bridge Contract
+#### Avalanche Fuji (43113)
 
-- Avalanche Fuji: 0xF793d3D4372935C236422DFA9cd958ec14C80F55 (❌ pending)
-- Optimism Goerli: 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 (✅ verified)
+- Bridge Contract: 0xF793d3D4372935C236422DFA9cd958ec14C80F55 (❌ pending)
+- CCIPAdapter: 0x99d73bDEB878197F3BeA347E86fD69541BeB14E4 (❌ pending)
+- CCIPAdapterRouter: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
 
-#### CCIPAdapter
+#### Optimism Goerli (420)
 
-- Avalanche Fuji: 0x99d73bDEB878197F3BeA347E86fD69541BeB14E4 (❌ pending)
-- Optimism Goerli: 0xfCc1fd12f71a23782Eef2AbbbCaC50c121c9b4Df (✅ verified)
-
-##### CCIPAdapterRouter
-
-- Avalanche Fuji: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
-- Optimism Goerli 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
+- Bridge Contract: 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 (✅ verified)
+- CCIPAdapter: 0xfCc1fd12f71a23782Eef2AbbbCaC50c121c9b4Df (✅ verified)
+- CCIPAdapterRouter: 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
 
 ## Getting Started
 
@@ -49,7 +46,11 @@ pnpm test:coverage
 
 ### Deploying contracts
 
-ToDo
+```shell
+pnpm hardhat deploy-bridge-contract --network 43113
+
+pnpm hardhat deploy-adapter-contract --network 420 --adapter "CCIPAdapter" --bridge-address 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 --router-address 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
+```
 
 ### Verifing contracts
 
@@ -57,6 +58,4 @@ ToDo
 pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
 ```
 
-### Setting chain config
-
-ToDo
+Please, read [extra guides here](guides-examples.md).
