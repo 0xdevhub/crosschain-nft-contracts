@@ -1,4 +1,3 @@
-import { Client } from '@/typechain/@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMERC721Receiver'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
@@ -13,6 +12,8 @@ import {
 
 import { abiCoder, getSigners } from '@/scripts/utils'
 import { AccessManagement } from '@/typechain/contracts/AccessManagement'
+import { Client } from '@/typechain/@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver'
+import { BRIDGE_ROLE, ROUTER_ROLE } from '@/scripts/constants'
 
 describe('CCIPAdapter', function () {
   let accessManagement: AccessManagement
@@ -115,7 +116,7 @@ describe('CCIPAdapter', function () {
 
   describe('Receive message', () => {
     it('should receive message from router', async function () {
-      const [, otherSideCaller] = await getSigners()
+      const [fakeRouterCaller, otherSideCaller] = await getSigners()
 
       const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
@@ -132,10 +133,12 @@ describe('CCIPAdapter', function () {
         )
       )
 
+      /// grant role to bridge contract
+      await accessManagement.grantRole(ROUTER_ROLE, fakeRouterCaller.address, 0)
       await accessManagement.setTargetFunctionRole(
         ccipAdapterAddress,
         [ccipAdapter.interface.getFunction('ccipReceive').selector],
-        0n // admin role
+        ROUTER_ROLE
       )
 
       const payload: Client.Any2EVMMessageStruct = {
@@ -194,6 +197,7 @@ describe('CCIPAdapter', function () {
 
   describe('Send message', () => {
     it('should send message to router', async function () {
+      const [fakeBridgeCaller] = await getSigners()
       const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
       const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
@@ -209,10 +213,12 @@ describe('CCIPAdapter', function () {
         )
       )
 
+      await accessManagement.grantRole(BRIDGE_ROLE, fakeBridgeCaller.address, 0)
+
       await accessManagement.setTargetFunctionRole(
         ccipAdapterAddress,
         [ccipAdapter.interface.getFunction('sendMessage').selector],
-        0n // admin role
+        BRIDGE_ROLE
       )
 
       const expectedAmount = 200_000
@@ -267,6 +273,8 @@ describe('CCIPAdapter', function () {
       })
 
       it('should revert if send message to router without fee amount', async function () {
+        const [fakeBridgeCaller] = await getSigners()
+
         const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
         const { mockCCIPRouterAddress, mockCCIPRouter } = await loadFixture(
@@ -282,10 +290,16 @@ describe('CCIPAdapter', function () {
           )
         )
 
+        await accessManagement.grantRole(
+          BRIDGE_ROLE,
+          fakeBridgeCaller.address,
+          0
+        )
+
         await accessManagement.setTargetFunctionRole(
           ccipAdapterAddress,
           [ccipAdapter.interface.getFunction('sendMessage').selector],
-          0n // admin role
+          BRIDGE_ROLE
         )
 
         const expectedAmount = 200_000

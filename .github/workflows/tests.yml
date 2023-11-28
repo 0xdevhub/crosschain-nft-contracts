@@ -24,11 +24,5 @@ jobs:
       - name: Install project dependencies
         run: pnpm install
 
-      - name: Output vars
-        run: |
-          echo "ACCOUNTS_PRIVATE_KEY_1: ${{vars.ACCOUNTS_PRIVATE_KEY_1}}"
-          echo "ACCOUNTS_PRIVATE_KEY_2: ${{vars.ACCOUNTS_PRIVATE_KEY_2}}"
-          echo "MUMBAI_API_KEY: ${{vars.MUMBAI_API_KEY}}"
-
       - name: Run Tests
         run: pnpm test
