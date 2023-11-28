@@ -13,8 +13,8 @@ Please, read [extra guides here](guides-examples.md).
 
 #### Avalanche Fuji (43113)
 
-- Bridge Contract: 0xF793d3D4372935C236422DFA9cd958ec14C80F55 (❌ pending)
-- CCIPAdapter: 0x99d73bDEB878197F3BeA347E86fD69541BeB14E4 (❌ pending)
+- Bridge Contract: 0xF793d3D4372935C236422DFA9cd958ec14C80F55 (✅ verified)
+- CCIPAdapter: 0x99d73bDEB878197F3BeA347E86fD69541BeB14E4 (✅ verified)
 - CCIPAdapterRouter: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
 
 #### Optimism Goerli (420)
