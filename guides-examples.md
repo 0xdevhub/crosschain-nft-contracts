@@ -72,7 +72,7 @@ pnpm hardhat set-function-role --network 420 --access-management-address 0xd9b59
 pnpm hardhat set-function-role --network 420 --access-management-address 0xd9b59f89A8FEF69d2Dbc028C9f00087432589F72 --target-address 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 --role 2 --bytes4-selector 0x31b85566
 ```
 
-### grant function role (send message)
+#### grant function role (send message)
 
 ```shell
 pnpm hardhat set-function-role --network 420 --access-management-address 0xd9b59f89A8FEF69d2Dbc028C9f00087432589F72 --target-address 0xfCc1fd12f71a23782Eef2AbbbCaC50c121c9b4Df --role 1 --bytes4-selector 0xa1d3f732
