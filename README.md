@@ -5,19 +5,19 @@
 ## Networks
 
 - Avalanche Fuji (43113)
-- Optimism Goerli (84531)
+- Optimism Goerli (420)
 
 ## Contracts
 
 #### Bridge Contract
 
-- Avalanche Fuji: 0xFA42AbaECF4CA09097099aEa70210DA7f11e579d
-- Optimism Goerli: 0xC782c716DeC6A50685A909491b259084C01B2d61
+- Avalanche Fuji: (❌ pending)
+- Optimism Goerli: 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 (❌ pending)
 
 #### CCIPAdapter
 
-- Avalanche Fuji: 0xF922E2032774cCA4b627fB797fB3E4907Ef35b08
-- Optimism Goerli: 0xFA42AbaECF4CA09097099aEa70210DA7f11e579d
+- Avalanche Fuji: (❌ pending)
+- Optimism Goerli: 0xF793d3D4372935C236422DFA9cd958ec14C80F55 (❌ pending)
 
 ##### CCIPAdapterRouter
 

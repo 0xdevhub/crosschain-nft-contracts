@@ -22,7 +22,7 @@ const config: HardhatUserConfig = {
             acc[chain.id] = {
               url: chain.rpcUrls.default.http[0],
               accounts: chain.accounts,
-              gasPrice: 25000000000
+              gasPrice: chain.gasPrice ?? 210000
             }
 
             return acc

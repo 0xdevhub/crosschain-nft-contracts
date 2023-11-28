@@ -19,8 +19,8 @@ export const avalancheFuji: Chain = {
     public: { http: ['https://api.avax-test.network/ext/bc/C/rpc'] }
   },
   blockExplorers: {
-    etherscan: { name: 'SnowTrace', url: 'https://testnet.snowtrace.io' },
-    default: { name: 'SnowTrace', url: 'https://testnet.snowtrace.io' }
+    etherscan: { name: 'SnowTrace', url: 'https://testnet.snowtrace.dev' },
+    default: { name: 'SnowTrace', url: 'https://testnet.snowtrace.dev' }
   },
   contracts: {
     multicall3: {
@@ -28,11 +28,12 @@ export const avalancheFuji: Chain = {
       blockCreated: 7096959
     },
     accessManagement: {
-      address: '0x6815547453B8731A39eB420C11E45D6c685a677C',
+      address: '0x091BEbE42637D6c283f88ceF478Cab8581293f73',
       blockCreated: 0
     }
   },
-  testnet: true
+  testnet: true,
+  gasPrice: 25000000000
 }
 
 export const optimismGoerli: Chain = {
@@ -68,9 +69,10 @@ export const optimismGoerli: Chain = {
       blockCreated: 49461
     },
     accessManagement: {
-      address: '0x0077124A6913476D37405E46fb41F1AA7ce255D7',
+      address: '0xd9b59f89A8FEF69d2Dbc028C9f00087432589F72',
       blockCreated: 0
     }
   },
-  testnet: true
+  testnet: true,
+  gasPrice: 210000
 }
