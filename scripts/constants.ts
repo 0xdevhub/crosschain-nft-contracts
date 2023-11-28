@@ -12,6 +12,6 @@ export const ROUTER_ROLE = 3n
 export const ROUTER_ROLE_DELAY = 0n
 
 /**
- * bridge 1 -> adapter 2 -> router 3
- * router 3 -> adapter 2 -> bridge 1 (420 ok)
+ * send: bridge 1 -> adapter 2 -> router 3
+ * receive: router 3 -> adapter 2 -> bridge 1
  */

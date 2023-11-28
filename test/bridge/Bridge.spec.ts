@@ -13,7 +13,7 @@ import {
 } from './fixture'
 import { abiCoder, getSigners } from '@/scripts/utils'
 import { ethers } from 'hardhat'
-import { BRIDGE_ROLE } from '@/scripts/constants'
+import { ADAPTER_ROLE } from '@/scripts/constants'
 
 describe('Bridge', function () {
   let accessManagement: AccessManagement
@@ -46,12 +46,12 @@ describe('Bridge', function () {
       )
 
       const evmChainId = 137
-      const chainId = 80_001
+      const nonEvmChainId = 805125132001
       const isEnabled = true
 
       await bridge.setChainSetting(
         evmChainId,
-        chainId,
+        nonEvmChainId,
         adapterAddress,
         RampType.OnRamp,
         isEnabled
@@ -61,7 +61,7 @@ describe('Bridge', function () {
 
       expect({
         adapter: adapterAddress,
-        nonEvmChainId: chainId,
+        nonEvmChainId,
         isEnabled
       }).to.deep.equal({
         adapter: adapter.adapter,
@@ -78,13 +78,13 @@ describe('Bridge', function () {
       )
 
       const evmChainId = 137
-      const chainId = 80_001
+      const nonEvmChainId = 125125352345
       const isEnabled = true
 
       await expect(
         bridge.setChainSetting(
           evmChainId,
-          chainId,
+          nonEvmChainId,
           adapterAddress,
           RampType.OnRamp,
           isEnabled
@@ -104,7 +104,7 @@ describe('Bridge', function () {
         )
 
         const evmChainId = 137
-        const chainId = 80_001
+        const nonEvmChainId = 125125352345
         const isEnabled = true
 
         await expect(
@@ -112,7 +112,7 @@ describe('Bridge', function () {
             .connect(unknown)
             .setChainSetting(
               evmChainId,
-              chainId,
+              nonEvmChainId,
               adapterAddress,
               RampType.OnRamp,
               isEnabled
@@ -219,13 +219,13 @@ describe('Bridge', function () {
       }
 
       /// grant role to bridge contract
-      await accessManagement.grantRole(BRIDGE_ROLE, mockAdapterAddress, 0)
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
 
       /// grant function role  to bridge contract
       await accessManagement.setTargetFunctionRole(
         bridgeAddress,
         [bridge.interface.getFunction('receiveERC721').selector],
-        BRIDGE_ROLE
+        ADAPTER_ROLE
       )
 
       const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
@@ -463,13 +463,13 @@ describe('Bridge', function () {
       }
 
       /// grant role to bridge contract
-      await accessManagement.grantRole(BRIDGE_ROLE, mockAdapterAddress, 0)
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
 
       /// grant function role  to bridge contract
       await accessManagement.setTargetFunctionRole(
         bridgeAddress,
         [bridge.interface.getFunction('receiveERC721').selector],
-        BRIDGE_ROLE
+        ADAPTER_ROLE
       )
 
       const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
@@ -568,13 +568,13 @@ describe('Bridge', function () {
       }
 
       /// grant role to bridge contract
-      await accessManagement.grantRole(BRIDGE_ROLE, mockAdapterAddress, 0)
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
 
       /// grant function role  to bridge contract
       await accessManagement.setTargetFunctionRole(
         bridgeAddress,
         [bridge.interface.getFunction('receiveERC721').selector],
-        BRIDGE_ROLE
+        ADAPTER_ROLE
       )
 
       const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
@@ -662,13 +662,13 @@ describe('Bridge', function () {
       }
 
       /// grant role to bridge contract
-      await accessManagement.grantRole(BRIDGE_ROLE, mockAdapterAddress, 0)
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
 
       /// grant function role  to bridge contract
       await accessManagement.setTargetFunctionRole(
         bridgeAddress,
         [bridge.interface.getFunction('receiveERC721').selector],
-        BRIDGE_ROLE
+        ADAPTER_ROLE
       )
 
       await mockAdapter.receiveMessage(payload, bridgeAddress)
@@ -731,13 +731,13 @@ describe('Bridge', function () {
       }
 
       /// grant role to bridge contract
-      await accessManagement.grantRole(BRIDGE_ROLE, mockAdapterAddress, 0)
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
 
       /// grant function role  to bridge contract
       await accessManagement.setTargetFunctionRole(
         bridgeAddress,
         [bridge.interface.getFunction('receiveERC721').selector],
-        BRIDGE_ROLE
+        ADAPTER_ROLE
       )
 
       await expect(mockAdapter.receiveMessage(payload, bridgeAddress))
@@ -828,13 +828,13 @@ describe('Bridge', function () {
         }
 
         /// grant role to bridge contract to call receiveERC721
-        await accessManagement.grantRole(BRIDGE_ROLE, mockAdapterAddress, 0)
+        await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
 
         /// grant access to bridge contract to call receiveERC721
         await accessManagement.setTargetFunctionRole(
           bridgeAddress,
           [bridge.interface.getFunction('receiveERC721').selector],
-          BRIDGE_ROLE
+          ADAPTER_ROLE
         )
 
         await expect(

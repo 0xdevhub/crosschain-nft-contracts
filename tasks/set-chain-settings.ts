@@ -1,24 +1,58 @@
 import { task } from 'hardhat/config'
 import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
-import { allowedChainsConfig } from '@/config/config'
+import { RampType } from '@/test/bridge/fixture'
 
 const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
-task('set-chain-settings', 'Set chain settings for adapters').setAction(
-  async (_, hre) => {
-    spinner.start()
+export type SetChainSettingsParams = {
+  bridgeAddress: string
+  evmChainId: number
+  nonEvmChainId: number
+  adapterAddress: string
+  rampType: RampType
+  isEnabled: boolean
+}
 
-    const chainConfig = allowedChainsConfig[+hre.network.name]
-    if (!chainConfig) throw new Error('Chain config not found')
+task('set-chain-settings', 'set chain settings')
+  .addParam('bridgeAddress', 'bridge address')
+  .addParam('evmChainId', 'genesis evm chain id')
+  .addParam('nonEvmChainId', 'abstracted evm chain id that adapters will use')
+  .addParam('adapterAddress', 'adapter address')
+  .addParam('rampType', 'ramp type to allow chain id communication')
+  .addParam('isEnabled', 'set chain settings is enabled')
+  .setAction(
+    async (
+      {
+        bridgeAddress,
+        evmChainId,
+        nonEvmChainId,
+        adapterAddress,
+        rampType,
+        isEnabled
+      }: SetChainSettingsParams,
+      hre
+    ) => {
+      spinner.start()
 
-    const accessManagementAddress =
-      chainConfig.contracts.accessManagement.address
+      console.log(
+        `ℹ️ Setting chain settings to bridge ${bridgeAddress} the following chainId: ${evmChainId}`
+      )
 
-    console.log(`ℹ️  Setting chain settings...`)
-    // todo: set chain settings
+      const bridgeContract = await hre.ethers.getContractAt(
+        'Bridge',
+        bridgeAddress
+      )
 
-    spinner.stop()
-    console.log(`✅ Chain settings set: `)
-  }
-)
+      await bridgeContract.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        adapterAddress,
+        rampType,
+        isEnabled
+      )
+
+      spinner.stop()
+      console.log(`✅ ChainId ${evmChainId} settings set to bridge.`)
+    }
+  )
