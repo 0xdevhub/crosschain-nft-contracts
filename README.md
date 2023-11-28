@@ -2,6 +2,8 @@
 
 [![Run Tests](https://github.com/0xdevhub/crosschain-nft-contracts/actions/workflows/tests.yml/badge.svg)](https://github.com/0xdevhub/crosschain-nft-contracts/actions/workflows/tests.yml)
 
+Please, read [extra guides here](guides-examples.md).
+
 ## Networks
 
 - Avalanche Fuji (43113)
@@ -57,5 +59,3 @@ pnpm hardhat deploy-adapter-contract --network 420 --adapter "CCIPAdapter" --bri
 ```shell
 pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
 ```
-
-Please, read [extra guides here](guides-examples.md).
