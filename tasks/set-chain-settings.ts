@@ -1,7 +1,11 @@
 import { task } from 'hardhat/config'
 import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
-import { RampType } from '@/test/bridge/fixture'
+export enum RampType {
+  OnRamp,
+  OffRamp
+}
+import { allowedChainsConfig } from '@/config/config'
 
 const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
@@ -35,8 +39,15 @@ task('set-chain-settings', 'set chain settings')
     ) => {
       spinner.start()
 
+      const chainConfig = allowedChainsConfig[+hre.network.name]
+      if (!chainConfig) throw new Error('Chain config not found')
+
       console.log(
-        `ℹ️ Setting chain settings to bridge ${bridgeAddress} the following chainId: ${evmChainId}`
+        `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${
+          chainConfig.id
+        } to the following chainId ${evmChainId} as ${
+          rampType === RampType.OnRamp ? 'on-ramp' : 'off-ramp'
+        } with adapter ${adapterAddress} and isEnabled ${isEnabled}`
       )
 
       const bridgeContract = await hre.ethers.getContractAt(
@@ -53,6 +64,8 @@ task('set-chain-settings', 'set chain settings')
       )
 
       spinner.stop()
-      console.log(`✅ ChainId ${evmChainId} settings set to bridge.`)
+      console.log(
+        `✅ ChainId ${evmChainId} settings set to bridge in ${chainConfig.id}.`
+      )
     }
   )
