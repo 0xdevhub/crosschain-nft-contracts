@@ -35,8 +35,8 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
       console.log(`ℹ️  Deploying adapter contract: ${adapter}`)
 
       const ccipAdapter = await hre.ethers.deployContract(adapter, [
-        accessManagementAddress,
         bridgeAddress,
+        accessManagementAddress,
         routerAddress
       ])
 

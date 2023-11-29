@@ -55,7 +55,7 @@ pnpm hardhat deploy-adapter-contract --network 43113 --adapter "CCIPAdapter" --b
 ### Verifing contracts
 
 ```shell
-pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
+pnpm verify --network [networkid] --contract contracts/[ContractName].sol:[Contract] [contractAddress] ["ARGUMENTS"]
 ```
 
 ### Setting chain settings
