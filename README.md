@@ -13,14 +13,14 @@ Please, read [extra guides here](guides-examples.md).
 
 #### Avalanche Fuji (43113)
 
-- Bridge Contract: 0xC6E1156D6047E7980e3c581d5c16c979b8406467 (✅ verified)
-- CCIPAdapter: 0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8 (✅ verified)
+- Bridge Contract: [0xC6E1156D6047E7980e3c581d5c16c979b8406467](https://avalanche.testnet.routescan.io/address/0xC6E1156D6047E7980e3c581d5c16c979b8406467#code) (✅ verified)
+- CCIPAdapter: [0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8](https://avalanche.testnet.routescan.io/address/0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8#code) (✅ verified)
 - CCIPAdapterRouter: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
 
 #### Optimism Goerli (420)
 
-- Bridge Contract: 0x99302F8a76B6668F54D7eE16E035d948305ACeE1 (✅ verified)
-- CCIPAdapter: 0xf1d60a203065f949DE2e4bD60Ccf38037371257F (✅ verified)
+- Bridge Contract: [0x99302F8a76B6668F54D7eE16E035d948305ACeE1](https://goerli-optimism.etherscan.io/address/0x99302F8a76B6668F54D7eE16E035d948305ACeE1#code) (✅ verified)
+- CCIPAdapter: [0xf1d60a203065f949DE2e4bD60Ccf38037371257F](https://goerli-optimism.etherscan.io/address/0xf1d60a203065f949DE2e4bD60Ccf38037371257F#code) (✅ verified)
 - CCIPAdapterRouter: 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
 
 ## Getting Started
