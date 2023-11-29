@@ -2,6 +2,7 @@ import { task } from 'hardhat/config'
 import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
+import { RampType } from './set-chain-settings'
 
 const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
@@ -68,7 +69,7 @@ task('deploy-test-nft-contract', 'deploy nft contract')
 
         const targetChainSettings = await bridge.getChainSettings(
           targetNetwork,
-          0
+          RampType.OnRamp
         )
 
         const payload = {

@@ -48,42 +48,64 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
 
       console.log(`ℹ️ Grating roles to bridge, adapter and router`)
 
-      // if nonce issues, try use the signer instead
-      // const signer = await hre.ethers.getSigner(
-      //   'address'
-      // )
-
-      // grant role (receive message)
       const accessManagementContract = await hre.ethers.getContractAt(
         'AccessManagement',
         accessManagementAddress
       )
 
+      // grant role (receive message)
       await accessManagementContract.grantRole(
         ROUTER_ROLE,
         adapterRouterAddress,
         ROUTER_ROLE_DELAY
       )
+
       await accessManagementContract.grantRole(
         ADAPTER_ROLE,
         adapterAddress,
         ADAPTER_ROLE_DELAY
       )
+
       await accessManagementContract.grantRole(
         BRIDGE_ROLE,
         bridgeAddress,
         BRIDGE_ROLE_DELAY
       )
 
+      // grant function role (send message)
+      // bridge -> adapter
+      const adapter = await hre.ethers.getContractFactory(adapterContractName)
+      const adapterFunctionSelector =
+        adapter.interface.getFunction('sendMessage')?.selector!
+
+      await accessManagementContract.setTargetFunctionRole(
+        adapterAddress,
+        [adapterFunctionSelector],
+        BRIDGE_ROLE
+      )
+
+      console.log(
+        'ℹ️ bridge -> adapter',
+        adapterAddress,
+        [adapterFunctionSelector],
+        BRIDGE_ROLE
+      )
+
       // grant function role (receive message)
-      // router will call adapter, so appply the role to adapter function
+      // router -> adapter
       await accessManagementContract.setTargetFunctionRole(
         adapterAddress,
         [adapterBytes4Signature],
         ROUTER_ROLE
       )
 
-      // adapter will call bridge, so appply the role to bridge function
+      console.log(
+        'ℹ️ router -> adapter',
+        adapterAddress,
+        [adapterBytes4Signature],
+        ROUTER_ROLE
+      )
+
       const bridge = await hre.ethers.getContractFactory('Bridge')
       const bridgeFunctionSelector =
         bridge.interface.getFunction('receiveERC721')?.selector!
@@ -94,16 +116,11 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         ADAPTER_ROLE
       )
 
-      // grant function role (send message)
-      // bridge will call adapter, so appply the role to adapter function
-      const adapter = await hre.ethers.getContractFactory(adapterContractName)
-      const adapterFunctionSelector =
-        adapter.interface.getFunction('sendMessage')?.selector!
-
-      await accessManagementContract.setTargetFunctionRole(
-        adapterAddress,
-        [adapterFunctionSelector],
-        BRIDGE_ROLE
+      console.log(
+        'ℹ️ adapter -> bridge',
+        bridgeAddress,
+        [bridgeFunctionSelector],
+        ADAPTER_ROLE
       )
 
       spinner.stop()

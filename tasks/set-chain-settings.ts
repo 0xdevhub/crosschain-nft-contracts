@@ -14,7 +14,6 @@ export type SetChainSettingsParams = {
   evmChainId: number
   nonEvmChainId: number
   adapterAddress: string
-  rampType: RampType
   isEnabled: boolean
 }
 
@@ -23,7 +22,6 @@ task('set-chain-settings', 'set chain settings')
   .addParam('evmChainId', 'genesis evm chain id')
   .addParam('nonEvmChainId', 'abstracted evm chain id that adapters will use')
   .addParam('adapterAddress', 'adapter address')
-  .addParam('rampType', 'ramp type to allow chain id communication')
   .addParam('isEnabled', 'set chain settings is enabled')
   .setAction(
     async (
@@ -32,7 +30,6 @@ task('set-chain-settings', 'set chain settings')
         evmChainId,
         nonEvmChainId,
         adapterAddress,
-        rampType,
         isEnabled
       }: SetChainSettingsParams,
       hre
@@ -43,11 +40,7 @@ task('set-chain-settings', 'set chain settings')
       if (!chainConfig) throw new Error('Chain config not found')
 
       console.log(
-        `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${
-          chainConfig.id
-        } to the following chainId ${evmChainId} as ${
-          rampType === RampType.OnRamp ? 'on-ramp' : 'off-ramp'
-        } with adapter ${adapterAddress} and isEnabled ${isEnabled}`
+        `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${chainConfig.id} to the following chainId ${evmChainId} `
       )
 
       const bridgeContract = await hre.ethers.getContractAt(
@@ -59,7 +52,15 @@ task('set-chain-settings', 'set chain settings')
         evmChainId,
         nonEvmChainId,
         adapterAddress,
-        rampType,
+        RampType.OnRamp,
+        isEnabled
+      )
+
+      await bridgeContract.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        adapterAddress,
+        RampType.OffRamp,
         isEnabled
       )
 

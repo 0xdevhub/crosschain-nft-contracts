@@ -15,7 +15,7 @@ task('deploy-bridge-contract', 'Deploy bridge contract').setAction(
     const accessManagementAddress =
       chainConfig.contracts.accessManagement.address
 
-    console.log(`ℹ️  Deploying bridge contract...`)
+    console.log(`ℹ️  Deploying bridge contract to chainId ${chainConfig.id}`)
 
     const bridgeContract = await hre.ethers.deployContract('Bridge', [
       accessManagementAddress,
@@ -25,6 +25,6 @@ task('deploy-bridge-contract', 'Deploy bridge contract').setAction(
     const bridgeContractAddress = await bridgeContract.getAddress()
 
     spinner.stop()
-    console.log(`✅ Bridge deployed: ${bridgeContractAddress}`)
+    console.log(`✅ Bridge deployed ${bridgeContractAddress}`)
   }
 )
