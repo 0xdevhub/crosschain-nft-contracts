@@ -18,7 +18,7 @@
 #### Optimism Goerli (420)
 
 - Bridge Contract: [0x99302F8a76B6668F54D7eE16E035d948305ACeE1](https://goerli-optimism.etherscan.io/address/0x99302F8a76B6668F54D7eE16E035d948305ACeE1#code) (✅ verified)
-- CCIPAdapter: [0xf1d60a203065f949DE2e4bD60Ccf38037371257F](https://goerli-optimism.etherscan.io/address/0xf1d60a203065f949DE2e4bD60Ccf38037371257F#code) (✅ verified)
+- CCIPAdapter: [0xF5f135f88Cfb3aEB2D415a6876739F4B751a64d8](https://goerli-optimism.etherscan.io/address/0xf1d60a203065f949DE2e4bD60Ccf38037371257F#code) (✅ verified)
 - CCIPAdapterRouter: 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
 
 ## Getting Started
