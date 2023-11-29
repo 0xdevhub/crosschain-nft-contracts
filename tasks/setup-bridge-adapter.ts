@@ -48,6 +48,11 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
 
       console.log(`ℹ️ Grating roles to bridge, adapter and router`)
 
+      // if nonce issues, try use the signer instead
+      // const signer = await hre.ethers.getSigner(
+      //   'address'
+      // )
+
       // grant role (receive message)
       const accessManagementContract = await hre.ethers.getContractAt(
         'AccessManagement',
