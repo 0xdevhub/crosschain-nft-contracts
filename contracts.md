@@ -3,8 +3,8 @@
 #### Optimism Goerli (420)
 
 - CCIPAdapterRouter: [0xeb52e9ae4a9fb37172978642d4c141ef53876f26](https://goerli-optimism.etherscan.io/address/0xeb52e9ae4a9fb37172978642d4c141ef53876f26#code)
-- CCIPAdapter: [0x882847481EB90F5B6Db98035cE517AF313Ee06FA](https://avalanche.testnet.routescan.io/address/0x882847481EB90F5B6Db98035cE517AF313Ee06FA#code)
-- Bridge: [0xeCAA060784d75e72BaFE3BBb03752726EB861a0f](https://avalanche.testnet.routescan.io/address/0xeCAA060784d75e72BaFE3BBb03752726EB861a0f#code)
+- CCIPAdapter: [0x882847481EB90F5B6Db98035cE517AF313Ee06FA](https://goerli-optimism.etherscan.io/address/0x882847481EB90F5B6Db98035cE517AF313Ee06FA#code)
+- Bridge: [0xeCAA060784d75e72BaFE3BBb03752726EB861a0f](https://goerli-optimism.etherscan.io/address/0xeCAA060784d75e72BaFE3BBb03752726EB861a0f#code)
 
 #### Avalanche Fuji (43113)
 
