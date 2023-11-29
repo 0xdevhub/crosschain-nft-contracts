@@ -13,8 +13,8 @@ Please, read [extra guides here](guides-examples.md).
 
 #### Avalanche Fuji (43113)
 
-- Bridge Contract: 0xF793d3D4372935C236422DFA9cd958ec14C80F55 (✅ verified)
-- CCIPAdapter: 0x99d73bDEB878197F3BeA347E86fD69541BeB14E4 (✅ verified)
+- Bridge Contract: 0xC6E1156D6047E7980e3c581d5c16c979b8406467 (✅ verified)
+- CCIPAdapter: 0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8 (✅ verified)
 - CCIPAdapterRouter: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
 
 #### Optimism Goerli (420)
@@ -51,7 +51,7 @@ pnpm test:coverage
 ```shell
 pnpm hardhat deploy-bridge-contract --network 43113
 
-pnpm hardhat deploy-adapter-contract --network 420 --adapter "CCIPAdapter" --bridge-address 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 --router-address 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
+pnpm hardhat deploy-adapter-contract --network 43113 --adapter "CCIPAdapter" --bridge-address 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 --router-address 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
 ```
 
 ### Verifing contracts

@@ -28,7 +28,7 @@ export const avalancheFuji: Chain = {
       blockCreated: 7096959
     },
     accessManagement: {
-      address: '0x091BEbE42637D6c283f88ceF478Cab8581293f73',
+      address: '0x7953C478A5F5d53C263Bd1251BfC4c418d8C5568',
       blockCreated: 0
     }
   },
@@ -69,7 +69,7 @@ export const optimismGoerli: Chain = {
       blockCreated: 49461
     },
     accessManagement: {
-      address: '0xd9b59f89A8FEF69d2Dbc028C9f00087432589F72',
+      address: '0x27aAd1692fD0F11C39c69c5412E52cCEf15045BD',
       blockCreated: 0
     }
   },

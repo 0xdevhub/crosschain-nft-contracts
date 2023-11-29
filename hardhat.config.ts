@@ -52,23 +52,24 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY!,
+      // comment if use custom chain
       avalancheFujiTestnet: process.env.AVALANCHE_FUJI_API_KEY!,
       optimisticGoerli: process.env.OPTIMISM_GOERLI_API_KEY!
       // uncomment snowtrace if any issue with avalanche fuji
       // snowtrace: 'snowtrace'
     }
     // uncomment snowtrace if any issue with avalanche fuji
-    // customChains: [
-    //   {
-    //     network: 'snowtrace',
-    //     chainId: 43113,
-    //     urls: {
-    //       apiURL:
-    //         'https://api.routescan.io/v2/network/testnet/evm/43113/etherscan',
-    //       browserURL: 'https://avalanche.testnet.routescan.io'
+    //   customChains: [
+    //     {
+    //       network: 'snowtrace',
+    //       chainId: 43113,
+    //       urls: {
+    //         apiURL:
+    //           'https://api.routescan.io/v2/network/testnet/evm/43113/etherscan',
+    //         browserURL: 'https://avalanche.testnet.routescan.io'
+    //       }
     //     }
-    //   }
-    // ]
+    //   ]
   }
 }
 
