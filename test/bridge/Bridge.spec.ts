@@ -228,11 +228,6 @@ describe('Bridge', function () {
         ADAPTER_ROLE
       )
 
-      console.log(
-        'receiveERC721',
-        bridge.interface.getFunction('receiveERC721').selector
-      )
-
       const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
       const receipt = await tx.wait()
       const filter = bridge.filters.ERC721WrappedCreated
