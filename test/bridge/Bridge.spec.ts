@@ -269,6 +269,14 @@ describe('Bridge', function () {
         isEnabled
       )
 
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OffRamp,
+        isEnabled
+      )
+
       const tokenId = 1
       await mockNFT.mint(tokenId)
       await mockNFT.approve(bridgeAddress, tokenId)
@@ -747,8 +755,6 @@ describe('Bridge', function () {
 
     describe('Checks', () => {
       it('should revert call commit offramp when unkown caller', async function () {
-        const [, unknown] = await getSigners()
-
         const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
@@ -765,13 +771,14 @@ describe('Bridge', function () {
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
-          RampType.OffRamp,
+          RampType.OnRamp,
           isEnabled
         )
 
+        /// it will fail, since onramp not allow offramp directly
         const payload = {
           fromChain: nonEvmChainId,
-          sender: ethers.ZeroAddress,
+          sender: mockAdapterAddress,
           data: '0x'
         }
 

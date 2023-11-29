@@ -78,12 +78,12 @@ contract Bridge is IBridge, AccessManaged {
     )
         external
         payable
-        checkEvmChainIdAdapterIsValid(s_evmChainSettings[toChain_][IBridge.RampType.OnRamp])
-        checkEvmChainIdIsEnabled(s_evmChainSettings[toChain_][IBridge.RampType.OnRamp])
+        checkEvmChainIdAdapterIsValid(getChainSettings(toChain_, IBridge.RampType.OnRamp))
+        checkEvmChainIdIsEnabled(getChainSettings(toChain_, IBridge.RampType.OnRamp))
     {
+        IBaseAdapter adapter = IBaseAdapter(getChainSettings(toChain_, IBridge.RampType.OnRamp).adapter);
         IBridge.ERC721Send memory payload = _getPayload(toChain_, token_, tokenId_);
 
-        IBaseAdapter adapter = IBaseAdapter(payload.receiver);
         if (adapter.getFee(payload) > msg.value) revert IBridge.InsufficientFeeTokenAmount();
 
         /// @dev check if its wrapped, then burn instead of transfer
@@ -94,7 +94,7 @@ contract Bridge is IBridge, AccessManaged {
             IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
         }
 
-        adapter.sendMessage(payload);
+        adapter.sendMessage{value: msg.value}(payload);
 
         emit IBridge.ERC721Sent(toChain_, payload.receiver, payload.data);
     }
@@ -104,13 +104,14 @@ contract Bridge is IBridge, AccessManaged {
         address token_,
         uint256 tokenId_
     ) internal view returns (IBridge.ERC721Send memory) {
-        EvmChainSettings memory chainSettings = getChainSettings(evmChainId_, IBridge.RampType.OnRamp);
+        /// @dev get target details to prepare payload
+        EvmChainSettings memory offRampChainSettings = getChainSettings(evmChainId_, IBridge.RampType.OffRamp);
         IERC721Metadata metadata = IERC721Metadata(token_);
 
         return
             IBridge.ERC721Send({
-                toChain: chainSettings.nonEvmChainId, /// @dev adapter use nonvEvmChainId to handle message
-                receiver: chainSettings.adapter, /// @dev adatper address that will receive the message
+                toChain: offRampChainSettings.nonEvmChainId, /// @dev adapter use nonvEvmChainId to handle message
+                receiver: offRampChainSettings.adapter, /// @dev adatper address that will receive the message
                 data: _getEncodedPayloadData(
                     msg.sender, /// @dev address that will receive the ERC721 wrapped in the other chain
                     abi.encode(evmChainId_, token_, tokenId_),
@@ -129,19 +130,19 @@ contract Bridge is IBridge, AccessManaged {
 
     /// @inheritdoc IBridge
     function receiveERC721(
-        IBridge.ERC721Receive memory payload_
+        IBridge.ERC721Receive memory payload_ // restricted
     )
         external
         override
         restricted
-        checkEvmChainIdAdapterIsValid(s_evmChainSettings[s_nonEvmChains[payload_.fromChain]][IBridge.RampType.OffRamp])
-        checkEvmChainIdIsEnabled(s_evmChainSettings[s_nonEvmChains[payload_.fromChain]][IBridge.RampType.OffRamp])
+        /// @dev check if adapter offramp exist and its enabled
+        checkEvmChainIdAdapterIsValid(getChainSettings(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp))
+        checkEvmChainIdIsEnabled(getChainSettings(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp))
     {
         uint256 evmChainId = s_nonEvmChains[payload_.fromChain];
         IBridge.ERC721Data memory data = _getDecodedERC721Data(payload_.data);
 
         emit IBridge.ERC721Received(evmChainId, payload_.sender, payload_.data);
-
         IBridge.ERC721Token memory token = _getDecodedERC721Token(data.token);
 
         address wrappedERC721Token;

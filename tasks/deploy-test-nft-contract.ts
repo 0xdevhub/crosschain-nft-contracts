@@ -49,11 +49,9 @@ task('deploy-test-nft-contract', 'deploy nft contract')
       const [deployer] = await hre.ethers.getSigners()
 
       await nft.waitForDeployment()
-      await nft.safeMint(
-        deployer.address,
-        tokenId,
-        'https://cdn.routescan.io/_next/image?url=https%3A%2F%2Fcms-cdn.avascan.com%2FROTW_Logo_bdd6b5e9d7.png%3F15707150.299999997&w=32&q=100'
-      )
+      const tx = await nft.mint(tokenId)
+
+      await tx.wait()
 
       const nftAddress = await nft.getAddress()
 
@@ -91,9 +89,15 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           )
         }
 
+        console.log('ℹ️ Getting required fee')
         const fee = await adapter.getFee(payload)
+        console.log('ℹ️ Feee', fee)
 
-        await nft.approve(bridgeAddress, tokenId)
+        console.log('ℹ️ Approving')
+        const tx2 = await nft.approve(bridgeAddress, tokenId)
+        console.log('ℹ️ Approved')
+
+        await tx2.wait()
 
         await bridge.sendERC721(
           targetChainSettings.evmChainId,

@@ -14,6 +14,7 @@ export type SetChainSettingsParams = {
   evmChainId: number
   nonEvmChainId: number
   adapterAddress: string
+  targetAdapterAddress: string
   isEnabled: boolean
 }
 
@@ -22,6 +23,7 @@ task('set-chain-settings', 'set chain settings')
   .addParam('evmChainId', 'genesis evm chain id')
   .addParam('nonEvmChainId', 'abstracted evm chain id that adapters will use')
   .addParam('adapterAddress', 'adapter address')
+  .addParam('targetAdapterAddress', 'target adapter address')
   .addParam('isEnabled', 'set chain settings is enabled')
   .setAction(
     async (
@@ -29,6 +31,7 @@ task('set-chain-settings', 'set chain settings')
         bridgeAddress,
         evmChainId,
         nonEvmChainId,
+        targetAdapterAddress,
         adapterAddress,
         isEnabled
       }: SetChainSettingsParams,
@@ -59,7 +62,7 @@ task('set-chain-settings', 'set chain settings')
       await bridgeContract.setChainSetting(
         evmChainId,
         nonEvmChainId,
-        adapterAddress,
+        targetAdapterAddress,
         RampType.OffRamp,
         isEnabled
       )
