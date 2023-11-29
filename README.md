@@ -19,8 +19,8 @@ Please, read [extra guides here](guides-examples.md).
 
 #### Optimism Goerli (420)
 
-- Bridge Contract: 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 (✅ verified)
-- CCIPAdapter: 0xfCc1fd12f71a23782Eef2AbbbCaC50c121c9b4Df (✅ verified)
+- Bridge Contract: 0x99302F8a76B6668F54D7eE16E035d948305ACeE1 (✅ verified)
+- CCIPAdapter: 0xf1d60a203065f949DE2e4bD60Ccf38037371257F (✅ verified)
 - CCIPAdapterRouter: 0xeb52e9ae4a9fb37172978642d4c141ef53876f26
 
 ## Getting Started
