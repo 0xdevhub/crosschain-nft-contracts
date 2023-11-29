@@ -141,6 +141,11 @@ describe('CCIPAdapter', function () {
         ROUTER_ROLE
       )
 
+      console.log(
+        'ccipReceive',
+        ccipAdapter.interface.getFunction('ccipReceive').selector
+      )
+
       const payload: Client.Any2EVMMessageStruct = {
         messageId: ethers.encodeBytes32String('messsage_id'),
         sourceChainSelector: 80_001n,
@@ -219,6 +224,11 @@ describe('CCIPAdapter', function () {
         ccipAdapterAddress,
         [ccipAdapter.interface.getFunction('sendMessage').selector],
         BRIDGE_ROLE
+      )
+
+      console.log(
+        'sendMessage',
+        ccipAdapter.interface.getFunction('sendMessage').selector
       )
 
       const expectedAmount = 200_000

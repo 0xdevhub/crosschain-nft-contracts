@@ -2,8 +2,6 @@
 
 [![Run Tests](https://github.com/0xdevhub/crosschain-nft-contracts/actions/workflows/tests.yml/badge.svg)](https://github.com/0xdevhub/crosschain-nft-contracts/actions/workflows/tests.yml)
 
-Please, read [extra guides here](guides-examples.md).
-
 ## Networks
 
 - Avalanche Fuji (43113)
@@ -58,4 +56,16 @@ pnpm hardhat deploy-adapter-contract --network 43113 --adapter "CCIPAdapter" --b
 
 ```shell
 pnpm verify --contract contracts/[ContractName].sol:[Contract] --network [networkid] [contractAddress] ["ARGUMENTS"]
+```
+
+### Setting chain settings
+
+```shell
+pnpm hardhat set-chain-settings --network 43113 --bridge-address 0xA5fBbb4B142A8062b37A2f2CbeBe8c67F65C9978 --evm-chain-id 420 --non-evm-chain-id 14767482510784806043 --adapter-address 0xfCc1fd12f71a23782Eef2AbbbCaC50c121c9b4Df --ramp-type 1 --is-enabled true
+```
+
+### Setup bridge adapter
+
+```shell
+pnpm hardhat setup-bridge-adapter --network 420 --bridge-address 0x99302F8a76B6668F54D7eE16E035d948305ACeE1 --adapter-address 0xf1d60a203065f949DE2e4bD60Ccf38037371257F --adapter-router-address 0xeb52e9ae4a9fb37172978642d4c141ef53876f26 --adapter-bytes4-signature 0x85572ffb --adapter-contract-name "CCIPAdapter"
 ```
