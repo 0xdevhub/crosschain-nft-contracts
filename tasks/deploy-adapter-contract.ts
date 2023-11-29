@@ -40,10 +40,6 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
         routerAddress
       ])
 
-      console.log(
-        JSON.stringify([accessManagementAddress, bridgeAddress, routerAddress])
-      )
-
       const ccipAdapterAddress = await ccipAdapter.getAddress()
 
       spinner.stop()

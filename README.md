@@ -12,7 +12,7 @@
 #### Avalanche Fuji (43113)
 
 - Bridge Contract: [0xC6E1156D6047E7980e3c581d5c16c979b8406467](https://avalanche.testnet.routescan.io/address/0xC6E1156D6047E7980e3c581d5c16c979b8406467#code) (✅ verified)
-- CCIPAdapter: [0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8](https://avalanche.testnet.routescan.io/address/0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8#code) (✅ verified)
+- CCIPAdapter: [0xBbd6d4dC3BF45fdbc286a01916eb7611b727957c](https://avalanche.testnet.routescan.io/address/0xBbd6d4dC3BF45fdbc286a01916eb7611b727957c#code) (✅ verified)
 - CCIPAdapterRouter: 0x554472a2720e5e7d5d3c817529aba05eed5f82d8
 
 #### Optimism Goerli (420)
