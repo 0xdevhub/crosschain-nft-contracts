@@ -2,9 +2,11 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import { HardhatUserConfig } from 'hardhat/config'
+
 import '@nomicfoundation/hardhat-verify'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomiclabs/hardhat-solhint'
+import 'hardhat-gas-reporter'
 import 'tsconfig-paths/register'
 import './tasks'
 
@@ -41,13 +43,18 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 800
+        runs: 200
       }
     }
   },
   typechain: {
     outDir: 'typechain',
     target: 'ethers-v6'
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 5,
+    enabled: true
   },
   etherscan: {
     apiKey: {
