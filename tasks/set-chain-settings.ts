@@ -16,6 +16,7 @@ export type SetChainSettingsParams = {
   adapterAddress: string
   targetAdapterAddress: string
   isEnabled: boolean
+  gasLimit: number
 }
 
 task('set-chain-settings', 'set chain settings')
@@ -25,6 +26,7 @@ task('set-chain-settings', 'set chain settings')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetAdapterAddress', 'target adapter address')
   .addParam('isEnabled', 'set chain settings is enabled')
+  .addParam('gasLimit', 'gas limit')
   .setAction(
     async (
       {
@@ -33,6 +35,7 @@ task('set-chain-settings', 'set chain settings')
         nonEvmChainId,
         targetAdapterAddress,
         adapterAddress,
+        gasLimit,
         isEnabled
       }: SetChainSettingsParams,
       hre
@@ -56,7 +59,8 @@ task('set-chain-settings', 'set chain settings')
         nonEvmChainId,
         adapterAddress,
         RampType.OnRamp,
-        isEnabled
+        isEnabled,
+        gasLimit
       )
 
       await bridgeContract.setChainSetting(
@@ -64,7 +68,8 @@ task('set-chain-settings', 'set chain settings')
         nonEvmChainId,
         targetAdapterAddress,
         RampType.OffRamp,
-        isEnabled
+        isEnabled,
+        gasLimit
       )
 
       spinner.stop()

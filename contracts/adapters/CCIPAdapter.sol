@@ -17,21 +17,26 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
 
     /// @inheritdoc IBaseAdapter
     function getFee(IBridge.ERC721Send memory payload_) public view override returns (uint256) {
-        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(payload_.receiver, payload_.data);
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
+            payload_.receiver,
+            payload_.data,
+            payload_.gasLimit
+        );
 
         return _getFee(uint64(payload_.toChain), evm2AnyMessage);
     }
 
     function _buildCCIPMessage(
         address receiver_,
-        bytes memory data_
+        bytes memory data_,
+        uint256 gasLimit_
     ) private pure returns (Client.EVM2AnyMessage memory) {
         return
             Client.EVM2AnyMessage({
                 receiver: abi.encode(receiver_),
                 data: data_,
                 tokenAmounts: new Client.EVMTokenAmount[](0),
-                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})),
+                extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: gasLimit_, strict: false})),
                 feeToken: feeToken()
             });
     }
@@ -62,13 +67,19 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     /// @inheritdoc BaseAdapter
-    function _sendMessage(IBridge.ERC721Send memory payload, uint256 quotedFee_) internal override {
-        _ccipSend(uint64(payload.toChain), payload.receiver, payload.data, quotedFee_);
+    function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal override {
+        _ccipSend(uint64(payload_.toChain), payload_.receiver, payload_.data, quotedFee_, payload_.gasLimit);
 
-        emit IBaseAdapter.ERC721Sent(payload.toChain, payload.receiver, payload.data);
+        emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
-    function _ccipSend(uint64 toChain, address receiver_, bytes memory data_, uint256 quotedFee_) private {
-        IRouterClient(router()).ccipSend{value: quotedFee_}(toChain, _buildCCIPMessage(receiver_, data_));
+    function _ccipSend(
+        uint64 toChain,
+        address receiver_,
+        bytes memory data_,
+        uint256 quotedFee_,
+        uint256 gasLimit_
+    ) private {
+        IRouterClient(router()).ccipSend{value: quotedFee_}(toChain, _buildCCIPMessage(receiver_, data_, gasLimit_));
     }
 }

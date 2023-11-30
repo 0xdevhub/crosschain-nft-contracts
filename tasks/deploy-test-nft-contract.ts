@@ -73,6 +73,7 @@ task('deploy-test-nft-contract', 'deploy nft contract')
         const payload = {
           toChain: targetChainSettings.nonEvmChainId,
           receiver: targetChainSettings.adapter,
+          gasLimit: targetChainSettings.gasLimit,
           data: abiCoder.encode(
             ['address', 'bytes', 'bytes'],
             [
@@ -95,16 +96,15 @@ task('deploy-test-nft-contract', 'deploy nft contract')
 
         console.log('ℹ️ Approving')
         const tx2 = await nft.approve(bridgeAddress, tokenId)
-        console.log('ℹ️ Approved')
-
         await tx2.wait()
+        console.log('ℹ️ Approved')
 
         await bridge.sendERC721(
           targetChainSettings.evmChainId,
           nftAddress,
           tokenId,
           {
-            value: fee
+            value: fee + 2560000n
           }
         )
 

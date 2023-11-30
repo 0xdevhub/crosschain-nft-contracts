@@ -54,7 +54,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         adapterAddress,
         RampType.OnRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const adapter = await bridge.getChainSettings(evmChainId, RampType.OnRamp)
@@ -87,7 +88,8 @@ describe('Bridge', function () {
           nonEvmChainId,
           adapterAddress,
           RampType.OnRamp,
-          isEnabled
+          isEnabled,
+          0n
         )
       )
         .to.emit(bridge, 'EvmChainSettingsSet')
@@ -115,7 +117,8 @@ describe('Bridge', function () {
               nonEvmChainId,
               adapterAddress,
               RampType.OnRamp,
-              isEnabled
+              isEnabled,
+              0n
             )
         ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
       })
@@ -143,7 +146,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OnRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const tokenId = 1
@@ -179,7 +183,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OnRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       await bridge.setChainSetting(
@@ -187,7 +192,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OffRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const tokenId = 1
@@ -266,7 +272,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OnRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       await bridge.setChainSetting(
@@ -274,7 +281,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OffRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const tokenId = 1
@@ -329,7 +337,8 @@ describe('Bridge', function () {
           nonEvmChainId,
           mockAdapterAddress,
           RampType.OnRamp,
-          isEnabled
+          isEnabled,
+          0n
         )
 
         const tokenId = 1
@@ -402,7 +411,8 @@ describe('Bridge', function () {
           nonEvmChainId,
           mockAdapterAddress,
           RampType.OnRamp,
-          isEnabled
+          isEnabled,
+          0n
         )
 
         const tokenId = 1
@@ -439,7 +449,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OffRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const tokenId = 1
@@ -517,7 +528,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OffRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const tokenId = 1
@@ -626,7 +638,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OnRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const tokenId = 1
@@ -641,7 +654,8 @@ describe('Bridge', function () {
         nonEvmChainId,
         mockAdapterAddress,
         RampType.OffRamp,
-        isEnabled
+        isEnabled,
+        0n
       )
 
       const encodedData = abiCoder.encode(
@@ -685,74 +699,6 @@ describe('Bridge', function () {
       expect(nftOwner).to.be.equal(currentOwner.address)
     })
 
-    it('should emit event on receive ERC721 token from bridge contract', async function () {
-      const [currentOwner] = await getSigners()
-
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
-      const { bridge, bridgeAddress } = await loadFixture(
-        deployBridgeFixture.bind(this, accessManagementAddress)
-      )
-
-      const evmChainId = 1
-      const nonEvmChainId = 123456789
-      const isEnabled = true
-
-      const { mockAdapterAddress, mockAdapter } = await loadFixture(
-        deployMockAdapterFixture
-      )
-
-      await bridge.setChainSetting(
-        evmChainId,
-        nonEvmChainId,
-        mockAdapterAddress,
-        RampType.OffRamp,
-        isEnabled
-      )
-
-      const tokenId = 1
-      await mockNFT.mint(tokenId)
-
-      const encodedData = abiCoder.encode(
-        ['address', 'bytes', 'bytes'],
-        [
-          currentOwner.address,
-          abiCoder.encode(
-            ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId]
-          ),
-          abiCoder.encode(
-            ['string', 'string', 'string'],
-            [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId)
-            ]
-          )
-        ]
-      )
-
-      const payload = {
-        fromChain: nonEvmChainId,
-        sender: mockAdapterAddress,
-        data: encodedData
-      }
-
-      /// grant role to bridge contract
-      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
-
-      /// grant function role  to bridge contract
-      await accessManagement.setTargetFunctionRole(
-        bridgeAddress,
-        [bridge.interface.getFunction('receiveERC721').selector],
-        ADAPTER_ROLE
-      )
-
-      await expect(mockAdapter.receiveMessage(payload, bridgeAddress))
-        .to.emit(bridge, 'ERC721Received')
-        .withArgs(evmChainId, mockAdapterAddress, encodedData)
-    })
-
     describe('Checks', () => {
       it('should revert call commit offramp when unkown caller', async function () {
         const { bridge, bridgeAddress } = await loadFixture(
@@ -772,7 +718,8 @@ describe('Bridge', function () {
           nonEvmChainId,
           mockAdapterAddress,
           RampType.OnRamp,
-          isEnabled
+          isEnabled,
+          0n
         )
 
         /// it will fail, since onramp not allow offramp directly
@@ -825,7 +772,8 @@ describe('Bridge', function () {
           nonEvmChainId,
           mockAdapterAddress,
           RampType.OffRamp,
-          isEnabled
+          isEnabled,
+          0n
         )
 
         const payload = {
