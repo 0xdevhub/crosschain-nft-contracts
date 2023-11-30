@@ -36,6 +36,50 @@ export const avalancheFuji: Chain = {
   gasPrice: 25000000000
 }
 
+export const polygonMumbai: Chain = {
+  id: 80_001,
+  name: 'Polygon Mumbai',
+  network: 'maticmum',
+  accounts: evmAccounts,
+  nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+  rpcUrls: {
+    protocol: {
+      http: [process.env.PUBLIC_NETWORK_80001_HTTP_RPC!]
+    },
+    infura: {
+      http: ['https://polygon-mumbai.infura.io/v3']
+    },
+    default: {
+      http: ['https://rpc.ankr.com/polygon_mumbai']
+    },
+    public: {
+      http: ['https://rpc.ankr.com/polygon_mumbai']
+    }
+  },
+  blockExplorers: {
+    etherscan: {
+      name: 'PolygonScan',
+      url: 'https://mumbai.polygonscan.com'
+    },
+    default: {
+      name: 'PolygonScan',
+      url: 'https://mumbai.polygonscan.com'
+    }
+  },
+  contracts: {
+    multicall3: {
+      address: '0xca11bde05977b3631167028862be2a173976ca11',
+      blockCreated: 25770160
+    },
+    accessManagement: {
+      address: '0xBbd6d4dC3BF45fdbc286a01916eb7611b727957c',
+      blockCreated: 0
+    }
+  },
+  testnet: true,
+  gasPrice: 210000
+}
+
 export const optimismGoerli: Chain = {
   id: 420,
   name: 'Optimism Goerli',

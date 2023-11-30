@@ -59,6 +59,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY!,
+      polygonMumbai: process.env.POLYGON_MUMBAI_API_KEY!,
       // comment if use custom chain
       avalancheFujiTestnet: process.env.AVALANCHE_FUJI_API_KEY!,
       optimisticGoerli: process.env.OPTIMISM_GOERLI_API_KEY!
