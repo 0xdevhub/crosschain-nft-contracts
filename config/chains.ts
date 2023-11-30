@@ -44,7 +44,7 @@ export const polygonMumbai: Chain = {
   nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
   rpcUrls: {
     protocol: {
-      http: [process.env.PUBLIC_NETWORK_80001_HTTP_RPC!]
+      http: ['https://rpc.ankr.com/polygon_mumbai']
     },
     infura: {
       http: ['https://polygon-mumbai.infura.io/v3']
@@ -76,8 +76,7 @@ export const polygonMumbai: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true,
-  gasPrice: 210000
+  testnet: true
 }
 
 export const optimismGoerli: Chain = {

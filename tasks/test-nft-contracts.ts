@@ -12,22 +12,28 @@ export type DeployTestNFTContractTask = {
   bridgeAddress: string
   adapterAddress: string
   targetNetwork: number
+  nftAddress: string
+  tokenId: number
 }
 
-task('deploy-test-nft-contract', 'deploy nft contract')
+task('test-nft-contract', 'deploy nft contract')
   .addParam('tokenName', 'token name')
   .addParam('tokenSymbol', 'token symbol')
   .addParam('bridgeAddress', 'bridge address')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetNetwork', 'target network')
+  .addParam('nftAddress', 'nft address')
+  .addParam('tokenId', 'token id')
   .setAction(
     async (
       {
+        nftAddress,
         tokenName,
         tokenSymbol,
         bridgeAddress,
         targetNetwork,
-        adapterAddress
+        adapterAddress,
+        tokenId
       }: DeployTestNFTContractTask,
       hre
     ) => {
@@ -40,24 +46,8 @@ task('deploy-test-nft-contract', 'deploy nft contract')
       )
 
       try {
-        const tokenId = 1
-
-        const nft = await hre.ethers.deployContract('MockNFT', [
-          tokenName,
-          tokenSymbol
-        ])
-
+        const nft = await hre.ethers.getContractAt('MockNFT', nftAddress)
         const [deployer] = await hre.ethers.getSigners()
-
-        await nft.waitForDeployment()
-        const tx = await nft.mint(tokenId)
-
-        await tx.wait()
-
-        const nftAddress = await nft.getAddress()
-
-        console.log('ℹ️ NFT deployed', nftAddress)
-
         const bridge = await hre.ethers.getContractAt('Bridge', bridgeAddress)
 
         const adapter = await hre.ethers.getContractAt(
