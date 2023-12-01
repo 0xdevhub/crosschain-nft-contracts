@@ -40,40 +40,51 @@ task('deploy-test-nft-contract', 'deploy nft contract')
       hre
     ) => {
       spinner.start()
-      const chainConfig = allowedChainsConfig[+hre.network.name]
-      if (!chainConfig) throw new Error('Chain config not found')
-
-      console.log(
-        `ℹ️ Deploying new NFT ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
-      )
-
-      const provider = new hre.ethers.JsonRpcProvider(
-        chainConfig.rpcUrls.default.http[0],
-        chainConfig.id
-      )
-
-      const deployer = new hre.ethers.Wallet(
-        chainConfig.accounts[accountIndex],
-        provider
-      )
-
-      const tokenId = 1
 
       try {
+        const chainConfig = allowedChainsConfig[+hre.network.name]
+        if (!chainConfig) {
+          spinner.stop()
+          throw new Error('Chain config not found')
+        }
+
+        const provider = new hre.ethers.JsonRpcProvider(
+          chainConfig.rpcUrls.default.http[0],
+          chainConfig.id
+        )
+
+        const deployer = new hre.ethers.Wallet(
+          chainConfig.accounts[accountIndex],
+          provider
+        )
+
+        console.log(
+          `ℹ️ Deploying NFT ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
+        )
+
         const nft = await hre.ethers.deployContract(
           'MockNFT',
           [tokenName, tokenSymbol],
           deployer
         )
 
-        console.log('ℹ️ Deploying...')
         await nft.waitForDeployment()
-        const nftAddress = await nft.getAddress()
 
-        console.log('ℹ️ Deployed and minting: ', nftAddress)
+        const tokenId = 1
+
+        console.log('ℹ️ Minting: ', tokenId)
+
         const tx = await nft.mint(tokenId)
-        await tx.wait()
-        console.log('ℹ️ NFT minted:', tokenId)
+        const receipt = await tx.wait()
+        const gasUsed = receipt?.gasUsed || 0n
+
+        console.log('ℹ️ Done and gas used: ', gasUsed)
+
+        /**
+         *
+         */
+
+        console.log('ℹ️ Getting required fee from adapter')
 
         const bridge = await hre.ethers.getContractAt(
           'Bridge',
@@ -98,6 +109,8 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           RampType.OnRamp
         )
 
+        const nftAddress = await nft.getAddress()
+
         const payload = {
           toChain: targetChainSettings.nonEvmChainId,
           receiver: targetChainSettings.adapter,
@@ -118,44 +131,72 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           )
         }
 
-        console.log('ℹ️ Getting required fee...')
         const fee = await adapter.getFee(payload)
-        console.log('ℹ️ Feee', fee)
 
-        console.log('ℹ️ Approving...')
+        console.log('ℹ️ Required feee:', fee)
+
+        /**
+         *
+         */
+
+        console.log('ℹ️ Approving NFT to bridge')
         const tx2 = await nft.approve(bridgeAddress, tokenId)
         await tx2.wait()
-        console.log('ℹ️ Approved')
 
-        console.log('ℹ️ Gas estimating...')
-        const estimateGas = await bridge.sendERC721.staticCall(
+        const receipt2 = await tx2.wait()
+        const gasUsed2 = receipt2?.gasUsed || 0n
+        console.log('ℹ️ Done and gas used: ', gasUsed2)
+
+        /**
+         *
+         */
+
+        console.log('ℹ️ Estimating gas')
+
+        const expectedInputValue =
+          fee +
+          chainConfig.crosschain.gasRequiredDeploy +
+          chainConfig.crosschain.gasRequiredToMint
+
+        const estimateGas = await bridge.sendERC721.estimateGas(
           targetChainSettings.evmChainId,
           nftAddress,
           tokenId,
           {
-            value: fee + 256000n
+            value: expectedInputValue
           }
         )
 
         console.log('ℹ️ Gas estimate', estimateGas)
 
-        await bridge.sendERC721(
+        const tx3 = await bridge.sendERC721(
           targetChainSettings.evmChainId,
           nftAddress,
           tokenId,
           {
-            value: fee + 25026000n
+            value: expectedInputValue
           }
         )
+
+        const receipt3 = await tx3.wait()
+        const gasUsed3 = receipt3?.gasUsed || 0n
+
+        console.log('ℹ️ Done and gas used: ', gasUsed3)
+
+        /**
+         *
+         */
 
         const nftOwner = await nft.ownerOf(tokenId)
 
         spinner.stop()
-        console.log(`✅ NFT deployed and transfered to ${nftOwner}`)
+        console.log(
+          `✅ NFT ${tokenName} deployed and transfered to ${nftOwner}`
+        )
       } catch (error) {
         spinner.stop()
-        console.log(`❌ NFT deploy failed`)
         console.log(error)
+        console.log(`❌ NFT ${tokenName}  deploy failed`)
       }
     }
   )

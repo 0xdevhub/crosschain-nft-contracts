@@ -48,117 +48,173 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
     ) => {
       spinner.start()
 
-      const chainConfig = allowedChainsConfig[+hre.network.name]
-      if (!chainConfig) throw new Error('Chain config not found')
+      try {
+        const chainConfig = allowedChainsConfig[+hre.network.name]
+        if (!chainConfig) {
+          spinner.stop()
+          throw new Error('Chain config not found')
+        }
 
-      const accessManagementAddress =
-        chainConfig.contracts.accessManagement.address
+        const wallet = new hre.ethers.Wallet(chainConfig.accounts[accountIndex])
 
-      console.log(`ℹ️ Grating roles to bridge, adapter and router`)
+        const provider = new hre.ethers.JsonRpcProvider(
+          chainConfig.rpcUrls.default.http[0],
+          chainConfig.id
+        )
 
-      const wallet = new hre.ethers.Wallet(chainConfig.accounts[accountIndex])
+        const deployer = wallet.connect(provider)
 
-      const provider = new hre.ethers.JsonRpcProvider(
-        chainConfig.rpcUrls.default.http[0],
-        chainConfig.id
-      )
+        const accessManagementAddress =
+          chainConfig.contracts.accessManagement.address
 
-      const deployer = wallet.connect(provider)
+        const accessManagementContract = await hre.ethers.getContractAt(
+          'AccessManagement',
+          accessManagementAddress,
+          deployer
+        )
 
-      const accessManagementContract = await hre.ethers.getContractAt(
-        'AccessManagement',
-        accessManagementAddress,
-        deployer
-      )
+        console.log(`ℹ️ Grating roles to contracts`)
 
-      await accessManagementContract.waitForDeployment()
+        await accessManagementContract.waitForDeployment()
 
-      // grant role (receive message)
-      const tx = await accessManagementContract.grantRole(
-        ROUTER_ROLE,
-        adapterRouterAddress,
-        ROUTER_ROLE_DELAY
-      )
-      await tx.wait()
+        /**
+         *
+         */
+        console.log('ℹ️ Granting adapter router role: ', ROUTER_ROLE)
 
-      const tx2 = await accessManagementContract.grantRole(
-        ADAPTER_ROLE,
-        adapterAddress,
-        ADAPTER_ROLE_DELAY
-      )
-      await tx2.wait()
+        const tx = await accessManagementContract.grantRole(
+          ROUTER_ROLE,
+          adapterRouterAddress,
+          ROUTER_ROLE_DELAY
+        )
 
-      const tx3 = await accessManagementContract.grantRole(
-        BRIDGE_ROLE,
-        bridgeAddress,
-        BRIDGE_ROLE_DELAY
-      )
+        const receipt = await tx.wait()
+        const gasUsed = receipt?.gasUsed || 0n
 
-      await tx3.wait()
+        console.log('ℹ️ Done and gas used: ', gasUsed)
 
-      // grant function role (send message)
-      // bridge -> adapter
-      const adapter = await hre.ethers.getContractAt(
-        adapterContractName,
-        deployer
-      )
+        /**
+         *
+         */
 
-      await adapter.waitForDeployment()
+        console.log('ℹ️ Granting adapter role: ', ADAPTER_ROLE)
 
-      const adapterFunctionSelector =
-        adapter.interface.getFunction('sendMessage')?.selector!
+        const tx2 = await accessManagementContract.grantRole(
+          ADAPTER_ROLE,
+          adapterAddress,
+          ADAPTER_ROLE_DELAY
+        )
 
-      await accessManagementContract.setTargetFunctionRole(
-        adapterAddress,
-        [adapterFunctionSelector],
-        BRIDGE_ROLE
-      )
+        const receipt2 = await tx2.wait()
+        const gasUsed2 = receipt2?.gasUsed || 0n
 
-      console.log(
-        'ℹ️ bridge -> adapter',
-        adapterAddress,
-        [adapterFunctionSelector],
-        BRIDGE_ROLE
-      )
+        console.log('ℹ️ Done and gas used: ', gasUsed2)
 
-      // grant function role (receive message)
-      // router -> adapter
-      const tx5 = await accessManagementContract.setTargetFunctionRole(
-        adapterAddress,
-        [adapterBytes4Signature],
-        ROUTER_ROLE
-      )
-      await tx5.wait()
+        /**
+         *
+         */
 
-      console.log(
-        'ℹ️ router -> adapter',
-        adapterAddress,
-        [adapterBytes4Signature],
-        ROUTER_ROLE
-      )
+        console.log('ℹ️ Granting bridge role: ', BRIDGE_ROLE)
 
-      const bridge = await hre.ethers.getContractAt('Bridge', deployer)
-      await bridge.waitForDeployment()
+        const tx3 = await accessManagementContract.grantRole(
+          BRIDGE_ROLE,
+          bridgeAddress,
+          BRIDGE_ROLE_DELAY
+        )
 
-      const bridgeFunctionSelector =
-        bridge.interface.getFunction('receiveERC721')?.selector!
+        const receipt3 = await tx3.wait()
+        const gasUsed3 = receipt3?.gasUsed || 0n
 
-      const tx6 = await accessManagementContract.setTargetFunctionRole(
-        bridgeAddress,
-        [bridgeFunctionSelector],
-        ADAPTER_ROLE
-      )
+        console.log('ℹ️ Done and gas used: ', gasUsed3)
 
-      await tx6.wait()
+        /**
+         * send messages
+         */
 
-      console.log(
-        'ℹ️ adapter -> bridge',
-        bridgeAddress,
-        [bridgeFunctionSelector],
-        ADAPTER_ROLE
-      )
+        const adapterFunctionSelectorName = 'sendMessage'
 
-      spinner.stop()
-      console.log(`✅ Roles granted to bridge, adapter and router`)
+        console.log(
+          'ℹ️ Granting bridge role to adapter function selector:',
+          adapterFunctionSelectorName
+        )
+
+        const adapter = await hre.ethers.getContractAt(
+          adapterContractName,
+          deployer
+        )
+
+        await adapter.waitForDeployment()
+
+        const adapterFunctionSelector = adapter.interface.getFunction(
+          adapterFunctionSelectorName
+        )?.selector!
+
+        const tx4 = await accessManagementContract.setTargetFunctionRole(
+          adapterAddress,
+          [adapterFunctionSelector],
+          BRIDGE_ROLE
+        )
+
+        const receipt4 = await tx4.wait()
+        const gasUsed4 = receipt4?.gasUsed || 0n
+        console.log('ℹ️ Done and gas used: ', gasUsed4)
+
+        /**
+         * receive messages
+         */
+        console.log(
+          'ℹ️ Granting router role to adapter function selector:',
+          adapterBytes4Signature
+        )
+
+        const tx5 = await accessManagementContract.setTargetFunctionRole(
+          adapterAddress,
+          [adapterBytes4Signature],
+          ROUTER_ROLE
+        )
+
+        await tx5.wait()
+        const receipt5 = await tx5.wait()
+        const gasUsed5 = receipt5?.gasUsed || 0n
+        console.log('ℹ️ Done and gas used: ', gasUsed5)
+
+        /**
+         *
+         */
+
+        const bridgeFunctionSelectorName = 'receiveERC721'
+
+        console.log(
+          'ℹ️ Granting adapter role to bridge function selector:',
+          bridgeFunctionSelectorName
+        )
+
+        const bridge = await hre.ethers.getContractAt('Bridge', deployer)
+        await bridge.waitForDeployment()
+
+        const bridgeFunctionSelector = bridge.interface.getFunction(
+          bridgeFunctionSelectorName
+        )?.selector!
+
+        const tx6 = await accessManagementContract.setTargetFunctionRole(
+          bridgeAddress,
+          [bridgeFunctionSelector],
+          ADAPTER_ROLE
+        )
+
+        await tx6.wait()
+
+        const receipt6 = await tx6.wait()
+        const gasUsed6 = receipt6?.gasUsed || 0n
+
+        console.log('ℹ️ Done and gas used: ', gasUsed6)
+
+        spinner.stop()
+        console.log(`✅ Roles granted to contracts`)
+      } catch (error) {
+        spinner.stop()
+        console.log(`❌ Granting role to contracts failed`)
+        console.log(error)
+      }
     }
   )

@@ -28,7 +28,7 @@ task('set-chain-settings', 'set chain settings')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetAdapterAddress', 'target adapter address')
   .addParam('isEnabled', 'set chain settings is enabled')
-  .addParam('gasLimit', 'gas limit')
+  .addOptionalParam('gasLimit', 'gas limit', 0, types.int)
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
@@ -50,56 +50,84 @@ task('set-chain-settings', 'set chain settings')
       hre
     ) => {
       spinner.start()
+      try {
+        const chainConfig = allowedChainsConfig[+hre.network.name]
+        if (!chainConfig) {
+          spinner.stop()
+          throw new Error('Chain config not found')
+        }
 
-      const chainConfig = allowedChainsConfig[+hre.network.name]
-      if (!chainConfig) throw new Error('Chain config not found')
+        const provider = new hre.ethers.JsonRpcProvider(
+          chainConfig.rpcUrls.default.http[0],
+          chainConfig.id
+        )
 
-      console.log(
-        `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${chainConfig.id} to the following chainId ${evmChainId} `
-      )
+        const deployer = new hre.ethers.Wallet(
+          chainConfig.accounts[accountIndex],
+          provider
+        )
 
-      const provider = new hre.ethers.JsonRpcProvider(
-        chainConfig.rpcUrls.default.http[0],
-        chainConfig.id
-      )
+        console.log(
+          `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${chainConfig.id} to the following chainId ${evmChainId} `
+        )
 
-      const deployer = new hre.ethers.Wallet(
-        chainConfig.accounts[accountIndex],
-        provider
-      )
+        const bridgeContract = await hre.ethers.getContractAt(
+          'Bridge',
+          bridgeAddress,
+          deployer
+        )
 
-      const bridgeContract = await hre.ethers.getContractAt(
-        'Bridge',
-        bridgeAddress,
-        deployer
-      )
+        await bridgeContract.waitForDeployment()
 
-      await bridgeContract.waitForDeployment()
+        console.log('ℹ️ Setting onramp chainSettings')
 
-      const tx = await bridgeContract.setChainSetting(
-        evmChainId,
-        nonEvmChainId,
-        adapterAddress,
-        RampType.OnRamp,
-        isEnabled,
-        gasLimit
-      )
-      await tx.wait()
+        const expectedGasMin =
+          chainConfig.crosschain.gasRequiredDeploy +
+          chainConfig.crosschain.gasRequiredToMint
+        const gasLimitValue =
+          expectedGasMin > gasLimit ? expectedGasMin : gasLimit
 
-      const tx2 = await bridgeContract.setChainSetting(
-        evmChainId,
-        nonEvmChainId,
-        targetAdapterAddress,
-        RampType.OffRamp,
-        isEnabled,
-        gasLimit
-      )
+        const tx = await bridgeContract.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          adapterAddress,
+          RampType.OnRamp,
+          isEnabled,
+          gasLimitValue
+        )
 
-      await tx2.wait()
+        const receipt = await tx.wait()
+        const gasUsed = receipt?.gasUsed || 0n
+        console.log('ℹ️ Done and gas used: ', gasUsed)
 
-      spinner.stop()
-      console.log(
-        `✅ ChainId ${evmChainId} settings set to bridge in ${chainConfig.id}.`
-      )
+        /**
+         *
+         */
+        console.log('ℹ️ Setting offramp chainSettings')
+
+        const tx2 = await bridgeContract.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          targetAdapterAddress,
+          RampType.OffRamp,
+          isEnabled,
+          gasLimitValue
+        )
+
+        await tx2.wait()
+
+        const receipt2 = await tx2.wait()
+        const gasUsed2 = receipt2?.gasUsed || 0n
+        console.log('ℹ️ Done and gas used: ', gasUsed2)
+
+        spinner.stop()
+        console.log(
+          `✅ ChainId ${evmChainId} settings set to bridge in ${chainConfig.id}.`
+        )
+      } catch (error) {
+        spinner.stop()
+        console.log(`❌ ChainId ${evmChainId} settings set failed`)
+        console.log(error)
+      }
     }
   )

@@ -32,7 +32,11 @@ export const avalancheFuji: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true
+  testnet: true,
+  crosschain: {
+    gasRequiredDeploy: 1206898n,
+    gasRequiredToMint: 68282n
+  }
 }
 
 export const polygonMumbai: Chain = {
@@ -75,7 +79,11 @@ export const polygonMumbai: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true
+  testnet: true,
+  crosschain: {
+    gasRequiredDeploy: 1207276n,
+    gasRequiredToMint: 68282n
+  }
 }
 
 export const optimismGoerli: Chain = {
@@ -115,7 +123,11 @@ export const optimismGoerli: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true
+  testnet: true,
+  crosschain: {
+    gasRequiredDeploy: 1206898n,
+    gasRequiredToMint: 68282n
+  }
 }
 
 export const baseGoerli: Chain = {
@@ -155,5 +167,9 @@ export const baseGoerli: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true
+  testnet: true,
+  crosschain: {
+    gasRequiredDeploy: 1206898n,
+    gasRequiredToMint: 68282n
+  }
 }

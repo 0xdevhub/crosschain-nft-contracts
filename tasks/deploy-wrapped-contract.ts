@@ -5,21 +5,15 @@ import { allowedChainsConfig } from '@/config/config'
 
 const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
-export enum AvailableAdapters {
-  CCIPAdapter = 'CCIPAdapter'
-}
-
-export type DeployBridgeContractTask = {
-  adapter: AvailableAdapters
-  bridgeAddress: string
-  routerAddress: string
+export type DeployWrappedTokenTask = {
   accountIndex: number
+  tokenName: string
+  tokenSymbol: string
 }
 
-task('deploy-adapter-contract', 'Deploy adapter contract')
-  .addParam('adapter', 'Adapter name')
-  .addParam('bridgeAddress', 'Bridge address')
-  .addParam('routerAddress', 'Router address')
+task('deploy-wrapped-token', 'deploy wrapped token')
+  .addParam('tokenName', 'token name')
+  .addParam('tokenSymbol', 'token symbol')
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
@@ -28,15 +22,11 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
   )
   .setAction(
     async (
-      {
-        adapter,
-        bridgeAddress,
-        routerAddress,
-        accountIndex
-      }: DeployBridgeContractTask,
+      { accountIndex, tokenName, tokenSymbol }: DeployWrappedTokenTask,
       hre
     ) => {
       spinner.start()
+
       try {
         const chainConfig = allowedChainsConfig[+hre.network.name]
         if (!chainConfig) {
@@ -54,29 +44,43 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
           provider
         )
 
-        const accessManagementAddress =
-          chainConfig.contracts.accessManagement.address
+        const tokenId = 1
 
-        console.log(`ℹ️  Deploying adapter ${adapter} contract`)
+        console.log(
+          `ℹ️ Deployng new wrapped ERC721 ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
+        )
 
-        const ccipAdapter = await hre.ethers.deployContract(
-          adapter,
-          [bridgeAddress, accessManagementAddress, routerAddress],
+        const nft = await hre.ethers.deployContract(
+          'MockNFT',
+          [tokenName, tokenSymbol],
           deployer
         )
 
-        const tx = await ccipAdapter.waitForDeployment()
+        const tx = await nft.waitForDeployment()
         const receipt = await tx.deploymentTransaction()?.wait()
         const gasUsed = receipt?.gasUsed || 0n
-        console.log('ℹ️ Gas used: ', gasUsed)
 
-        const ccipAdapterAddress = await ccipAdapter.getAddress()
+        console.log('ℹ️ Done and gas used: ', gasUsed)
+
+        /**
+         *
+         */
+
+        console.log('ℹ️ Minting: ', tokenId)
+
+        const tx2 = await nft.mint(tokenId)
+        const receipt2 = await tx2.wait()
+        const gasUsed2 = receipt2?.gasUsed || 0n
+
+        console.log('ℹ️ Done and gas used: ', gasUsed2)
+
+        const nftAddress = await nft.getAddress()
 
         spinner.stop()
-        console.log(`✅ Adapter ${adapter} deployed at:`, ccipAdapterAddress)
+        console.log(`✅ Deployed NFT ${tokenName} at: `, nftAddress)
       } catch (error) {
         spinner.stop()
-        console.log(`❌ Adapter ${adapter} deploy failed`)
+        console.log(`❌ NFT ${tokenName} deploy failed`)
         console.log(error)
       }
     }

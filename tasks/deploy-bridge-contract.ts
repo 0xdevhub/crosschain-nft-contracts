@@ -19,33 +19,48 @@ task('deploy-bridge-contract', 'Deploy bridge contract')
   .setAction(async ({ accountIndex }: DeployBridgeContractTask, hre) => {
     spinner.start()
 
-    const chainConfig = allowedChainsConfig[+hre.network.name]
-    if (!chainConfig) throw new Error('Chain config not found')
+    try {
+      const chainConfig = allowedChainsConfig[+hre.network.name]
+      if (!chainConfig) {
+        spinner.stop()
+        throw new Error('Chain config not found')
+      }
 
-    const accessManagementAddress =
-      chainConfig.contracts.accessManagement.address
+      const provider = new hre.ethers.JsonRpcProvider(
+        chainConfig.rpcUrls.default.http[0],
+        chainConfig.id
+      )
 
-    console.log(`ℹ️  Deploying bridge contract to chainId ${chainConfig.id}`)
+      const deployer = new hre.ethers.Wallet(
+        chainConfig.accounts[accountIndex],
+        provider
+      )
 
-    const provider = new hre.ethers.JsonRpcProvider(
-      chainConfig.rpcUrls.default.http[0],
-      chainConfig.id
-    )
+      const accessManagementAddress =
+        chainConfig.contracts.accessManagement.address
 
-    const deployer = new hre.ethers.Wallet(
-      chainConfig.accounts[accountIndex],
-      provider
-    )
+      console.log(`ℹ️  Deploying bridge contract to chainId ${chainConfig.id}`)
 
-    const bridgeContract = await hre.ethers.deployContract(
-      'Bridge',
-      [accessManagementAddress, chainConfig.id],
-      deployer
-    )
+      const bridgeContract = await hre.ethers.deployContract(
+        'Bridge',
+        [accessManagementAddress, chainConfig.id],
+        deployer
+      )
 
-    await bridgeContract.waitForDeployment()
-    const bridgeContractAddress = await bridgeContract.getAddress()
+      const tx = await bridgeContract.waitForDeployment()
 
-    spinner.stop()
-    console.log(`✅ Bridge deployed ${bridgeContractAddress}`)
+      const receipt = await tx.deploymentTransaction()?.wait()
+      const gasUsed = receipt?.gasUsed || 0n
+
+      console.log('ℹ️ Gas used: ', gasUsed)
+
+      const bridgeContractAddress = await bridgeContract.getAddress()
+
+      spinner.stop()
+      console.log(`✅ Bridge deployed at:`, bridgeContractAddress)
+    } catch (error) {
+      spinner.stop()
+      console.log(`❌ Bridge deploy failed`)
+      console.log(error)
+    }
   })

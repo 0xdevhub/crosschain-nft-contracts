@@ -29,4 +29,8 @@ export interface Chain {
     }
   }
   testnet: boolean
+  crosschain: {
+    gasRequiredToMint: bigint
+    gasRequiredDeploy: bigint
+  }
 }
