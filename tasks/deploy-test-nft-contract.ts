@@ -1,4 +1,4 @@
-import { task } from 'hardhat/config'
+import { task, types } from 'hardhat/config'
 import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
@@ -12,6 +12,7 @@ export type DeployTestNFTContractTask = {
   bridgeAddress: string
   adapterAddress: string
   targetNetwork: number
+  accountIndex: number
 }
 
 task('deploy-test-nft-contract', 'deploy nft contract')
@@ -20,6 +21,12 @@ task('deploy-test-nft-contract', 'deploy nft contract')
   .addParam('bridgeAddress', 'bridge address')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetNetwork', 'target network')
+  .addOptionalParam(
+    'accountIndex',
+    'Account index to use for deployment',
+    0,
+    types.int
+  )
   .setAction(
     async (
       {
@@ -27,7 +34,8 @@ task('deploy-test-nft-contract', 'deploy nft contract')
         tokenSymbol,
         bridgeAddress,
         targetNetwork,
-        adapterAddress
+        adapterAddress,
+        accountIndex
       }: DeployTestNFTContractTask,
       hre
     ) => {
@@ -39,31 +47,49 @@ task('deploy-test-nft-contract', 'deploy nft contract')
         `ℹ️ Deploying new NFT ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
       )
 
+      const provider = new hre.ethers.JsonRpcProvider(
+        chainConfig.rpcUrls.default.http[0],
+        chainConfig.id
+      )
+
+      const deployer = new hre.ethers.Wallet(
+        chainConfig.accounts[accountIndex],
+        provider
+      )
+
+      const tokenId = 1
+
       try {
-        const tokenId = 1
+        const nft = await hre.ethers.deployContract(
+          'MockNFT',
+          [tokenName, tokenSymbol],
+          deployer
+        )
 
-        const nft = await hre.ethers.deployContract('MockNFT', [
-          tokenName,
-          tokenSymbol
-        ])
-
-        const [deployer] = await hre.ethers.getSigners()
-
+        console.log('ℹ️ Deploying...')
         await nft.waitForDeployment()
-        const tx = await nft.mint(tokenId)
-
-        await tx.wait()
-
         const nftAddress = await nft.getAddress()
 
-        console.log('ℹ️ NFT deployed', nftAddress)
+        console.log('ℹ️ Deployed and minting: ', nftAddress)
+        const tx = await nft.mint(tokenId)
+        await tx.wait()
+        console.log('ℹ️ NFT minted:', tokenId)
 
-        const bridge = await hre.ethers.getContractAt('Bridge', bridgeAddress)
+        const bridge = await hre.ethers.getContractAt(
+          'Bridge',
+          bridgeAddress,
+          deployer
+        )
+
+        await bridge.waitForDeployment()
 
         const adapter = await hre.ethers.getContractAt(
           'CCIPAdapter',
-          adapterAddress
+          adapterAddress,
+          deployer
         )
+
+        await adapter.waitForDeployment()
 
         const abiCoder = hre.ethers.AbiCoder.defaultAbiCoder()
 
@@ -92,21 +118,33 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           )
         }
 
-        console.log('ℹ️ Getting required fee')
+        console.log('ℹ️ Getting required fee...')
         const fee = await adapter.getFee(payload)
         console.log('ℹ️ Feee', fee)
 
-        console.log('ℹ️ Approving')
+        console.log('ℹ️ Approving...')
         const tx2 = await nft.approve(bridgeAddress, tokenId)
         await tx2.wait()
         console.log('ℹ️ Approved')
+
+        console.log('ℹ️ Gas estimating...')
+        const estimateGas = await bridge.sendERC721.staticCall(
+          targetChainSettings.evmChainId,
+          nftAddress,
+          tokenId,
+          {
+            value: fee + 256000n
+          }
+        )
+
+        console.log('ℹ️ Gas estimate', estimateGas)
 
         await bridge.sendERC721(
           targetChainSettings.evmChainId,
           nftAddress,
           tokenId,
           {
-            value: fee + 2560000n
+            value: fee + 256000n
           }
         )
 

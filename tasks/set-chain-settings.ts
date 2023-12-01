@@ -1,11 +1,12 @@
-import { task } from 'hardhat/config'
+import { task, types } from 'hardhat/config'
 import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
+import { allowedChainsConfig } from '@/config/config'
+
 export enum RampType {
   OnRamp,
   OffRamp
 }
-import { allowedChainsConfig } from '@/config/config'
 
 const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
@@ -17,6 +18,7 @@ export type SetChainSettingsParams = {
   targetAdapterAddress: string
   isEnabled: boolean
   gasLimit: number
+  accountIndex: number
 }
 
 task('set-chain-settings', 'set chain settings')
@@ -27,6 +29,12 @@ task('set-chain-settings', 'set chain settings')
   .addParam('targetAdapterAddress', 'target adapter address')
   .addParam('isEnabled', 'set chain settings is enabled')
   .addParam('gasLimit', 'gas limit')
+  .addOptionalParam(
+    'accountIndex',
+    'Account index to use for deployment',
+    0,
+    types.int
+  )
   .setAction(
     async (
       {
@@ -36,7 +44,8 @@ task('set-chain-settings', 'set chain settings')
         targetAdapterAddress,
         adapterAddress,
         gasLimit,
-        isEnabled
+        isEnabled,
+        accountIndex
       }: SetChainSettingsParams,
       hre
     ) => {
@@ -49,12 +58,25 @@ task('set-chain-settings', 'set chain settings')
         `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${chainConfig.id} to the following chainId ${evmChainId} `
       )
 
-      const bridgeContract = await hre.ethers.getContractAt(
-        'Bridge',
-        bridgeAddress
+      const provider = new hre.ethers.JsonRpcProvider(
+        chainConfig.rpcUrls.default.http[0],
+        chainConfig.id
       )
 
-      await bridgeContract.setChainSetting(
+      const deployer = new hre.ethers.Wallet(
+        chainConfig.accounts[accountIndex],
+        provider
+      )
+
+      const bridgeContract = await hre.ethers.getContractAt(
+        'Bridge',
+        bridgeAddress,
+        deployer
+      )
+
+      await bridgeContract.waitForDeployment()
+
+      const tx = await bridgeContract.setChainSetting(
         evmChainId,
         nonEvmChainId,
         adapterAddress,
@@ -62,8 +84,9 @@ task('set-chain-settings', 'set chain settings')
         isEnabled,
         gasLimit
       )
+      await tx.wait()
 
-      await bridgeContract.setChainSetting(
+      const tx2 = await bridgeContract.setChainSetting(
         evmChainId,
         nonEvmChainId,
         targetAdapterAddress,
@@ -71,6 +94,8 @@ task('set-chain-settings', 'set chain settings')
         isEnabled,
         gasLimit
       )
+
+      await tx2.wait()
 
       spinner.stop()
       console.log(

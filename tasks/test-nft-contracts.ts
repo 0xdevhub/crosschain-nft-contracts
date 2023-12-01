@@ -1,4 +1,4 @@
-import { task } from 'hardhat/config'
+import { task, types } from 'hardhat/config'
 import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
@@ -14,6 +14,7 @@ export type DeployTestNFTContractTask = {
   targetNetwork: number
   nftAddress: string
   tokenId: number
+  accountIndex: number
 }
 
 task('test-nft-contract', 'deploy nft contract')
@@ -24,6 +25,12 @@ task('test-nft-contract', 'deploy nft contract')
   .addParam('targetNetwork', 'target network')
   .addParam('nftAddress', 'nft address')
   .addParam('tokenId', 'token id')
+  .addOptionalParam(
+    'accountIndex',
+    'Account index to use for deployment',
+    0,
+    types.int
+  )
   .setAction(
     async (
       {
@@ -33,7 +40,8 @@ task('test-nft-contract', 'deploy nft contract')
         bridgeAddress,
         targetNetwork,
         adapterAddress,
-        tokenId
+        tokenId,
+        accountIndex
       }: DeployTestNFTContractTask,
       hre
     ) => {
@@ -45,14 +53,32 @@ task('test-nft-contract', 'deploy nft contract')
         `ℹ️ Deploying new NFT ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
       )
 
+      const provider = new hre.ethers.JsonRpcProvider(
+        chainConfig.rpcUrls.default.http[0],
+        chainConfig.id
+      )
+
+      const deployer = new hre.ethers.Wallet(
+        chainConfig.accounts[accountIndex],
+        provider
+      )
+
       try {
-        const nft = await hre.ethers.getContractAt('MockNFT', nftAddress)
-        const [deployer] = await hre.ethers.getSigners()
-        const bridge = await hre.ethers.getContractAt('Bridge', bridgeAddress)
+        const nft = await hre.ethers.getContractAt(
+          'MockNFT',
+          nftAddress,
+          deployer
+        )
+        const bridge = await hre.ethers.getContractAt(
+          'Bridge',
+          bridgeAddress,
+          deployer
+        )
 
         const adapter = await hre.ethers.getContractAt(
           'CCIPAdapter',
-          adapterAddress
+          adapterAddress,
+          deployer
         )
 
         const abiCoder = hre.ethers.AbiCoder.defaultAbiCoder()

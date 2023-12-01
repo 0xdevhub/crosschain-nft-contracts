@@ -133,7 +133,7 @@ contract Bridge is IBridge, AccessManaged {
 
     /// @inheritdoc IBridge
     function receiveERC721(
-        IBridge.ERC721Receive memory payload_
+        IBridge.ERC721Receive memory payload_ // restricted
     )
         external
         override
