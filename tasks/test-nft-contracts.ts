@@ -69,17 +69,24 @@ task('test-nft-contract', 'deploy nft contract')
           nftAddress,
           deployer
         )
+
+        await nft.waitForDeployment()
+
         const bridge = await hre.ethers.getContractAt(
           'Bridge',
           bridgeAddress,
           deployer
         )
 
+        await bridge.waitForDeployment()
+
         const adapter = await hre.ethers.getContractAt(
           'CCIPAdapter',
           adapterAddress,
           deployer
         )
+
+        await adapter.waitForDeployment()
 
         const abiCoder = hre.ethers.AbiCoder.defaultAbiCoder()
 

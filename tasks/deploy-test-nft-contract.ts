@@ -144,7 +144,7 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           nftAddress,
           tokenId,
           {
-            value: fee + 256000n
+            value: fee + 25026000n
           }
         )
 
