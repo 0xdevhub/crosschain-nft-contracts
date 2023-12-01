@@ -2,9 +2,11 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import { HardhatUserConfig } from 'hardhat/config'
+
 import '@nomicfoundation/hardhat-verify'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomiclabs/hardhat-solhint'
+import 'hardhat-gas-reporter'
 import 'tsconfig-paths/register'
 import './tasks'
 
@@ -14,6 +16,8 @@ import { Chain } from './config/types'
 import { NetworksUserConfig } from 'hardhat/types'
 
 const config: HardhatUserConfig = {
+  defaultNetwork: 'hardhat',
+
   networks:
     process.env.NODE_ENV !== 'development'
       ? reduce(
@@ -22,7 +26,7 @@ const config: HardhatUserConfig = {
             acc[chain.id] = {
               url: chain.rpcUrls.default.http[0],
               accounts: chain.accounts,
-              gasPrice: chain.gasPrice ?? 210000
+              gasPrice: chain.gasPrice
             }
 
             return acc
@@ -49,9 +53,15 @@ const config: HardhatUserConfig = {
     outDir: 'typechain',
     target: 'ethers-v6'
   },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 5,
+    enabled: process.env.RUN_GAS_REPORTER === 'true'
+  },
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY!,
+      polygonMumbai: process.env.POLYGON_MUMBAI_API_KEY!,
       // comment if use custom chain
       avalancheFujiTestnet: process.env.AVALANCHE_FUJI_API_KEY!,
       optimisticGoerli: process.env.OPTIMISM_GOERLI_API_KEY!

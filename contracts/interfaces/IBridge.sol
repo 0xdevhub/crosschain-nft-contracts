@@ -8,11 +8,11 @@ interface IBridge {
     }
 
     struct EvmChainSettings {
-        /// @todo: adapter settings (eg: gas limit) (e> could be bytes)
         uint256 evmChainId;
         uint256 nonEvmChainId;
         address adapter;
         bool isEnabled;
+        uint256 gasLimit;
     }
 
     struct ERC721Wrapped {
@@ -31,6 +31,7 @@ interface IBridge {
         uint256 toChain;
         address receiver;
         bytes data; /// @dev ERC721Data
+        uint256 gasLimit;
     }
 
     struct ERC721Data {
@@ -61,6 +62,8 @@ interface IBridge {
 
     error RampTypeNotAllowed();
 
+    error WrappedContractNotCreated();
+
     event EvmChainSettingsSet(uint256 indexed evmChainId_, RampType indexed rampType_);
 
     event ERC721Sent(uint256 evmChainId_, address receiver_, bytes data_);
@@ -80,7 +83,8 @@ interface IBridge {
         uint256 nonEvmChainId_,
         address adapter_,
         RampType rampType_,
-        bool isEnabled_
+        bool isEnabled_,
+        uint256 gasLimit_
     ) external;
 
     function getChainSettings(uint256 evmChainId_, RampType rampType_) external view returns (EvmChainSettings memory);

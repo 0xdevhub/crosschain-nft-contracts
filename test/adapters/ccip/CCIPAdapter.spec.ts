@@ -107,7 +107,8 @@ describe('CCIPAdapter', function () {
       const requiredFee = await ccipAdapter.getFee({
         toChain: 80_001,
         receiver: ethers.ZeroAddress,
-        data: '0x'
+        data: '0x',
+        gasLimit: 0
       })
 
       expect(requiredFee).to.be.equal(expectedAmount)
@@ -227,7 +228,8 @@ describe('CCIPAdapter', function () {
       const payload = {
         toChain: 80_001,
         receiver: ethers.ZeroAddress,
-        data: '0x'
+        data: '0x',
+        gasLimit: 0
       }
 
       await expect(
@@ -261,7 +263,8 @@ describe('CCIPAdapter', function () {
         const payload = {
           toChain: 80_001,
           receiver: ethers.ZeroAddress,
-          data: '0x'
+          data: '0x',
+          gasLimit: 0
         }
 
         await expect(
@@ -310,7 +313,8 @@ describe('CCIPAdapter', function () {
             {
               toChain: 80_001,
               receiver: ethers.ZeroAddress,
-              data: '0x'
+              data: '0x',
+              gasLimit: 0
             },
             {
               value: expectedAmount - 1

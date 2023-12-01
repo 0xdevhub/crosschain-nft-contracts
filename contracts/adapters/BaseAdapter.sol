@@ -31,13 +31,10 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
 
     /// @inheritdoc IBaseAdapter
     function sendMessage(IBridge.ERC721Send memory payload_) external payable override restricted {
-        uint256 quotedFee = getFee(payload_);
+        /// @dev check if there is enough fee token amount
+        if (msg.value < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
-        if (msg.value < quotedFee) {
-            revert InsufficientFeeTokenAmount();
-        }
-
-        _sendMessage(payload_, quotedFee);
+        _sendMessage(payload_, msg.value);
         emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 

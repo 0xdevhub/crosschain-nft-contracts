@@ -12,15 +12,19 @@ export type DeployTestNFTContractTask = {
   bridgeAddress: string
   adapterAddress: string
   targetNetwork: number
+  nftAddress: string
+  tokenId: number
   accountIndex: number
 }
 
-task('deploy-test-nft-contract', 'deploy nft contract')
+task('test-nft-contract', 'deploy nft contract')
   .addParam('tokenName', 'token name')
   .addParam('tokenSymbol', 'token symbol')
   .addParam('bridgeAddress', 'bridge address')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetNetwork', 'target network')
+  .addParam('nftAddress', 'nft address')
+  .addParam('tokenId', 'token id')
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
@@ -30,11 +34,13 @@ task('deploy-test-nft-contract', 'deploy nft contract')
   .setAction(
     async (
       {
+        nftAddress,
         tokenName,
         tokenSymbol,
         bridgeAddress,
         targetNetwork,
         adapterAddress,
+        tokenId,
         accountIndex
       }: DeployTestNFTContractTask,
       hre
@@ -57,23 +63,14 @@ task('deploy-test-nft-contract', 'deploy nft contract')
         provider
       )
 
-      const tokenId = 1
-
       try {
-        const nft = await hre.ethers.deployContract(
+        const nft = await hre.ethers.getContractAt(
           'MockNFT',
-          [tokenName, tokenSymbol],
+          nftAddress,
           deployer
         )
 
-        console.log('ℹ️ Deploying...')
         await nft.waitForDeployment()
-        const nftAddress = await nft.getAddress()
-
-        console.log('ℹ️ Deployed and minting: ', nftAddress)
-        const tx = await nft.mint(tokenId)
-        await tx.wait()
-        console.log('ℹ️ NFT minted:', tokenId)
 
         const bridge = await hre.ethers.getContractAt(
           'Bridge',
@@ -118,33 +115,21 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           )
         }
 
-        console.log('ℹ️ Getting required fee...')
+        console.log('ℹ️ Getting required fee')
         const fee = await adapter.getFee(payload)
         console.log('ℹ️ Feee', fee)
 
-        console.log('ℹ️ Approving...')
+        console.log('ℹ️ Approving')
         const tx2 = await nft.approve(bridgeAddress, tokenId)
         await tx2.wait()
         console.log('ℹ️ Approved')
-
-        console.log('ℹ️ Gas estimating...')
-        const estimateGas = await bridge.sendERC721.staticCall(
-          targetChainSettings.evmChainId,
-          nftAddress,
-          tokenId,
-          {
-            value: fee + 256000n
-          }
-        )
-
-        console.log('ℹ️ Gas estimate', estimateGas)
 
         await bridge.sendERC721(
           targetChainSettings.evmChainId,
           nftAddress,
           tokenId,
           {
-            value: fee + 25026000n
+            value: fee + 2560000n
           }
         )
 

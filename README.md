@@ -49,7 +49,7 @@ pnpm verify --network [networkid] --contract contracts/[ContractName].sol:[Contr
 enabling onramp as the destination chain and offramp as the source chain
 
 ```shell
-pnpm hardhat set-chain-settings --network 43113 --bridge-address 0xC6E1156D6047E7980e3c581d5c16c979b8406467 --evm-chain-id 420 --non-evm-chain-id 2664363617261496610 --adapter-address 0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8 ---target-adapter-address 0xeb52e9ae4a9fb37172978642d4c141ef53876f26 --is-enabled true
+pnpm hardhat set-chain-settings --network 43113 --bridge-address 0xC6E1156D6047E7980e3c581d5c16c979b8406467 --evm-chain-id 420 --non-evm-chain-id 2664363617261496610 --adapter-address 0x2D80f3e88538aE935cE8820165A3f17e6DD0D4A8 ---target-adapter-address 0xeb52e9ae4a9fb37172978642d4c141ef53876f26 --is-enabled true --gas-limit 24578110
 ```
 
 ### Setup bridge adapter
