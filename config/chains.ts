@@ -32,8 +32,7 @@ export const avalancheFuji: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true,
-  gasPrice: 25000000000
+  testnet: true
 }
 
 export const polygonMumbai: Chain = {
@@ -44,7 +43,7 @@ export const polygonMumbai: Chain = {
   nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
   rpcUrls: {
     protocol: {
-      http: ['https://rpc.ankr.com/polygon_mumbai']
+      http: [process.env.PUBLIC_NETWORK_80001_HTTP_RPC!]
     },
     infura: {
       http: ['https://polygon-mumbai.infura.io/v3']
@@ -116,8 +115,7 @@ export const optimismGoerli: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true,
-  gasPrice: 210000
+  testnet: true
 }
 
 export const baseGoerli: Chain = {
@@ -157,6 +155,5 @@ export const baseGoerli: Chain = {
       blockCreated: 0
     }
   },
-  testnet: true,
-  gasPrice: 210000
+  testnet: true
 }

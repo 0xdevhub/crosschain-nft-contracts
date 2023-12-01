@@ -16,6 +16,8 @@ import { Chain } from './config/types'
 import { NetworksUserConfig } from 'hardhat/types'
 
 const config: HardhatUserConfig = {
+  defaultNetwork: 'hardhat',
+
   networks:
     process.env.NODE_ENV !== 'development'
       ? reduce(
@@ -24,7 +26,7 @@ const config: HardhatUserConfig = {
             acc[chain.id] = {
               url: chain.rpcUrls.default.http[0],
               accounts: chain.accounts,
-              gasPrice: chain.gasPrice ?? 210000
+              gasPrice: chain.gasPrice
             }
 
             return acc
@@ -43,7 +45,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 800
       }
     }
   },
