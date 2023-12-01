@@ -23,4 +23,4 @@ pnpm hardhat setup-bridge-adapter --network 80001 --bridge-address 0xAa38cabdEd0
 
 =========================
 
-pnpm hardhat deploy-test-nft-contract --network 80001 --token-name "hello" --token-symbol "world" --bridge-address 0x3b89046C763c3C8aCD5b62d3c61805b205395957 --adapter-address 0x3fb3D961fFB2f632748Bdb22F7AfC141384A38EF --target-network 43113 --account-index 1
+pnpm hardhat deploy-test-nft-contract --network 80001 --token-name "hello" --token-symbol "world" --bridge-address 0xAa38cabdEd065835861d5Bc0dAed06bfc6a94062 --adapter-address 0x01433417E5C1Bd6468CEE60CA3260A730Af75d58 --target-network 43113 --account-index 1

@@ -169,6 +169,15 @@ task('deploy-test-nft-contract', 'deploy nft contract')
 
         console.log('ℹ️ Gas estimate', estimateGas)
 
+        await bridge.sendERC721.staticCall(
+          targetChainSettings.evmChainId,
+          nftAddress,
+          tokenId,
+          {
+            value: expectedInputValue
+          }
+        )
+
         const tx3 = await bridge.sendERC721(
           targetChainSettings.evmChainId,
           nftAddress,

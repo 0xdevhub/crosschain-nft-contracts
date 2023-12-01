@@ -22,5 +22,3 @@ pnpm hardhat set-chain-settings --network 43113 --bridge-address 0x0b17e2c8aA8cE
 pnpm hardhat setup-bridge-adapter --network 43113 --bridge-address 0x0b17e2c8aA8cEB71E6C5d40AdB77e57966b31651 --adapter-address 0xD1c5abc7c1673fF9ab5fb21a2EF91d7a3EB539C3 --adapter-router-address 0x554472a2720e5e7d5d3c817529aba05eed5f82d8 --adapter-bytes4-signature 0x85572ffb --adapter-contract-name "CCIPAdapter"
 
 =========================
-
-pnpm hardhat deploy-test-nft-contract --network 43113 --token-name "hello" --token-symbol "world" --bridge-address 0x0b17e2c8aA8cEB71E6C5d40AdB77e57966b31651 --adapter-address 0xD1c5abc7c1673fF9ab5fb21a2EF91d7a3EB539C3 --target-network 80001

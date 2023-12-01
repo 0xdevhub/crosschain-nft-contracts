@@ -75,8 +75,6 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
 
         console.log(`ℹ️ Grating roles to contracts`)
 
-        await accessManagementContract.waitForDeployment()
-
         /**
          *
          */
@@ -143,8 +141,6 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
           deployer
         )
 
-        await adapter.waitForDeployment()
-
         const adapterFunctionSelector = adapter.interface.getFunction(
           adapterFunctionSelectorName
         )?.selector!
@@ -190,7 +186,6 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         )
 
         const bridge = await hre.ethers.getContractAt('Bridge', deployer)
-        await bridge.waitForDeployment()
 
         const bridgeFunctionSelector = bridge.interface.getFunction(
           bridgeFunctionSelectorName

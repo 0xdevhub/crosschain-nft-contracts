@@ -77,8 +77,6 @@ task('set-chain-settings', 'set chain settings')
           deployer
         )
 
-        await bridgeContract.waitForDeployment()
-
         console.log('ℹ️ Setting onramp chainSettings')
 
         const expectedGasMin =
