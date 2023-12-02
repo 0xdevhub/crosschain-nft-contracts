@@ -204,6 +204,10 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
 
         console.log('ℹ️ Done and gas used: ', gasUsed6)
 
+        /**
+         *
+         */
+
         spinner.stop()
         console.log(`✅ Roles granted to contracts`)
       } catch (error) {

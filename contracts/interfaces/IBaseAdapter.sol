@@ -22,5 +22,7 @@ interface IBaseAdapter {
 
     function getFee(IBridge.ERC721Send memory payload_) external view returns (uint256);
 
-    function sendMessage(IBridge.ERC721Send memory payload_) external payable;
+    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable;
+
+    function sendMessageUsingERC20(IBridge.ERC721Send memory payload_, uint256 amount_) external;
 }

@@ -3,6 +3,7 @@ pragma solidity 0.8.21;
 
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockCCIPRouter is IRouterClient {
     uint256 public s_fee;
@@ -21,16 +22,21 @@ contract MockCCIPRouter is IRouterClient {
     function getFee(
         uint64 /*destinationChainSelector*/,
         Client.EVM2AnyMessage memory /*message*/
-    ) external view returns (uint256) {
+    ) public view returns (uint256) {
         return s_fee;
     }
 
     function ccipSend(
         uint64 /*destinationChainSelector*/,
-        Client.EVM2AnyMessage calldata /*message*/
+        Client.EVM2AnyMessage calldata message_
     ) external payable returns (bytes32) {
-        /// @dev only for test purpose
-        payable(address(this)).transfer(msg.value);
+        if (message_.feeToken == address(0)) {
+            /// @dev only for test purpose
+            payable(address(this)).transfer(msg.value);
+        } else {
+            IERC20(message_.feeToken).transferFrom(msg.sender, address(this), getFee(0, message_));
+        }
+
         return bytes32(0);
     }
 

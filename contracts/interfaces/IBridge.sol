@@ -12,6 +12,7 @@ interface IBridge {
         uint256 nonEvmChainId;
         address adapter;
         bool isEnabled;
+        /// @dev todo: encode adapter params into bytes to improve with other settings
         uint256 gasLimit;
     }
 
@@ -53,26 +54,19 @@ interface IBridge {
     }
 
     error TransferNotAllowed();
-
     error InsufficientFeeTokenAmount();
-
     error AdapterNotFound();
-
     error AdapterNotEnabled();
-
     error RampTypeNotAllowed();
-
     error WrappedContractNotCreated();
+    error OperationNotSupported();
 
     event EvmChainSettingsSet(uint256 indexed evmChainId_, RampType indexed rampType_);
-
     event ERC721Sent(uint256 evmChainId_, address receiver_, bytes data_);
-
     event ERC721Received(uint256 evmChainId_, address sender_, bytes data_);
-
     event ERC721WrappedCreated(
         uint256 indexed originChainId_,
-        address indexed originalAddress_,
+        address indexed originAddress_,
         address indexed wrappedAddress_
     );
 
@@ -89,7 +83,9 @@ interface IBridge {
 
     function getChainSettings(uint256 evmChainId_, RampType rampType_) external view returns (EvmChainSettings memory);
 
-    function sendERC721(uint256 evmChainId_, address token_, uint256 tokenId_) external payable;
+    function sendERC721UsingERC20(uint256 evmChainId_, address token_, uint256 tokenId_, uint256 quotedFee_) external;
+
+    function sendERC721UsingNative(uint256 evmChainId_, address token_, uint256 tokenId_) external payable;
 
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 

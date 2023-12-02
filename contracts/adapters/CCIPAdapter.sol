@@ -7,13 +7,19 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {IBaseAdapter, BaseAdapter} from "./BaseAdapter.sol";
 import {IBridge} from "../interfaces/IBridge.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract CCIPAdapter is BaseAdapter, CCIPReceiver {
+    address private immutable s_feeToken;
+
     constructor(
         address bridge_,
         address accessManagement_,
-        address router_
-    ) BaseAdapter(bridge_, accessManagement_) CCIPReceiver(router_) {}
+        address router_,
+        address feeToken_
+    ) BaseAdapter(bridge_, accessManagement_) CCIPReceiver(router_) {
+        s_feeToken = feeToken_;
+    }
 
     /// @inheritdoc IBaseAdapter
     function getFee(IBridge.ERC721Send memory payload_) public view override returns (uint256) {
@@ -26,23 +32,29 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
         return _getFee(uint64(payload_.toChain), evm2AnyMessage);
     }
 
+    function _getFee(uint64 toChain, Client.EVM2AnyMessage memory evm2AnyMessage) internal view returns (uint256) {
+        return IRouterClient(router()).getFee(toChain, evm2AnyMessage);
+    }
+
     function _buildCCIPMessage(
         address receiver_,
         bytes memory data_,
         uint256 gasLimit_
-    ) private pure returns (Client.EVM2AnyMessage memory) {
+    ) private view returns (Client.EVM2AnyMessage memory) {
         return
             Client.EVM2AnyMessage({
                 receiver: abi.encode(receiver_),
                 data: data_,
                 tokenAmounts: new Client.EVMTokenAmount[](0),
+                /// @dev set strict to false to allow send message any time
                 extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: gasLimit_, strict: false})),
+                /// @dev if zero address it will be set to native token
                 feeToken: feeToken()
             });
     }
 
-    function _getFee(uint64 toChain, Client.EVM2AnyMessage memory evm2AnyMessage) internal view returns (uint256) {
-        return IRouterClient(router()).getFee(toChain, evm2AnyMessage);
+    function feeToken() public view override returns (address) {
+        return s_feeToken;
     }
 
     /// @inheritdoc IBaseAdapter
@@ -80,6 +92,18 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
         uint256 quotedFee_,
         uint256 gasLimit_
     ) private {
-        IRouterClient(router()).ccipSend{value: quotedFee_}(toChain, _buildCCIPMessage(receiver_, data_, gasLimit_));
+        if (feeToken() != address(0)) {
+            /// @dev get tokens and approve router to spend ERC20 token as fees
+            IERC20(feeToken()).transferFrom(msg.sender, address(this), quotedFee_);
+            IERC20(feeToken()).approve(router(), quotedFee_);
+
+            IRouterClient(router()).ccipSend(toChain, _buildCCIPMessage(receiver_, data_, gasLimit_));
+        } else {
+            /// @dev spend native token as fees
+            IRouterClient(router()).ccipSend{value: quotedFee_}(
+                toChain,
+                _buildCCIPMessage(receiver_, data_, gasLimit_)
+            );
+        }
     }
 }

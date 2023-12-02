@@ -36,6 +36,10 @@ task('deploy-bridge-contract', 'Deploy bridge contract')
         provider
       )
 
+      /**
+       *
+       */
+
       const accessManagementAddress =
         chainConfig.contracts.accessManagement.address
 
@@ -53,6 +57,10 @@ task('deploy-bridge-contract', 'Deploy bridge contract')
       const gasUsed = receipt?.gasUsed || 0n
 
       console.log('ℹ️ Gas used: ', gasUsed)
+
+      /**
+       *
+       */
 
       const bridgeContractAddress = await bridgeContract.getAddress()
 

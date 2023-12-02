@@ -1,19 +1,15 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
 import { AccessManagement } from '@/typechain/contracts/AccessManagement'
-
 import { deployAccessManagementFixture } from '@/test/accessManagement/fixtures'
-
-import {
-  RampType,
-  deployBridgeFixture,
-  deployMockAdapterFixture,
-  deployMockContractGeneralFixture,
-  deployMockNFTFixture
-} from './fixture'
+import { RampType, deployBridgeFixture } from './fixture'
+import { deployMockERC721Fixture } from '@/test/mocks/erc721Fixture'
+import { deployMockAdapterFixture } from '@/test/mocks/adapterFixture'
+import { deployMockContractGeneralFixture } from '@/test/mocks/commonFixture'
 import { abiCoder, getSigners } from '@/scripts/utils'
 import { ethers } from 'hardhat'
 import { ADAPTER_ROLE } from '@/scripts/constants'
+import { deployMockERC20Fixture } from '../mocks/erc20Fixture'
 
 describe('Bridge', function () {
   let accessManagement: AccessManagement
@@ -38,6 +34,7 @@ describe('Bridge', function () {
 
       expect(chainId).to.be.equal(deployedChainId)
     })
+
     it('should set chain settings by evm chain id', async function () {
       const adapterAddress = '0x00000000000000000000000000000000000000D2'
 
@@ -126,11 +123,12 @@ describe('Bridge', function () {
   })
 
   describe('Commit OnRamp', () => {
-    it('should transfer ERC721 to bridge contract', async function () {
+    it('should transfer ERC721 to bridge contract using native as fee token', async function () {
       const evmChainId = 137
 
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
 
       const { bridge, bridgeAddress } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
@@ -139,7 +137,9 @@ describe('Bridge', function () {
       const nonEvmChainId = 12334124515
       const isEnabled = true
 
-      const { mockAdapterAddress } = await loadFixture(deployMockAdapterFixture)
+      const { mockAdapter, mockAdapterAddress } = await loadFixture(
+        deployMockAdapterFixture
+      )
 
       await bridge.setChainSetting(
         evmChainId,
@@ -150,21 +150,85 @@ describe('Bridge', function () {
         0n
       )
 
+      const expectedAmount = 100_000
+
+      await mockAdapter.setFee(expectedAmount)
+
       const tokenId = 1
-      await mockNFT.mint(tokenId)
-      await mockNFT.approve(bridgeAddress, tokenId)
+      await mockERC721.mint(tokenId)
+      await mockERC721.approve(bridgeAddress, tokenId)
 
-      await bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
+      await bridge.sendERC721UsingNative(
+        evmChainId,
+        mockERC721Address,
+        tokenId,
+        {
+          value: expectedAmount
+        }
+      )
 
-      const nftOwner = await mockNFT.ownerOf(tokenId)
-      expect(nftOwner).to.be.equal(bridgeAddress)
+      const ERC721Owner = await mockERC721.ownerOf(tokenId)
+      expect(ERC721Owner).to.be.equal(bridgeAddress)
+    })
+
+    it('should transfer ERC721 to bridge contract using ERC20 token as fee', async function () {
+      const evmChainId = 137
+
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
+
+      const { mockERC20, mockERC20Address } = await loadFixture(
+        deployMockERC20Fixture
+      )
+
+      const { bridge, bridgeAddress } = await loadFixture(
+        deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
+      )
+
+      const nonEvmChainId = 12334124515
+      const isEnabled = true
+
+      const { mockAdapter, mockAdapterAddress } = await loadFixture(
+        deployMockAdapterFixture
+      )
+
+      await mockAdapter.setFeeToken(mockERC20Address)
+
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OnRamp,
+        isEnabled,
+        0n
+      )
+
+      const expectedAmount = 100_000n
+      await mockAdapter.setFee(expectedAmount)
+
+      const tokenId = 1
+      await mockERC721.mint(tokenId)
+      await mockERC721.approve(bridgeAddress, tokenId)
+      await mockERC20.approve(bridgeAddress, expectedAmount)
+
+      await bridge.sendERC721UsingERC20(
+        evmChainId,
+        mockERC721Address,
+        tokenId,
+        expectedAmount
+      )
+
+      const ERC721Owner = await mockERC721.ownerOf(tokenId)
+      expect(ERC721Owner).to.be.equal(bridgeAddress)
     })
 
     it('should burn ERC721 when transfer to bridge contract if its origin chain', async function () {
       const [currentOwner] = await getSigners()
 
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
 
       const { bridge, bridgeAddress } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress)
@@ -197,7 +261,7 @@ describe('Bridge', function () {
       )
 
       const tokenId = 1
-      await mockNFT.mint(tokenId)
+      await mockERC721.mint(tokenId)
 
       const encodedData = abiCoder.encode(
         ['address', 'bytes', 'bytes'],
@@ -205,14 +269,14 @@ describe('Bridge', function () {
           currentOwner.address,
           abiCoder.encode(
             ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId]
+            [evmChainId, mockERC721Address, tokenId]
           ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId)
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
             ]
           )
         ]
@@ -246,16 +310,21 @@ describe('Bridge', function () {
       )
 
       await wrappedToken.approve(bridgeAddress, tokenId)
-      await bridge.sendERC721(evmChainId, wrappedTokenAddress, tokenId)
+      await bridge.sendERC721UsingNative(
+        evmChainId,
+        wrappedTokenAddress,
+        tokenId
+      )
 
-      const balanceOfNFT = await mockNFT.balanceOf(currentOwner.address)
-      expect(balanceOfNFT).to.be.equal(0)
+      const balanceOfERC721 = await mockERC721.balanceOf(currentOwner.address)
+      expect(balanceOfERC721).to.be.equal(0)
     })
 
     it('should emit event on transfer ERC721 to bridge contract', async function () {
       const [currentOwner] = await getSigners()
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
 
       const { bridge, bridgeAddress } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress)
@@ -286,8 +355,8 @@ describe('Bridge', function () {
       )
 
       const tokenId = 1
-      await mockNFT.mint(tokenId)
-      await mockNFT.approve(bridgeAddress, tokenId)
+      await mockERC721.mint(tokenId)
+      await mockERC721.approve(bridgeAddress, tokenId)
 
       const encodedData = abiCoder.encode(
         ['address', 'bytes', 'bytes'],
@@ -295,30 +364,33 @@ describe('Bridge', function () {
           currentOwner.address,
           abiCoder.encode(
             ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId]
+            [evmChainId, mockERC721Address, tokenId]
           ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId)
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
             ]
           )
         ]
       )
 
-      await expect(bridge.sendERC721(evmChainId, mockNFTAddress, tokenId))
+      await expect(
+        bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
+      )
         .to.emit(bridge, 'ERC721Sent')
         .withArgs(evmChainId, mockAdapterAddress, encodedData)
     })
 
     describe('Checks', () => {
-      it('should revert if the amount sent as fee token is insufficient', async function () {
+      it('should revert if the amount sent as fee token is insufficient using native', async function () {
         const evmChainId = 137
 
-        const { mockNFTAddress, mockNFT } =
-          await loadFixture(deployMockNFTFixture)
+        const { mockERC721Address, mockERC721 } = await loadFixture(
+          deployMockERC721Fixture
+        )
 
         const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
@@ -342,33 +414,168 @@ describe('Bridge', function () {
         )
 
         const tokenId = 1
-        await mockNFT.mint(tokenId)
-        await mockNFT.approve(bridgeAddress, tokenId)
+        await mockERC721.mint(tokenId)
+        await mockERC721.approve(bridgeAddress, tokenId)
 
         await expect(
-          bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
+          bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
         ).to.be.revertedWithCustomError(bridge, 'InsufficientFeeTokenAmount')
       })
 
+      it('should revert if the amount sent as fee token is insufficient using ERC20', async function () {
+        const evmChainId = 137
+
+        const { mockERC721Address, mockERC721 } = await loadFixture(
+          deployMockERC721Fixture
+        )
+
+        const { mockERC20Address, mockERC20 } = await loadFixture(
+          deployMockERC20Fixture
+        )
+
+        const { bridge, bridgeAddress } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
+        )
+
+        const nonEvmChainId = 12334124515
+        const isEnabled = true
+
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
+          deployMockAdapterFixture
+        )
+
+        await mockAdapter.setFee(200_000n)
+        await mockAdapter.setFeeToken(mockERC20Address)
+        await bridge.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          mockAdapterAddress,
+          RampType.OnRamp,
+          isEnabled,
+          0n
+        )
+
+        const tokenId = 1
+        await mockERC721.mint(tokenId)
+        await mockERC721.approve(bridgeAddress, tokenId)
+        await mockERC20.approve(bridgeAddress, 100_000n)
+
+        await expect(
+          bridge.sendERC721UsingERC20(
+            evmChainId,
+            mockERC721Address,
+            tokenId,
+            100_000n
+          )
+        ).to.be.revertedWithCustomError(bridge, 'InsufficientFeeTokenAmount')
+      })
+
+      it('should revert if call send erc721 using native if adapter is erc20', async function () {
+        const evmChainId = 137
+
+        const { mockERC721Address, mockERC721 } = await loadFixture(
+          deployMockERC721Fixture
+        )
+
+        const { bridge, bridgeAddress } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
+        )
+
+        const nonEvmChainId = 12334124515
+        const isEnabled = true
+
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
+          deployMockAdapterFixture
+        )
+
+        await mockAdapter.setFeeToken(mockERC721Address)
+
+        await bridge.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          mockAdapterAddress,
+          RampType.OnRamp,
+          isEnabled,
+          0n
+        )
+
+        const tokenId = 1
+        await mockERC721.mint(tokenId)
+        await mockERC721.approve(bridgeAddress, tokenId)
+
+        await expect(
+          bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
+        ).to.be.revertedWithCustomError(bridge, 'OperationNotSupported')
+      })
+
+      it('should revert if call send erc721 using erc20 if adapter is native', async function () {
+        const evmChainId = 137
+
+        const { mockERC721Address, mockERC721 } = await loadFixture(
+          deployMockERC721Fixture
+        )
+
+        const { mockERC20 } = await loadFixture(deployMockERC20Fixture)
+
+        const { bridge, bridgeAddress } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
+        )
+
+        const nonEvmChainId = 12334124515
+        const isEnabled = true
+
+        const { mockAdapterAddress, mockAdapter } = await loadFixture(
+          deployMockAdapterFixture
+        )
+
+        const expectedAmount = 100_000n
+
+        await mockAdapter.setFee(expectedAmount)
+
+        await bridge.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          mockAdapterAddress,
+          RampType.OnRamp,
+          isEnabled,
+          0n
+        )
+
+        const tokenId = 1
+        await mockERC721.mint(tokenId)
+        await mockERC721.approve(bridgeAddress, tokenId)
+        await mockERC20.approve(bridgeAddress, expectedAmount)
+
+        await expect(
+          bridge.sendERC721UsingERC20(
+            evmChainId,
+            mockERC721Address,
+            tokenId,
+            expectedAmount
+          )
+        ).to.be.revertedWithCustomError(bridge, 'OperationNotSupported')
+      })
+
       it('should revert if call safe transfer from another contract', async function () {
-        const { mockNFT, mockNFTAddress } =
-          await loadFixture(deployMockNFTFixture)
+        const { mockERC721, mockERC721Address } = await loadFixture(
+          deployMockERC721Fixture
+        )
 
         const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
         )
 
         const tokenId = 1
-        await mockNFT.mint(tokenId)
+        await mockERC721.mint(tokenId)
 
         const { mockContractGeneral, mockContractGeneralAddress } =
           await loadFixture(deployMockContractGeneralFixture)
 
-        mockNFT.approve(mockContractGeneralAddress, tokenId)
+        mockERC721.approve(mockContractGeneralAddress, tokenId)
 
         await expect(
-          mockContractGeneral.transferNFTViaContract(
-            mockNFTAddress,
+          mockContractGeneral.transferERC721ViaContract(
+            mockERC721Address,
             tokenId,
             bridgeAddress
           )
@@ -376,8 +583,8 @@ describe('Bridge', function () {
       })
 
       it('should revert if adapter is not valid', async function () {
-        const fakeNFTAddress = ethers.ZeroAddress
-        const fakeNFTTokenId = 0
+        const fakeERC721Address = ethers.ZeroAddress
+        const fakeERC721TokenId = 0
         const [receiver] = await getSigners()
         const { bridge } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
@@ -386,13 +593,18 @@ describe('Bridge', function () {
         const evmChainId = 137
 
         await expect(
-          bridge.sendERC721(evmChainId, fakeNFTAddress, fakeNFTTokenId)
+          bridge.sendERC721UsingNative(
+            evmChainId,
+            fakeERC721Address,
+            fakeERC721TokenId
+          )
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
       })
 
       it('should revert if adapter is not enabled', async function () {
-        const { mockNFT, mockNFTAddress } =
-          await loadFixture(deployMockNFTFixture)
+        const { mockERC721, mockERC721Address } = await loadFixture(
+          deployMockERC721Fixture
+        )
 
         const { bridge, bridgeAddress } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
@@ -416,11 +628,11 @@ describe('Bridge', function () {
         )
 
         const tokenId = 1
-        await mockNFT.mint(tokenId)
-        await mockNFT.approve(bridgeAddress, tokenId)
+        await mockERC721.mint(tokenId)
+        await mockERC721.approve(bridgeAddress, tokenId)
 
         await expect(
-          bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
+          bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
       })
     })
@@ -430,8 +642,9 @@ describe('Bridge', function () {
     it('should create and transfer ERC721 wrapped to receiver', async function () {
       const [currentOwner] = await getSigners()
 
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
       const { bridge, bridgeAddress } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress)
       )
@@ -454,7 +667,7 @@ describe('Bridge', function () {
       )
 
       const tokenId = 1
-      await mockNFT.mint(tokenId)
+      await mockERC721.mint(tokenId)
 
       const encodedData = abiCoder.encode(
         ['address', 'bytes', 'bytes'],
@@ -462,14 +675,14 @@ describe('Bridge', function () {
           currentOwner.address,
           abiCoder.encode(
             ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId]
+            [evmChainId, mockERC721Address, tokenId]
           ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId)
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
             ]
           )
         ]
@@ -509,8 +722,9 @@ describe('Bridge', function () {
     it('should transfer ERC721 wrapped to receiver without create erc721 wrapped when its already created', async function () {
       const [currentOwner] = await getSigners()
 
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
       const { bridge, bridgeAddress } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress)
       )
@@ -534,8 +748,8 @@ describe('Bridge', function () {
 
       const tokenId = 1
       const tokenId2 = 2
-      await mockNFT.mint(tokenId)
-      await mockNFT.mint(tokenId2)
+      await mockERC721.mint(tokenId)
+      await mockERC721.mint(tokenId2)
 
       const encodedData = abiCoder.encode(
         ['address', 'bytes', 'bytes'],
@@ -543,14 +757,14 @@ describe('Bridge', function () {
           currentOwner.address,
           abiCoder.encode(
             ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId]
+            [evmChainId, mockERC721Address, tokenId]
           ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId)
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
             ]
           )
         ]
@@ -562,14 +776,14 @@ describe('Bridge', function () {
           currentOwner.address,
           abiCoder.encode(
             ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId2]
+            [evmChainId, mockERC721Address, tokenId2]
           ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId2)
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId2)
             ]
           )
         ]
@@ -619,8 +833,9 @@ describe('Bridge', function () {
       /// send erc721 to bridge contract
       const evmChainId = 137
 
-      const { mockNFT, mockNFTAddress } =
-        await loadFixture(deployMockNFTFixture)
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
 
       const { bridge, bridgeAddress } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress, evmChainId)
@@ -643,9 +858,9 @@ describe('Bridge', function () {
       )
 
       const tokenId = 1
-      await mockNFT.mint(tokenId)
-      await mockNFT.approve(bridgeAddress, tokenId)
-      await bridge.sendERC721(evmChainId, mockNFTAddress, tokenId)
+      await mockERC721.mint(tokenId)
+      await mockERC721.approve(bridgeAddress, tokenId)
+      await bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
 
       /// Receive erc721 from bridge contract
 
@@ -664,14 +879,14 @@ describe('Bridge', function () {
           currentOwner.address,
           abiCoder.encode(
             ['uint256', 'address', 'uint256'],
-            [evmChainId, mockNFTAddress, tokenId]
+            [evmChainId, mockERC721Address, tokenId]
           ),
           abiCoder.encode(
             ['string', 'string', 'string'],
             [
-              await mockNFT.name(),
-              await mockNFT.symbol(),
-              await mockNFT.tokenURI(tokenId)
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
             ]
           )
         ]
@@ -695,8 +910,8 @@ describe('Bridge', function () {
 
       await mockAdapter.receiveMessage(payload, bridgeAddress)
 
-      const nftOwner = await mockNFT.ownerOf(tokenId)
-      expect(nftOwner).to.be.equal(currentOwner.address)
+      const ERC721Owner = await mockERC721.ownerOf(tokenId)
+      expect(ERC721Owner).to.be.equal(currentOwner.address)
     })
 
     describe('Checks', () => {

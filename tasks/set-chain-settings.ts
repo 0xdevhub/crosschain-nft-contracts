@@ -66,6 +66,9 @@ task('set-chain-settings', 'set chain settings')
           chainConfig.accounts[accountIndex],
           provider
         )
+        /**
+         *
+         */
 
         console.log(
           `ℹ️ Setting chain settings to bridge ${bridgeAddress} in ${chainConfig.id} to the following chainId ${evmChainId} `
@@ -118,6 +121,9 @@ task('set-chain-settings', 'set chain settings')
         const gasUsed2 = receipt2?.gasUsed || 0n
         console.log('ℹ️ Done and gas used: ', gasUsed2)
 
+        /**
+         *
+         */
         spinner.stop()
         console.log(
           `✅ ChainId ${evmChainId} settings set to bridge in ${chainConfig.id}.`

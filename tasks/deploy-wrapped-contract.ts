@@ -44,6 +44,10 @@ task('deploy-wrapped-token', 'deploy wrapped token')
           provider
         )
 
+        /**
+         *
+         */
+
         const tokenId = 1
 
         console.log(
@@ -51,7 +55,7 @@ task('deploy-wrapped-token', 'deploy wrapped token')
         )
 
         const nft = await hre.ethers.deployContract(
-          'MockNFT',
+          'mockERC721',
           [tokenName, tokenSymbol],
           deployer
         )
@@ -73,6 +77,10 @@ task('deploy-wrapped-token', 'deploy wrapped token')
         const gasUsed2 = receipt2?.gasUsed || 0n
 
         console.log('ℹ️ Done and gas used: ', gasUsed2)
+
+        /**
+         *
+         */
 
         const nftAddress = await nft.getAddress()
 

@@ -6,7 +6,7 @@ import { RampType } from './set-chain-settings'
 
 const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
-export type DeployTestNFTContractTask = {
+export type DeployTestERC721ContractTask = {
   tokenName: string
   tokenSymbol: string
   bridgeAddress: string
@@ -15,7 +15,7 @@ export type DeployTestNFTContractTask = {
   accountIndex: number
 }
 
-task('deploy-test-nft-contract', 'deploy nft contract')
+task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
   .addParam('tokenName', 'token name')
   .addParam('tokenSymbol', 'token symbol')
   .addParam('bridgeAddress', 'bridge address')
@@ -36,7 +36,7 @@ task('deploy-test-nft-contract', 'deploy nft contract')
         targetNetwork,
         adapterAddress,
         accountIndex
-      }: DeployTestNFTContractTask,
+      }: DeployTestERC721ContractTask,
       hre
     ) => {
       spinner.start()
@@ -59,22 +59,22 @@ task('deploy-test-nft-contract', 'deploy nft contract')
         )
 
         console.log(
-          `ℹ️ Deploying NFT ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
+          `ℹ️ Deploying ERC721 ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
         )
 
-        const nft = await hre.ethers.deployContract(
-          'MockNFT',
+        const ERC721 = await hre.ethers.deployContract(
+          'mockERC721',
           [tokenName, tokenSymbol],
           deployer
         )
 
-        await nft.waitForDeployment()
+        await ERC721.waitForDeployment()
 
         const tokenId = 1
 
         console.log('ℹ️ Minting: ', tokenId)
 
-        const tx = await nft.mint(tokenId)
+        const tx = await ERC721.mint(tokenId)
         const receipt = await tx.wait()
         const gasUsed = receipt?.gasUsed || 0n
 
@@ -109,7 +109,7 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           RampType.OnRamp
         )
 
-        const nftAddress = await nft.getAddress()
+        const ERC721Address = await ERC721.getAddress()
 
         const payload = {
           toChain: targetChainSettings.nonEvmChainId,
@@ -121,11 +121,11 @@ task('deploy-test-nft-contract', 'deploy nft contract')
               deployer.address,
               abiCoder.encode(
                 ['uint256', 'address', 'uint256'],
-                [chainConfig.id, nftAddress, tokenId]
+                [chainConfig.id, ERC721Address, tokenId]
               ),
               abiCoder.encode(
                 ['string', 'string', 'string'],
-                [tokenName, tokenSymbol, await nft.tokenURI(tokenId)]
+                [tokenName, tokenSymbol, await ERC721.tokenURI(tokenId)]
               )
             ]
           )
@@ -139,8 +139,8 @@ task('deploy-test-nft-contract', 'deploy nft contract')
          *
          */
 
-        console.log('ℹ️ Approving NFT to bridge')
-        const tx2 = await nft.approve(bridgeAddress, tokenId)
+        console.log('ℹ️ Approving ERC721 to bridge')
+        const tx2 = await ERC721.approve(bridgeAddress, tokenId)
         await tx2.wait()
 
         const receipt2 = await tx2.wait()
@@ -158,9 +158,9 @@ task('deploy-test-nft-contract', 'deploy nft contract')
           chainConfig.crosschain.gasRequiredDeploy +
           chainConfig.crosschain.gasRequiredToMint
 
-        const estimateGas = await bridge.sendERC721.estimateGas(
+        const estimateGas = await bridge.sendERC721UsingNative.estimateGas(
           targetChainSettings.evmChainId,
-          nftAddress,
+          ERC721Address,
           tokenId,
           {
             value: expectedInputValue
@@ -169,18 +169,18 @@ task('deploy-test-nft-contract', 'deploy nft contract')
 
         console.log('ℹ️ Gas estimate', estimateGas)
 
-        await bridge.sendERC721.staticCall(
+        await bridge.sendERC721UsingNative.staticCall(
           targetChainSettings.evmChainId,
-          nftAddress,
+          ERC721Address,
           tokenId,
           {
             value: expectedInputValue
           }
         )
 
-        const tx3 = await bridge.sendERC721(
+        const tx3 = await bridge.sendERC721UsingNative(
           targetChainSettings.evmChainId,
-          nftAddress,
+          ERC721Address,
           tokenId,
           {
             value: expectedInputValue
@@ -196,16 +196,16 @@ task('deploy-test-nft-contract', 'deploy nft contract')
          *
          */
 
-        const nftOwner = await nft.ownerOf(tokenId)
+        const ERC721Owner = await ERC721.ownerOf(tokenId)
 
         spinner.stop()
         console.log(
-          `✅ NFT ${tokenName} deployed and transfered to ${nftOwner}`
+          `✅ ERC721 ${tokenName} deployed and transfered to ${ERC721Owner}`
         )
       } catch (error) {
         spinner.stop()
         console.log(error)
-        console.log(`❌ NFT ${tokenName}  deploy failed`)
+        console.log(`❌ ERC721 ${tokenName}  deploy failed`)
       }
     }
   )
