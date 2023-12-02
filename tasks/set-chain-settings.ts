@@ -86,7 +86,7 @@ task('set-chain-settings', 'set chain settings')
           chainConfig.crosschain.gasRequiredDeploy +
           chainConfig.crosschain.gasRequiredToMint
         const gasLimitValue =
-          expectedGasMin > gasLimit ? expectedGasMin : gasLimit
+          expectedGasMin > BigInt(gasLimit) ? expectedGasMin : BigInt(gasLimit)
 
         const tx = await bridgeContract.setChainSetting(
           evmChainId,
