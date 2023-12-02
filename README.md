@@ -110,6 +110,48 @@ pnpm hardhat setup-bridge-adapter --network 80001 --bridge-address 0x96D103BCb67
 
 `--account-index` - {optional} account index (default 0)
 
+### Bridge ERC721 using ERC20 token
+
+```shell
+pnpm hardhat bridge-erc721-using-erc20 --network 80001 --token-name "hello" --token-symbol "world" --bridge-address 0xAa38cabdEd065835861d5Bc0dAed06bfc6a94062 --adapter-address 0x01433417E5C1Bd6468CEE60CA3260A730Af75d58 --target-network 43113 --fee-token-name LINK
+```
+
+#### parameters
+
+`--token-name` - Token name
+
+`--token-symbol` - Token symbol
+
+`--bridge-address` - Bridge contract address
+
+`--adapter-address` - Adapter contract address
+
+`--target-network` - Target network id
+
+`--fee-token-name` - Fee token name (eg: LINK)
+
+`--account-index` - {optional} account index (default 0)
+
+### Bridge ERC721 using Native token
+
+```shell
+pnpm hardhat bridge-erc721-using-native --network 80001 --token-name "hello" --token-symbol "world" --bridge-address 0xAa38cabdEd065835861d5Bc0dAed06bfc6a94062 --adapter-address 0x01433417E5C1Bd6468CEE60CA3260A730Af75d58 --target-network 43113
+```
+
+#### parameters
+
+`--token-name` - Token name
+
+`--token-symbol` - Token symbol
+
+`--bridge-address` - Bridge contract address
+
+`--adapter-address` - Adapter contract address
+
+`--target-network` - Target network id
+
+`--account-index` - {optional} account index (default 0)
+
 ### Verifing contracts
 
 ```shell

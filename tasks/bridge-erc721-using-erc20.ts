@@ -12,7 +12,7 @@ export type DeployTestERC721ContractTask = {
   bridgeAddress: string
   adapterAddress: string
   targetNetwork: number
-  feeTokenName: string
+  feeTokenName: 'LINK'
   accountIndex: number
 }
 
@@ -66,7 +66,7 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
         )
 
         const ERC721 = await hre.ethers.deployContract(
-          'mockERC721',
+          'MockERC721',
           [tokenName, tokenSymbol],
           deployer
         )
@@ -149,17 +149,34 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
         const receipt2 = await tx2.wait()
         const gasUsed2 = receipt2?.gasUsed || 0n
         console.log('ℹ️ Done and gas used: ', gasUsed2)
+        /**
+         *
+         */
+
+        const expectedInputValue =
+          fee +
+          chainConfig.crosschain.gasRequiredDeploy +
+          chainConfig.crosschain.gasRequiredToMint
+
+        console.log(`ℹ️ Approving bridge to spend ERC20 tokens`)
+
+        const ERC20 = await hre.ethers.getContractAt(
+          'ERC20',
+          chainConfig.assets[feeTokenName].address,
+          deployer
+        )
+
+        const tx4 = await ERC20.approve(bridgeAddress, expectedInputValue)
+        const receipt4 = await tx4.wait()
+        const gasUsed4 = receipt4?.gasUsed || 0n
+
+        console.log('ℹ️ Done and gas used: ', gasUsed4)
 
         /**
          *
          */
 
         console.log('ℹ️ Estimating gas')
-
-        const expectedInputValue =
-          fee +
-          chainConfig.crosschain.gasRequiredDeploy +
-          chainConfig.crosschain.gasRequiredToMint
 
         const estimateGas = await bridge.sendERC721UsingERC20.estimateGas(
           targetChainSettings.evmChainId,
@@ -175,14 +192,6 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
          */
 
         console.log(`ℹ️ Sending ERC721 to bridge using ${feeTokenName}`)
-
-        const ERC20 = await hre.ethers.getContractAt(
-          'ERC20',
-          chainConfig.assets[feeTokenName].address,
-          deployer
-        )
-
-        await ERC20.approve(bridgeAddress, expectedInputValue)
 
         await bridge.sendERC721UsingERC20.staticCall(
           targetChainSettings.evmChainId,

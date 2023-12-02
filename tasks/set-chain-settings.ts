@@ -17,7 +17,7 @@ export type SetChainSettingsParams = {
   adapterAddress: string
   targetAdapterAddress: string
   isEnabled: boolean
-  gasLimit: number
+  gasLimit: bigint
   accountIndex: number
 }
 
@@ -28,7 +28,7 @@ task('set-chain-settings', 'set chain settings')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetAdapterAddress', 'target adapter address')
   .addParam('isEnabled', 'set chain settings is enabled')
-  .addOptionalParam('gasLimit', 'gas limit', 200_000n, types.int)
+  .addOptionalParam('gasLimit', 'gas limit', '200000', types.string)
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
