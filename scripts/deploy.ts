@@ -1,7 +1,7 @@
 import { Spinner } from './spinner'
 import cliSpinner from 'cli-spinners'
 
-const spinner: Spinner = new Spinner(cliSpinner.triangle)
+const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 
 const deploy = async () => {
   console.log(`ℹ️  Deploying...`)

@@ -10,7 +10,7 @@ import {
   ROUTER_ROLE_DELAY
 } from '@/scripts/constants'
 
-const spinner: Spinner = new Spinner(cliSpinner.triangle)
+const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 import { allowedChainsConfig } from '@/config/config'
 
 export type SetupBridgeAdapterTask = {

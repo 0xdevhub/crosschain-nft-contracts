@@ -8,7 +8,7 @@ export enum RampType {
   OffRamp
 }
 
-const spinner: Spinner = new Spinner(cliSpinner.triangle)
+const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 
 export type SetChainSettingsParams = {
   bridgeAddress: string

@@ -3,7 +3,7 @@ import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 
-const spinner: Spinner = new Spinner(cliSpinner.triangle)
+const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 
 export type DeployWrappedTokenTask = {
   accountIndex: number

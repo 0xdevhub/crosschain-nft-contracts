@@ -4,7 +4,7 @@ import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 import { ethers } from 'ethers'
 
-const spinner: Spinner = new Spinner(cliSpinner.triangle)
+const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 
 export type DeployBridgeContractTask = {
   adapter: 'CCIPAdapter'
