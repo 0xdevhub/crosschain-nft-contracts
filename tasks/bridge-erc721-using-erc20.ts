@@ -12,6 +12,7 @@ export type DeployTestERC721ContractTask = {
   bridgeAddress: string
   adapterAddress: string
   targetNetwork: number
+  feeTokenName: string
   accountIndex: number
 }
 
@@ -21,6 +22,7 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
   .addParam('bridgeAddress', 'bridge address')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetNetwork', 'target network')
+  .addParam('feeTokenName', 'fee token address')
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
@@ -35,7 +37,8 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
         bridgeAddress,
         targetNetwork,
         adapterAddress,
-        accountIndex
+        accountIndex,
+        feeTokenName
       }: DeployTestERC721ContractTask,
       hre
     ) => {
@@ -158,33 +161,41 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
           chainConfig.crosschain.gasRequiredDeploy +
           chainConfig.crosschain.gasRequiredToMint
 
-        const estimateGas = await bridge.sendERC721UsingNative.estimateGas(
+        const estimateGas = await bridge.sendERC721UsingERC20.estimateGas(
           targetChainSettings.evmChainId,
           ERC721Address,
           tokenId,
-          {
-            value: expectedInputValue
-          }
+          expectedInputValue
         )
 
         console.log('ℹ️ Gas estimate', estimateGas)
 
-        await bridge.sendERC721UsingNative.staticCall(
-          targetChainSettings.evmChainId,
-          ERC721Address,
-          tokenId,
-          {
-            value: expectedInputValue
-          }
+        /**
+         *
+         */
+
+        console.log(`ℹ️ Sending ERC721 to bridge using ${feeTokenName}`)
+
+        const ERC20 = await hre.ethers.getContractAt(
+          'ERC20',
+          chainConfig.assets[feeTokenName].address,
+          deployer
         )
 
-        const tx3 = await bridge.sendERC721UsingNative(
+        await ERC20.approve(bridgeAddress, expectedInputValue)
+
+        await bridge.sendERC721UsingERC20.staticCall(
           targetChainSettings.evmChainId,
           ERC721Address,
           tokenId,
-          {
-            value: expectedInputValue
-          }
+          expectedInputValue
+        )
+
+        const tx3 = await bridge.sendERC721UsingERC20(
+          targetChainSettings.evmChainId,
+          ERC721Address,
+          tokenId,
+          expectedInputValue
         )
 
         const receipt3 = await tx3.wait()

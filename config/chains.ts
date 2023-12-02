@@ -36,6 +36,12 @@ export const avalancheFuji: Chain = {
   crosschain: {
     gasRequiredDeploy: 1206898n,
     gasRequiredToMint: 68282n
+  },
+  assets: {
+    LINK: {
+      address: '0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846',
+      decimals: 18
+    }
   }
 }
 
@@ -83,6 +89,12 @@ export const polygonMumbai: Chain = {
   crosschain: {
     gasRequiredDeploy: 1207276n,
     gasRequiredToMint: 68282n
+  },
+  assets: {
+    LINK: {
+      address: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
+      decimals: 18
+    }
   }
 }
 
@@ -127,6 +139,12 @@ export const optimismGoerli: Chain = {
   crosschain: {
     gasRequiredDeploy: 1206898n,
     gasRequiredToMint: 68282n
+  },
+  assets: {
+    LINK: {
+      address: '0xdc2CC710e42857672E7907CF474a69B63B93089f',
+      decimals: 18
+    }
   }
 }
 
@@ -171,5 +189,11 @@ export const baseGoerli: Chain = {
   crosschain: {
     gasRequiredDeploy: 1206898n,
     gasRequiredToMint: 68282n
+  },
+  assets: {
+    LINK: {
+      address: '0x6D0F8D488B669aa9BA2D0f0b7B75a88bf5051CD3',
+      decimals: 18
+    }
   }
 }

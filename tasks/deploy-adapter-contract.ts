@@ -11,19 +11,14 @@ export type DeployBridgeContractTask = {
   bridgeAddress: string
   routerAddress: string
   accountIndex: number
-  feeTokenAddress: string
+  feeTokenName?: 'LINK'
 }
 
 task('deploy-adapter-contract', 'Deploy adapter contract')
   .addParam('adapter', 'Adapter name')
   .addParam('bridgeAddress', 'Bridge address')
   .addParam('routerAddress', 'Router address')
-  .addOptionalParam(
-    'feeTokenAddress',
-    'Fee token address',
-    ethers.ZeroAddress,
-    types.string
-  )
+  .addOptionalParam('feeTokenName', 'Fee token address', '', types.string)
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
@@ -37,7 +32,7 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
         bridgeAddress,
         routerAddress,
         accountIndex,
-        feeTokenAddress
+        feeTokenName
       }: DeployBridgeContractTask,
       hre
     ) => {
@@ -65,7 +60,13 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
         const accessManagementAddress =
           chainConfig.contracts.accessManagement.address
 
-        console.log(`ℹ️  Deploying adapter ${adapter} contract`)
+        const feeTokenAddress = feeTokenName
+          ? chainConfig.assets[feeTokenName].address
+          : ethers.ZeroAddress
+
+        console.log(
+          `ℹ️  Deploying adapter ${adapter} contract with ${feeTokenAddress} as fee token`
+        )
 
         const adapterContract = await hre.ethers.deployContract(
           adapter,

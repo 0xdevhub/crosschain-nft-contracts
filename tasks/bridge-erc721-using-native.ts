@@ -169,6 +169,12 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
 
         console.log('ℹ️ Gas estimate', estimateGas)
 
+        /**
+         *
+         */
+
+        console.log(`ℹ️ Sending ERC721 to bridge using native`)
+
         await bridge.sendERC721UsingNative.staticCall(
           targetChainSettings.evmChainId,
           ERC721Address,

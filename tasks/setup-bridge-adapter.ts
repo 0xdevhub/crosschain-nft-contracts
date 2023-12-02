@@ -17,16 +17,26 @@ export type SetupBridgeAdapterTask = {
   bridgeAddress: string
   adapterAddress: string
   adapterRouterAddress: string
-  adapterBytes4Signature: string
-  adapterContractName: string
+  adapterContractName: 'CCIPAdapter'
   accountIndex: number
+  routerToAdapterFunctionSelector: 'ccipReceive'
+  bridgeToAdapterFunctionSelector:
+    | 'sendMessageUsingNative'
+    | 'sendMessageUsingERC20'
 }
 
 task('setup-bridge-adapter', 'setting up bridge and adapter')
   .addParam('bridgeAddress', 'bridge address')
   .addParam('adapterAddress', 'adapter address')
   .addParam('adapterRouterAddress', 'adapter router address')
-  .addParam('adapterBytes4Signature', 'adapter bytes4 signature')
+  .addParam(
+    'routerToAdapterFunctionSelector',
+    'router to adapter function selector'
+  )
+  .addParam(
+    'bridgeToAdapterFunctionSelector',
+    'bridge to adapter function selector'
+  )
   .addParam('adapterContractName', 'adapter contract name')
   .addOptionalParam(
     'accountIndex',
@@ -40,9 +50,10 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         bridgeAddress,
         adapterAddress,
         adapterRouterAddress,
-        adapterBytes4Signature,
         adapterContractName,
-        accountIndex
+        accountIndex,
+        routerToAdapterFunctionSelector,
+        bridgeToAdapterFunctionSelector
       }: SetupBridgeAdapterTask,
       hre
     ) => {
@@ -67,17 +78,18 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         const accessManagementAddress =
           chainConfig.contracts.accessManagement.address
 
+        console.log(`ℹ️ Grating roles to contracts`)
+
         const accessManagementContract = await hre.ethers.getContractAt(
           'AccessManagement',
           accessManagementAddress,
           deployer
         )
 
-        console.log(`ℹ️ Grating roles to contracts`)
-
         /**
          *
          */
+
         console.log('ℹ️ Granting adapter router role: ', ROUTER_ROLE)
 
         const tx = await accessManagementContract.grantRole(
@@ -129,11 +141,9 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
          * send messages
          */
 
-        const adapterFunctionSelectorName = 'sendMessage'
-
         console.log(
           'ℹ️ Granting bridge role to adapter function selector:',
-          adapterFunctionSelectorName
+          bridgeToAdapterFunctionSelector
         )
 
         const adapter = await hre.ethers.getContractAt(
@@ -141,13 +151,14 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
           deployer
         )
 
-        const adapterFunctionSelector = adapter.interface.getFunction(
-          adapterFunctionSelectorName
-        )?.selector!
+        /// @dev get bytes4 selector of the function
+        const bridgeToAdapterFunctionSelectorBytes4 =
+          adapter.interface.getFunction(bridgeToAdapterFunctionSelector)
+            ?.selector!
 
         const tx4 = await accessManagementContract.setTargetFunctionRole(
           adapterAddress,
-          [adapterFunctionSelector],
+          [bridgeToAdapterFunctionSelectorBytes4],
           BRIDGE_ROLE
         )
 
@@ -158,14 +169,20 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         /**
          * receive messages
          */
+
         console.log(
           'ℹ️ Granting router role to adapter function selector:',
-          adapterBytes4Signature
+          routerToAdapterFunctionSelector
         )
+
+        /// @dev get bytes4 selector of the function
+        const routerToAdapterFunctionSelectorBytes4 =
+          adapter.interface.getFunction(routerToAdapterFunctionSelector)
+            ?.selector!
 
         const tx5 = await accessManagementContract.setTargetFunctionRole(
           adapterAddress,
-          [adapterBytes4Signature],
+          [routerToAdapterFunctionSelectorBytes4],
           ROUTER_ROLE
         )
 
@@ -178,22 +195,22 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
          *
          */
 
-        const bridgeFunctionSelectorName = 'receiveERC721'
+        const adapterToBridgeFunctionSelector = 'receiveERC721'
 
         console.log(
           'ℹ️ Granting adapter role to bridge function selector:',
-          bridgeFunctionSelectorName
+          adapterToBridgeFunctionSelector
         )
 
         const bridge = await hre.ethers.getContractAt('Bridge', deployer)
 
-        const bridgeFunctionSelector = bridge.interface.getFunction(
-          bridgeFunctionSelectorName
-        )?.selector!
+        const adapterToBridgeFunctionSelectorBytes4 =
+          bridge.interface.getFunction(adapterToBridgeFunctionSelector)
+            ?.selector!
 
         const tx6 = await accessManagementContract.setTargetFunctionRole(
           bridgeAddress,
-          [bridgeFunctionSelector],
+          [adapterToBridgeFunctionSelectorBytes4],
           ADAPTER_ROLE
         )
 

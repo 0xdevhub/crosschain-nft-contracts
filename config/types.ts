@@ -33,4 +33,10 @@ export interface Chain {
     gasRequiredToMint: bigint
     gasRequiredDeploy: bigint
   }
+  assets: {
+    [key: string]: {
+      address: string
+      decimals: number
+    }
+  }
 }

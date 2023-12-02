@@ -239,6 +239,11 @@ describe('CCIPAdapter', function () {
         BRIDGE_ROLE
       )
 
+      console.log(
+        'native',
+        ccipAdapter.interface.getFunction('sendMessageUsingNative').selector
+      )
+
       const expectedAmount = 200_000
       await mockCCIPRouter.setFee(expectedAmount)
 
@@ -277,10 +282,16 @@ describe('CCIPAdapter', function () {
         )
       )
       await accessManagement.grantRole(BRIDGE_ROLE, fakeBridgeCaller.address, 0)
+
       await accessManagement.setTargetFunctionRole(
         ccipAdapterAddress,
-        [ccipAdapter.interface.getFunction('sendMessageUsingNative').selector],
+        [ccipAdapter.interface.getFunction('sendMessageUsingERC20').selector],
         BRIDGE_ROLE
+      )
+
+      console.log(
+        'erc20',
+        ccipAdapter.interface.getFunction('sendMessageUsingERC20').selector
       )
 
       const expectedAmount = 200_000n
