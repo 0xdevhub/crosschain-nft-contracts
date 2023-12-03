@@ -302,7 +302,7 @@ describe('CCIPAdapter', function () {
     })
 
     describe('Checks', () => {
-      it('should revert if send message from unknown caller', async function () {
+      it('should revert if send message from unknown caller using native', async function () {
         const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
         const { mockCCIPRouterAddress } = await loadFixture(
@@ -329,6 +329,39 @@ describe('CCIPAdapter', function () {
 
         await expect(
           ccipAdapter.connect(developer).sendMessageUsingNative(payload)
+        ).to.be.revertedWithCustomError(
+          ccipAdapter,
+          'AccessManagedUnauthorized'
+        )
+      })
+
+      it('should revert if send message from unknown caller using erc20', async function () {
+        const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+
+        const { mockCCIPRouterAddress } = await loadFixture(
+          deployMockCCIPRouterFixture
+        )
+
+        const [, developer] = await getSigners()
+
+        const { ccipAdapter } = await loadFixture(
+          deployCCIPAdapterFixture.bind(
+            this,
+            mockBridgeAddress,
+            accessManagementAddress,
+            mockCCIPRouterAddress
+          )
+        )
+
+        const payload = {
+          toChain: 80_001,
+          receiver: ethers.ZeroAddress,
+          data: '0x',
+          gasLimit: 0
+        }
+
+        await expect(
+          ccipAdapter.connect(developer).sendMessageUsingERC20(payload, 0)
         ).to.be.revertedWithCustomError(
           ccipAdapter,
           'AccessManagedUnauthorized'

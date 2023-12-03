@@ -36,7 +36,7 @@ describe('Bridge', function () {
     })
 
     it('should set chain settings by evm chain id', async function () {
-      const adapterAddress = '0x00000000000000000000000000000000000000D2'
+      const adapterAddress = '0x00000000000000000000000000000000000000f9'
 
       const { bridge } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress)
@@ -69,7 +69,7 @@ describe('Bridge', function () {
     })
 
     it('should emit event when chain settings is set', async function () {
-      const adapterAddress = '0x00000000000000000000000000000000000000D2'
+      const adapterAddress = '0x00000000000000000000000000000000000000d2'
 
       const { bridge } = await loadFixture(
         deployBridgeFixture.bind(this, accessManagementAddress)
@@ -93,10 +93,27 @@ describe('Bridge', function () {
         .withArgs(evmChainId, RampType.OnRamp)
     })
 
+    it('should set wrapped ERC721 manually', async function () {
+      const wrappedAddress = '0x0000000000000000000000000000000000000001'
+      const originAddress = '0x0000000000000000000000000000000000000002'
+
+      const { bridge } = await loadFixture(
+        deployBridgeFixture.bind(this, accessManagementAddress)
+      )
+
+      const evmChainId = 137
+
+      await expect(
+        bridge.setERC721WrappedToken(wrappedAddress, evmChainId, originAddress)
+      )
+        .to.emit(bridge, 'ERC721WrappedCreated')
+        .withArgs(evmChainId, originAddress, wrappedAddress)
+    })
+
     describe('Checks', () => {
       it('should revert call to set chain settings address when unkown caller', async function () {
         const [, unknown] = await getSigners()
-        const adapterAddress = '0x00000000000000000000000000000000000000D2'
+        const adapterAddress = '0x00000000000000000000000000000000000000d2'
 
         const { bridge } = await loadFixture(
           deployBridgeFixture.bind(this, accessManagementAddress)
@@ -117,6 +134,24 @@ describe('Bridge', function () {
               isEnabled,
               0n
             )
+        ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
+      })
+
+      it('should revert call to set wrapped ERC721 when unkown caller', async function () {
+        const [, unknown] = await getSigners()
+        const wrappedAddress = '0x00000000000000000000000000000000000000d2'
+        const originAddress = '0x00000000000000000000000000000000000000c6'
+
+        const { bridge } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress)
+        )
+
+        const evmChainId = 137
+
+        await expect(
+          bridge
+            .connect(unknown)
+            .setERC721WrappedToken(wrappedAddress, evmChainId, originAddress)
         ).to.be.revertedWithCustomError(bridge, 'AccessManagedUnauthorized')
       })
     })

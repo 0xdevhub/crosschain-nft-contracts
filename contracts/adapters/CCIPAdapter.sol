@@ -72,30 +72,43 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
 
     /// @inheritdoc BaseAdapter
     function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal override {
-        _ccipSend(uint64(payload_.toChain), payload_.receiver, payload_.data, quotedFee_, payload_.gasLimit);
+        bool isFeeTokenNative = feeToken() == address(0);
+
+        /// @dev get tokens and approve router to spend ERC20 token as fees if not native token
+        if (!isFeeTokenNative) {
+            IERC20(feeToken()).transferFrom(msg.sender, address(this), quotedFee_);
+            IERC20(feeToken()).approve(router(), quotedFee_);
+        }
+
+        uint256[2] memory tokenAmounts_ = [payload_.gasLimit, quotedFee_];
+
+        _ccipSend(
+            IRouterClient(router()),
+            uint64(payload_.toChain),
+            payload_.receiver,
+            payload_.data,
+            isFeeTokenNative,
+            tokenAmounts_
+        );
 
         emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
     function _ccipSend(
+        IRouterClient router_,
         uint64 toChain,
         address receiver_,
         bytes memory data_,
-        uint256 quotedFee_,
-        uint256 gasLimit_
+        bool isFeeTokenNative,
+        uint256[2] memory tokenAmounts_
     ) private {
-        if (feeToken() != address(0)) {
-            /// @dev get tokens and approve router to spend ERC20 token as fees
-            IERC20(feeToken()).transferFrom(msg.sender, address(this), quotedFee_);
-            IERC20(feeToken()).approve(router(), quotedFee_);
+        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(receiver_, data_, tokenAmounts_[0]);
 
-            IRouterClient(router()).ccipSend(toChain, _buildCCIPMessage(receiver_, data_, gasLimit_));
+        if (!isFeeTokenNative) {
+            router_.ccipSend(toChain, evm2AnyMessage);
         } else {
             /// @dev spend native token as fees
-            IRouterClient(router()).ccipSend{value: quotedFee_}(
-                toChain,
-                _buildCCIPMessage(receiver_, data_, gasLimit_)
-            );
+            router_.ccipSend{value: tokenAmounts_[1]}(toChain, evm2AnyMessage);
         }
     }
 }

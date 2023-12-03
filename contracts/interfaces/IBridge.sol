@@ -62,8 +62,10 @@ interface IBridge {
     error OperationNotSupported();
 
     event EvmChainSettingsSet(uint256 indexed evmChainId_, RampType indexed rampType_);
+
     event ERC721Sent(uint256 evmChainId_, address receiver_, bytes data_);
     event ERC721Received(uint256 evmChainId_, address sender_, bytes data_);
+
     event ERC721WrappedCreated(
         uint256 indexed originChainId_,
         address indexed originAddress_,
@@ -90,4 +92,6 @@ interface IBridge {
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 
     function receiveERC721(ERC721Receive memory payload_) external;
+
+    function setERC721WrappedToken(address wrappedAddress_, uint256 originEvmChainId, address originAddress) external;
 }
