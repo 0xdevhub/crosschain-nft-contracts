@@ -17,7 +17,10 @@ contract Bridge is IBridge, AccessManaged {
     /// @dev nonEvmChainId => evmChainId
     mapping(uint256 => uint256) private s_nonEvmChains;
 
-    mapping(address => ERC721Wrapped) private s_wrappedERC721Tokens;
+    mapping(address => IBridge.ERC721Wrapped) private s_wrappedERC721Tokens;
+
+    // mapping(uint256 => IBridge.ERC721Receive) public receivedERC721;
+    // uint256 public receivedERC721Count;
 
     constructor(address accessManagement_, uint256 chainId_) AccessManaged(accessManagement_) {
         s_chainId = chainId_;
@@ -73,6 +76,15 @@ contract Bridge is IBridge, AccessManaged {
         return s_evmChainSettings[evmChainId_][rampType_];
     }
 
+    /// @dev test
+    // function setERC721WrappedToken(
+    //     address wrappedAddress_,
+    //     uint256 originEvmChainId,
+    //     address originAddress
+    // ) external restricted {
+    //     _setERC721WrappedToken(wrappedAddress_, originEvmChainId, originAddress);
+    // }
+
     function _setERC721WrappedToken(address wrappedAddress_, uint256 originEvmChainId, address originAddress) private {
         s_wrappedERC721Tokens[originAddress] = IBridge.ERC721Wrapped({
             originEvmChainId: originEvmChainId,
@@ -108,6 +120,7 @@ contract Bridge is IBridge, AccessManaged {
 
         /// @dev get tokens first
         IERC20(adapter.feeToken()).transferFrom(msg.sender, address(this), amount_);
+
         /// @dev approve adapter to spend tokens
         IERC20(adapter.feeToken()).approve(address(adapter), amount_);
 
@@ -178,7 +191,7 @@ contract Bridge is IBridge, AccessManaged {
 
     /// @inheritdoc IBridge
     function receiveERC721(
-        IBridge.ERC721Receive memory payload_ // restricted
+        IBridge.ERC721Receive memory payload_
     )
         external
         override
@@ -186,6 +199,8 @@ contract Bridge is IBridge, AccessManaged {
         checkEvmChainIdAdapterIsValid(getChainSettings(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp))
         checkEvmChainIdIsEnabled(getChainSettings(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp))
     {
+        // receivedERC721[receivedERC721Count++] = payload_;
+
         uint256 evmChainId = s_nonEvmChains[payload_.fromChain];
         address wrappedERC721Token;
 
@@ -198,12 +213,14 @@ contract Bridge is IBridge, AccessManaged {
             IERC721(wrappedERC721Token).safeTransferFrom(address(this), data.receiver, token.tokenId);
         } else {
             IBridge.ERC721Metadata memory metadata = _getDecodedERC721Metadata(data.metadata);
-            if (s_wrappedERC721Tokens[token.tokenAddress].wrappedAddress == address(0)) {
+            address wrappedERC721TokenAddress = s_wrappedERC721Tokens[token.tokenAddress].wrappedAddress;
+
+            if (wrappedERC721TokenAddress == address(0)) {
                 /// @dev create new ERC721
                 wrappedERC721Token = _createWrapped(payload_, token.tokenAddress, metadata.name, metadata.symbol);
             } else {
                 /// @dev reuse an already wrapped ERC721
-                wrappedERC721Token = s_wrappedERC721Tokens[token.tokenAddress].wrappedAddress;
+                wrappedERC721Token = wrappedERC721TokenAddress;
             }
 
             WERC721(wrappedERC721Token).safeMint(data.receiver, token.tokenId, metadata.tokenURI);
@@ -236,12 +253,14 @@ contract Bridge is IBridge, AccessManaged {
     function _createWrapped(
         IBridge.ERC721Receive memory payload_,
         address token,
-        string memory name,
-        string memory symbol
+        string memory name_,
+        string memory symbol_
     ) private returns (address wrappedERC721Token) {
         /// @dev get salt to deploy same address in any evm chain
+
         bytes32 salt = keccak256(abi.encodePacked(s_nonEvmChains[payload_.fromChain], token));
-        wrappedERC721Token = address((new WERC721){salt: salt}(name, symbol));
+
+        wrappedERC721Token = address(new WERC721{salt: salt}(address(this), name_, symbol_));
 
         _setERC721WrappedToken(wrappedERC721Token, s_nonEvmChains[payload_.fromChain], token);
     }

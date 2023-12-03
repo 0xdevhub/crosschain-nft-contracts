@@ -134,6 +134,8 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
           )
         }
 
+        console.log(`ℹ️ Payload: ${JSON.stringify(payload)}`)
+
         const fee = await adapter.getFee(payload)
 
         console.log('ℹ️ Required feee:', fee)
@@ -154,9 +156,10 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
          */
 
         const expectedInputValue =
-          fee +
-          chainConfig.crosschain.gasRequiredDeploy +
-          chainConfig.crosschain.gasRequiredToMint
+          (fee +
+            chainConfig.crosschain.gasRequiredDeploy +
+            chainConfig.crosschain.gasRequiredToMint) *
+          3n
 
         console.log(`ℹ️ Approving bridge to spend ERC20 tokens`)
 
@@ -193,12 +196,12 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
 
         console.log(`ℹ️ Sending ERC721 to bridge using ${feeTokenName}`)
 
-        await bridge.sendERC721UsingERC20.staticCall(
-          targetChainSettings.evmChainId,
-          ERC721Address,
-          tokenId,
-          expectedInputValue
-        )
+        // await bridge.sendERC721UsingERC20.staticCall(
+        //   targetChainSettings.evmChainId,
+        //   ERC721Address,
+        //   tokenId,
+        //   expectedInputValue
+        // )
 
         const tx3 = await bridge.sendERC721UsingERC20(
           targetChainSettings.evmChainId,

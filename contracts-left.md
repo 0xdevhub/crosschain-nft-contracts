@@ -14,22 +14,22 @@ pnpm hardhat deploy-bridge-contract --network 80001
 
 =========================
 
-pnpm hardhat deploy-adapter-contract --network 80001 --adapter "CCIPAdapter" --bridge-address 0x311353f8A4F9195f7eD005112948197e4518E8a1 --router-address 0x70499c328e1e2a3c41108bd3730f6670a44595d1 --fee-token-name LINK
+pnpm hardhat deploy-adapter-contract --network 80001 --adapter "CCIPAdapter" --bridge-address 0x8Dfc565d2514b2727A1f94641C7bA8650F96cfF1 --router-address 0x70499c328e1e2a3c41108bd3730f6670a44595d1 --fee-token-name LINK
 
 # Set chain settings
 
 =========================
 
-pnpm hardhat set-chain-settings --network 80001 --bridge-address 0x311353f8A4F9195f7eD005112948197e4518E8a1 --evm-chain-id 43113 --non-evm-chain-id 14767482510784806043 --adapter-address 0x7c456Ed3b44a1a10AC9D68d14867a2f8A4358B2A ---target-adapter-address 0xd7a528C92081cAE52Bc45e0170C4Ae45A93d844F --is-enabled true
+pnpm hardhat set-chain-settings --network 80001 --bridge-address 0x8Dfc565d2514b2727A1f94641C7bA8650F96cfF1 --evm-chain-id 43113 --non-evm-chain-id 14767482510784806043 --adapter-address 0x3C66f7dC50c6Cd38d90707fD66de6041f7B42518 ---target-adapter-address 0x5da3Ef4Cd1437C6b4cFE46b852248A25D605759F --is-enabled true --gas-limit 4000000
 
 # Setup bridge adapter roles
 
 =========================
 
-pnpm hardhat setup-bridge-adapter --network 80001 --bridge-address 0x311353f8A4F9195f7eD005112948197e4518E8a1 --adapter-address 0x7c456Ed3b44a1a10AC9D68d14867a2f8A4358B2A --adapter-router-address 0x70499c328e1e2a3c41108bd3730f6670a44595d1 --router-to-adapter-function-selector ccipReceive ----bridge-to-adapter-function-selector sendMessageUsingERC20 --adapter-contract-name CCIPAdapter
+pnpm hardhat setup-bridge-adapter --network 80001 --bridge-address 0x3d7593Ef9d71959b86720e728c1e7469eeDE2d8e --adapter-address 0xA30A80709b97BCc6aF48c570507238627Da85822 --adapter-router-address 0x70499c328e1e2a3c41108bd3730f6670a44595d1 --router-to-adapter-function-selector ccipReceive ----bridge-to-adapter-function-selector sendMessageUsingERC20 --adapter-contract-name CCIPAdapter
 
 # Bridge ERC721 using ERC20 token as fee
 
 =========================
 
-pnpm hardhat bridge-erc721-using-erc20 --network 80001 --token-name "hello" --token-symbol "world" --bridge-address 0x311353f8A4F9195f7eD005112948197e4518E8a1 --adapter-address 0x7c456Ed3b44a1a10AC9D68d14867a2f8A4358B2A --target-network 43113 --fee-token-name LINK
+pnpm hardhat bridge-erc721-using-erc20 --network 80001 --token-name "hello" --token-symbol "world" --bridge-address 0x8Dfc565d2514b2727A1f94641C7bA8650F96cfF1 --adapter-address 0x3C66f7dC50c6Cd38d90707fD66de6041f7B42518 --target-network 43113 --fee-token-name LINK

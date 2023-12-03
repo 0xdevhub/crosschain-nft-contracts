@@ -6,7 +6,11 @@ import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract WERC721 is ERC721, ERC721URIStorage, Ownable {
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) Ownable(msg.sender) {}
+    constructor(
+        address initialOwner_,
+        string memory name_,
+        string memory symbol_
+    ) ERC721(name_, symbol_) Ownable(initialOwner_) {}
 
     function safeMint(address to, uint256 tokenId, string memory uri) public onlyOwner {
         _safeMint(to, tokenId);

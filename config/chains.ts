@@ -34,7 +34,7 @@ export const avalancheFuji: Chain = {
   },
   testnet: true,
   crosschain: {
-    gasRequiredDeploy: 1206898n,
+    gasRequiredDeploy: 13201611n,
     gasRequiredToMint: 68282n
   },
   assets: {
@@ -87,7 +87,7 @@ export const polygonMumbai: Chain = {
   },
   testnet: true,
   crosschain: {
-    gasRequiredDeploy: 1207276n,
+    gasRequiredDeploy: 74007900740079n,
     gasRequiredToMint: 68282n
   },
   assets: {
