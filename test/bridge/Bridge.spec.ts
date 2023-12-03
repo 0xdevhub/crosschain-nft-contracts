@@ -223,7 +223,7 @@ describe('Bridge', function () {
       expect(ERC721Owner).to.be.equal(bridgeAddress)
     })
 
-    it('should burn ERC721 when transfer to bridge contract if its origin chain', async function () {
+    it('should burn ERC721 when transfer to bridge contract if its origin chain using native', async function () {
       const [currentOwner] = await getSigners()
 
       const { mockERC721, mockERC721Address } = await loadFixture(
@@ -316,6 +316,121 @@ describe('Bridge', function () {
         evmChainId,
         wrappedTokenAddress,
         tokenId
+      )
+
+      await tx2.wait()
+
+      await expect(wrappedToken.ownerOf(tokenId)).to.be.revertedWithCustomError(
+        wrappedToken,
+        'ERC721NonexistentToken'
+      )
+    })
+
+    it('should burn ERC721 when transfer to bridge contract if its origin chain using erc20', async function () {
+      const [currentOwner] = await getSigners()
+
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
+
+      const { mockERC20, mockERC20Address } = await loadFixture(
+        deployMockERC20Fixture
+      )
+
+      const { bridge, bridgeAddress } = await loadFixture(
+        deployBridgeFixture.bind(this, accessManagementAddress)
+      )
+
+      const evmChainId = 1
+      const nonEvmChainId = 123456789
+      const isEnabled = true
+
+      const { mockAdapterAddress, mockAdapter } = await loadFixture(
+        deployMockAdapterFixture
+      )
+
+      await mockAdapter.setFeeToken(mockERC20Address)
+
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OnRamp,
+        isEnabled,
+        0n
+      )
+
+      await bridge.setChainSetting(
+        evmChainId,
+        nonEvmChainId,
+        mockAdapterAddress,
+        RampType.OffRamp,
+        isEnabled,
+        0n
+      )
+
+      const tokenId = 1
+      await mockERC721.mint(tokenId)
+
+      const encodedData = abiCoder.encode(
+        ['address', 'bytes', 'bytes'],
+        [
+          currentOwner.address,
+          abiCoder.encode(
+            ['uint256', 'address', 'uint256'],
+            [evmChainId, mockERC721Address, tokenId]
+          ),
+          abiCoder.encode(
+            ['string', 'string', 'string'],
+            [
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
+            ]
+          )
+        ]
+      )
+
+      const payload = {
+        fromChain: nonEvmChainId,
+        sender: mockAdapterAddress,
+        data: encodedData
+      }
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
+
+      /// grant function role  to bridge contract
+      await accessManagement.setTargetFunctionRole(
+        bridgeAddress,
+        [bridge.interface.getFunction('receiveERC721').selector],
+        ADAPTER_ROLE
+      )
+
+      const tx = await mockAdapter.receiveMessage(payload, bridgeAddress)
+      const receipt = await tx.wait()
+      const filter = bridge.filters.ERC721WrappedCreated
+      const logs = await bridge.queryFilter(filter, receipt?.blockHash)
+
+      const [, , wrappedTokenAddress] = logs[0].args
+
+      const wrappedToken = await ethers.getContractAt(
+        'WERC721',
+        wrappedTokenAddress
+      )
+
+      const expectedAmount = 100_000n
+      await mockAdapter.setFee(expectedAmount)
+
+      await wrappedToken.approve(bridgeAddress, tokenId)
+
+      await mockERC20.approve(bridgeAddress, expectedAmount)
+
+      const tx2 = await bridge.sendERC721UsingERC20(
+        evmChainId,
+        wrappedTokenAddress,
+        tokenId,
+        expectedAmount
       )
 
       await tx2.wait()
@@ -588,7 +703,7 @@ describe('Bridge', function () {
         ).to.be.revertedWithCustomError(bridge, 'TransferNotAllowed')
       })
 
-      it('should revert if adapter is not valid', async function () {
+      it('should revert if adapter is not valid using native', async function () {
         const fakeERC721Address = ethers.ZeroAddress
         const fakeERC721TokenId = 0
         const [receiver] = await getSigners()
@@ -607,7 +722,26 @@ describe('Bridge', function () {
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
       })
 
-      it('should revert if adapter is not enabled', async function () {
+      it('should revert if adapter is not valid using erc29', async function () {
+        const fakeERC721Address = ethers.ZeroAddress
+        const fakeERC721TokenId = 0
+        const { bridge } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress)
+        )
+
+        const evmChainId = 137
+
+        await expect(
+          bridge.sendERC721UsingERC20(
+            evmChainId,
+            fakeERC721Address,
+            fakeERC721TokenId,
+            0n
+          )
+        ).to.be.revertedWithCustomError(bridge, 'AdapterNotFound')
+      })
+
+      it('should revert if adapter is not enabled using native', async function () {
         const { mockERC721, mockERC721Address } = await loadFixture(
           deployMockERC721Fixture
         )
@@ -639,6 +773,52 @@ describe('Bridge', function () {
 
         await expect(
           bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
+        ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
+      })
+
+      it('should revert if adapter is not enabled using erc20', async function () {
+        const { mockERC721, mockERC721Address } = await loadFixture(
+          deployMockERC721Fixture
+        )
+
+        const { mockERC20 } = await loadFixture(deployMockERC20Fixture)
+
+        const { bridge, bridgeAddress } = await loadFixture(
+          deployBridgeFixture.bind(this, accessManagementAddress)
+        )
+
+        const evmChainId = 137
+        const nonEvmChainId = 12334124515
+        const isEnabled = false
+
+        const { mockAdapterAddress } = await loadFixture(
+          deployMockAdapterFixture
+        )
+
+        const expectedAmount = 100_000n
+
+        await mockERC20.approve(bridgeAddress, expectedAmount)
+
+        await bridge.setChainSetting(
+          evmChainId,
+          nonEvmChainId,
+          mockAdapterAddress,
+          RampType.OnRamp,
+          isEnabled,
+          0n
+        )
+
+        const tokenId = 1
+        await mockERC721.mint(tokenId)
+        await mockERC721.approve(bridgeAddress, tokenId)
+
+        await expect(
+          bridge.sendERC721UsingERC20(
+            evmChainId,
+            mockERC721Address,
+            tokenId,
+            expectedAmount
+          )
         ).to.be.revertedWithCustomError(bridge, 'AdapterNotEnabled')
       })
     })

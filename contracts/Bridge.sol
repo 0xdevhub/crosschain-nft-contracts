@@ -201,7 +201,7 @@ contract Bridge is IBridge, AccessManaged {
         return abi.encode(receiver_, token_, metadata_);
     }
 
-    /// @dev todo: split this operation to handle by automation instead
+    /// @dev todo: split this operation to handle by automation instead using a setup like executeByAutomation = true
     /// @inheritdoc IBridge
     function receiveERC721(
         IBridge.ERC721Receive memory payload_
