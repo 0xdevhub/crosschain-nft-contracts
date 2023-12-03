@@ -134,8 +134,6 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
           )
         }
 
-        console.log(`ℹ️ Payload: ${JSON.stringify(payload)}`)
-
         const fee = await adapter.getFee(payload)
 
         console.log('ℹ️ Required feee:', fee)

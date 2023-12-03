@@ -7,10 +7,11 @@ import {IBaseAdapter} from "../interfaces/IBaseAdapter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
-    /// @dev bridge address set once in constructor
     address private immutable s_bridge;
+    address private immutable s_feeToken;
 
-    constructor(address bridge_, address accessManagement_) AccessManaged(accessManagement_) {
+    constructor(address bridge_, address accessManagement_, address feeToken_) AccessManaged(accessManagement_) {
+        s_feeToken = feeToken_;
         s_bridge = bridge_;
     }
 
@@ -27,7 +28,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
 
     /// @inheritdoc IBaseAdapter
     function feeToken() public view virtual override returns (address) {
-        return address(0);
+        return s_feeToken;
     }
 
     /// @inheritdoc IBaseAdapter

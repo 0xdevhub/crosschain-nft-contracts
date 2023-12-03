@@ -10,16 +10,12 @@ import {IBridge} from "../interfaces/IBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract CCIPAdapter is BaseAdapter, CCIPReceiver {
-    address private immutable s_feeToken;
-
     constructor(
         address bridge_,
         address accessManagement_,
         address router_,
         address feeToken_
-    ) BaseAdapter(bridge_, accessManagement_) CCIPReceiver(router_) {
-        s_feeToken = feeToken_;
-    }
+    ) BaseAdapter(bridge_, accessManagement_, feeToken_) CCIPReceiver(router_) {}
 
     /// @inheritdoc IBaseAdapter
     function getFee(IBridge.ERC721Send memory payload_) public view override returns (uint256) {
@@ -51,10 +47,6 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
                 /// @dev if zero address it will be set to native token
                 feeToken: feeToken()
             });
-    }
-
-    function feeToken() public view override returns (address) {
-        return s_feeToken;
     }
 
     /// @inheritdoc IBaseAdapter

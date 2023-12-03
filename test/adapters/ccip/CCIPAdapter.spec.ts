@@ -239,11 +239,6 @@ describe('CCIPAdapter', function () {
         BRIDGE_ROLE
       )
 
-      console.log(
-        'native',
-        ccipAdapter.interface.getFunction('sendMessageUsingNative').selector
-      )
-
       const expectedAmount = 200_000
       await mockCCIPRouter.setFee(expectedAmount)
 
@@ -287,11 +282,6 @@ describe('CCIPAdapter', function () {
         ccipAdapterAddress,
         [ccipAdapter.interface.getFunction('sendMessageUsingERC20').selector],
         BRIDGE_ROLE
-      )
-
-      console.log(
-        'erc20',
-        ccipAdapter.interface.getFunction('sendMessageUsingERC20').selector
       )
 
       const expectedAmount = 200_000n

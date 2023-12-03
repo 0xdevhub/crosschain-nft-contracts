@@ -302,22 +302,28 @@ describe('Bridge', function () {
       const receipt = await tx.wait()
       const filter = bridge.filters.ERC721WrappedCreated
       const logs = await bridge.queryFilter(filter, receipt?.blockHash)
+
       const [, , wrappedTokenAddress] = logs[0].args
 
       const wrappedToken = await ethers.getContractAt(
-        'ERC721',
+        'WERC721',
         wrappedTokenAddress
       )
 
       await wrappedToken.approve(bridgeAddress, tokenId)
-      await bridge.sendERC721UsingNative(
+
+      const tx2 = await bridge.sendERC721UsingNative(
         evmChainId,
         wrappedTokenAddress,
         tokenId
       )
 
-      const balanceOfERC721 = await mockERC721.balanceOf(currentOwner.address)
-      expect(balanceOfERC721).to.be.equal(0)
+      await tx2.wait()
+
+      await expect(wrappedToken.ownerOf(tokenId)).to.be.revertedWithCustomError(
+        wrappedToken,
+        'ERC721NonexistentToken'
+      )
     })
 
     it('should emit event on transfer ERC721 to bridge contract', async function () {
