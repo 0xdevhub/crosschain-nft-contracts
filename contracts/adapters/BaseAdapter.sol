@@ -21,9 +21,6 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function router() public view virtual returns (address);
-
-    /// @inheritdoc IBaseAdapter
     function getFee(IBridge.ERC721Send memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
@@ -57,7 +54,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
 
     function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual {
         IBridge(s_bridge).receiveERC721(payload_);
-        emit IBaseAdapter.ERC721Receive(payload_.fromChain, payload_.sender, payload_.data);
+        emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     /// @dev prevent to receive native token

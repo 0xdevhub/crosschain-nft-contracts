@@ -37,7 +37,7 @@ describe('CCIPAdapter', function () {
         )
       )
 
-      const router = await ccipAdapter.router()
+      const router = await ccipAdapter.getRouter()
 
       expect(router).to.be.equal(routerAddress)
     })
@@ -168,7 +168,7 @@ describe('CCIPAdapter', function () {
       }
 
       await expect(ccipAdapter.ccipReceive(payload))
-        .to.emit(ccipAdapter, 'ERC721Receive')
+        .to.emit(ccipAdapter, 'ERC721Received')
         .withArgs(
           payload.sourceChainSelector,
           otherSideCaller.address,

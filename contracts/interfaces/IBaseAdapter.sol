@@ -12,9 +12,7 @@ interface IBaseAdapter {
 
     event ERC721Sent(uint256 toChain_, address receiver_, bytes data_);
 
-    event ERC721Receive(uint256 fromChain_, address sender_, bytes data_);
-
-    function router() external view returns (address);
+    event ERC721Received(uint256 fromChain_, address sender_, bytes data_);
 
     function bridge() external view returns (address);
 

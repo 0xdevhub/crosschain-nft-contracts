@@ -29,7 +29,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     function _getFee(uint64 toChain, Client.EVM2AnyMessage memory evm2AnyMessage) internal view returns (uint256) {
-        return IRouterClient(router()).getFee(toChain, evm2AnyMessage);
+        return IRouterClient(getRouter()).getFee(toChain, evm2AnyMessage);
     }
 
     function _buildCCIPMessage(
@@ -49,11 +49,6 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
             });
     }
 
-    /// @inheritdoc IBaseAdapter
-    function router() public view override returns (address) {
-        return getRouter();
-    }
-
     /// @inheritdoc CCIPReceiver
     function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
         _ccipReceive(any2EvmMessage);
@@ -67,6 +62,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
             data: any2EvmMessage.data
         });
 
+        /// @dev todo: receive message but not execute, automate it
         _receiveMessage(payload);
     }
 
@@ -77,38 +73,31 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
         /// @dev get tokens and approve router to spend ERC20 token as fees if not native token
         if (!isFeeTokenNative) {
             IERC20(feeToken()).transferFrom(msg.sender, address(this), quotedFee_);
-            IERC20(feeToken()).approve(router(), quotedFee_);
+            IERC20(feeToken()).approve(getRouter(), quotedFee_);
         }
 
         uint256[2] memory tokenAmounts_ = [payload_.gasLimit, quotedFee_];
 
-        _ccipSend(
-            IRouterClient(router()),
-            uint64(payload_.toChain),
-            payload_.receiver,
-            payload_.data,
-            isFeeTokenNative,
-            tokenAmounts_
-        );
+        _ccipSend(uint64(payload_.toChain), payload_.receiver, payload_.data, isFeeTokenNative, tokenAmounts_);
 
         emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
     function _ccipSend(
-        IRouterClient router_,
         uint64 toChain,
         address receiver_,
         bytes memory data_,
         bool isFeeTokenNative,
         uint256[2] memory tokenAmounts_
     ) private {
+        IRouterClient router = IRouterClient(getRouter());
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(receiver_, data_, tokenAmounts_[0]);
 
         if (!isFeeTokenNative) {
-            router_.ccipSend(toChain, evm2AnyMessage);
+            router.ccipSend(toChain, evm2AnyMessage);
         } else {
             /// @dev spend native token as fees
-            router_.ccipSend{value: tokenAmounts_[1]}(toChain, evm2AnyMessage);
+            router.ccipSend{value: tokenAmounts_[1]}(toChain, evm2AnyMessage);
         }
     }
 }
