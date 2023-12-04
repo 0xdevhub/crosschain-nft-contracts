@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
               url: chain.rpcUrls.default.http[0],
               accounts: chain.accounts,
               gasPrice: chain.gasPrice,
-              gasMultiplier: 1.6
+              gasMultiplier: 1.2
             }
 
             return acc
@@ -46,7 +46,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 800
+        runs: 200
       }
     }
   },
@@ -61,11 +61,10 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY!,
+      ethereum: process.env.ETHERSCAN_API_KEY!,
       polygonMumbai: process.env.POLYGON_MUMBAI_API_KEY!,
       // comment if use custom chain
-      avalancheFujiTestnet: process.env.AVALANCHE_FUJI_API_KEY!,
-      optimisticGoerli: process.env.OPTIMISM_GOERLI_API_KEY!
+      avalancheFujiTestnet: process.env.AVALANCHE_FUJI_API_KEY!
       // uncomment snowtrace if any issue with avalanche fuji
       // snowtrace: 'snowtrace'
     }
