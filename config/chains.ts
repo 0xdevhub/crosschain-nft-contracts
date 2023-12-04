@@ -34,8 +34,8 @@ export const avalancheFuji: Chain = {
   },
   testnet: true,
   crosschain: {
-    gasRequiredDeploy: 13201611n,
-    gasRequiredToMint: 68282n
+    gasRequiredDeploy: 1299614n,
+    gasRequiredToMint: 95639n
   },
   assets: {
     LINK: {
@@ -87,112 +87,12 @@ export const polygonMumbai: Chain = {
   },
   testnet: true,
   crosschain: {
-    gasRequiredDeploy: 74007900740079n,
-    gasRequiredToMint: 68282n
+    gasRequiredDeploy: 1300024n,
+    gasRequiredToMint: 95639n
   },
   assets: {
     LINK: {
       address: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB',
-      decimals: 18
-    }
-  }
-}
-
-export const optimismGoerli: Chain = {
-  id: 420,
-  name: 'Optimism Goerli',
-  network: 'optimism-goerli',
-  nativeCurrency: { name: 'Goerli Ether', symbol: 'ETH', decimals: 18 },
-  accounts: evmAccounts,
-  rpcUrls: {
-    protocol: {
-      http: [process.env.PUBLIC_NETWORK_420_HTTP_RPC!]
-    },
-    default: {
-      http: ['https://goerli.optimism.io']
-    },
-    public: {
-      http: ['https://goerli.optimism.io']
-    }
-  },
-  blockExplorers: {
-    etherscan: {
-      name: 'Etherscan',
-      url: 'https://goerli-optimism.etherscan.io'
-    },
-    default: {
-      name: 'Etherscan',
-      url: 'https://goerli-optimism.etherscan.io'
-    }
-  },
-  contracts: {
-    multicall3: {
-      address: '0xca11bde05977b3631167028862be2a173976ca11',
-      blockCreated: 49461
-    },
-    accessManagement: {
-      address: '0x483E5D5a59EeB5dB9c2AAC502Da40fab173b8DF2',
-      blockCreated: 0
-    }
-  },
-  testnet: true,
-  crosschain: {
-    gasRequiredDeploy: 1206898n,
-    gasRequiredToMint: 68282n
-  },
-  assets: {
-    LINK: {
-      address: '0xdc2CC710e42857672E7907CF474a69B63B93089f',
-      decimals: 18
-    }
-  }
-}
-
-export const baseGoerli: Chain = {
-  id: 84531,
-  network: 'base-goerli',
-  name: 'Base Goerli',
-  accounts: evmAccounts,
-  nativeCurrency: { name: 'Goerli Ether', symbol: 'ETH', decimals: 18 },
-  rpcUrls: {
-    protocol: {
-      http: [process.env.PUBLIC_NETWORK_84531_HTTP_RPC!]
-    },
-    default: {
-      http: ['https://goerli.base.org']
-    },
-    public: {
-      http: ['https://goerli.base.org']
-    }
-  },
-  blockExplorers: {
-    etherscan: {
-      name: 'Basescan',
-      url: 'https://goerli.basescan.org'
-    },
-    default: {
-      name: 'Basescan',
-      url: 'https://goerli.basescan.org'
-    }
-  },
-  contracts: {
-    multicall3: {
-      address: '0xca11bde05977b3631167028862be2a173976ca11',
-      blockCreated: 1376988
-    },
-    accessManagement: {
-      address: '0x9eDb3e9d394B924a2FE264C170049795F849479c',
-      blockCreated: 0
-    }
-  },
-  testnet: true,
-  crosschain: {
-    gasRequiredDeploy: 1206898n,
-    gasRequiredToMint: 68282n
-  },
-  assets: {
-    LINK: {
-      address: '0x6D0F8D488B669aa9BA2D0f0b7B75a88bf5051CD3',
       decimals: 18
     }
   }

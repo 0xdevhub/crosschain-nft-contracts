@@ -10,6 +10,14 @@ import {IBridge} from "../interfaces/IBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract CCIPAdapter is BaseAdapter, CCIPReceiver {
+    mapping(uint256 => IBridge.ERC721Receive) private s_pendingMessagesToExecute;
+    mapping(uint256 => IBridge.ERC721Receive) private s_pendingMessagesExecuted;
+
+    uint256 private s_pendingMessagesCount;
+    uint256 private s_pendingMessagesExecutedCount;
+
+    error NoMessagesAvailable();
+
     constructor(
         address bridge_,
         address accessManagement_,
@@ -62,8 +70,42 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
             data: any2EvmMessage.data
         });
 
-        /// @dev todo: receive message but not execute, automate it
         _receiveMessage(payload);
+    }
+
+    function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual override {
+        try IBridge(bridge()).receiveERC721(payload_) {
+            /// @dev if success, just bypass
+        } catch {
+            _setPendingMessage(payload_);
+        }
+
+        emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
+    }
+
+    function _setPendingMessage(IBridge.ERC721Receive memory payload_) private {
+        s_pendingMessagesToExecute[s_pendingMessagesCount++] = payload_;
+    }
+
+    function manuallyExecuteMessages(uint256 limitToExecute_) public {
+        if (s_pendingMessagesCount == 0) revert NoMessagesAvailable();
+
+        for (uint256 i = 0; i < limitToExecute_; i++) {
+            IBridge.ERC721Receive memory payload = s_pendingMessagesToExecute[i];
+
+            _receiveMessage(payload);
+
+            s_pendingMessagesExecuted[s_pendingMessagesExecutedCount++] = payload;
+            s_pendingMessagesCount--;
+        }
+    }
+
+    function getPendingMessage(uint256 index_) public view returns (IBridge.ERC721Receive memory) {
+        return s_pendingMessagesToExecute[index_];
+    }
+
+    function getExecutedMessage(uint256 index_) public view returns (IBridge.ERC721Receive memory) {
+        return s_pendingMessagesExecuted[index_];
     }
 
     /// @inheritdoc BaseAdapter

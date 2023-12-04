@@ -11,7 +11,7 @@ export type DeployWrappedTokenTask = {
   tokenSymbol: string
 }
 
-task('deploy-wrapped-token', 'deploy wrapped token')
+task('deploy-wrapped-contract', 'deploy wrapped token contract ')
   .addParam('tokenName', 'token name')
   .addParam('tokenSymbol', 'token symbol')
   .addOptionalParam(
@@ -48,6 +48,8 @@ task('deploy-wrapped-token', 'deploy wrapped token')
          *
          */
 
+        const [receiver] = await hre.ethers.getSigners()
+
         const tokenId = 1
 
         console.log(
@@ -55,8 +57,8 @@ task('deploy-wrapped-token', 'deploy wrapped token')
         )
 
         const nft = await hre.ethers.deployContract(
-          'mockERC721',
-          [tokenName, tokenSymbol],
+          'WERC721',
+          [receiver.address, tokenName, tokenSymbol],
           deployer
         )
 
@@ -72,7 +74,7 @@ task('deploy-wrapped-token', 'deploy wrapped token')
 
         console.log('ℹ️ Minting: ', tokenId)
 
-        const tx2 = await nft.mint(tokenId)
+        const tx2 = await nft.bridgeMint(receiver.address, tokenId, '0x')
         const receipt2 = await tx2.wait()
         const gasUsed2 = receipt2?.gasUsed || 0n
 

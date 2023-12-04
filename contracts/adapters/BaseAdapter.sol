@@ -49,7 +49,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
         emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
-    ///@dev override this function to send message using your implementation
+    ///@dev {override} this function to send message using your implementation
     function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal virtual;
 
     function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual {

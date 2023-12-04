@@ -5,27 +5,37 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract WERC721 is ERC721, ERC721URIStorage, Ownable {
-    constructor(
-        address initialOwner_,
-        string memory name_,
-        string memory symbol_
-    ) ERC721(name_, symbol_) Ownable(initialOwner_) {}
+contract WERC721 is ERC721 {
+    address private s_bridgeAddress;
 
-    function safeMint(address to, uint256 tokenId, string memory uri) public onlyOwner {
-        _safeMint(to, tokenId);
+    mapping(uint256 tokenId => string) private s_tokenURIs;
+
+    error OnlyBridge();
+
+    constructor(address bridgeAddress_, string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+        s_bridgeAddress = bridgeAddress_;
+    }
+
+    modifier onlyBridge() {
+        if (msg.sender != s_bridgeAddress) revert OnlyBridge();
+        _;
+    }
+
+    function bridgeMint(address to, uint256 tokenId, string memory uri) public onlyBridge {
+        _mint(to, tokenId);
         _setTokenURI(tokenId, uri);
     }
 
-    function burn(uint256 tokenId) public onlyOwner {
+    function bridgeBurn(uint256 tokenId) public onlyBridge {
         _burn(tokenId);
     }
 
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
+    function tokenURI(uint256 tokenId_) public view override returns (string memory) {
+        _requireOwned(tokenId_);
+        return s_tokenURIs[tokenId_];
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool) {
-        return super.supportsInterface(interfaceId);
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+        s_tokenURIs[tokenId] = _tokenURI;
     }
 }

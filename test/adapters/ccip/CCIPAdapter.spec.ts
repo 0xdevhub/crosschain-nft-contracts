@@ -10,6 +10,7 @@ import { abiCoder, getSigners } from '@/scripts/utils'
 import { AccessManagement } from '@/typechain/contracts/AccessManagement'
 import { Client } from '@/typechain/@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver'
 import { BRIDGE_ROLE, ROUTER_ROLE } from '@/scripts/constants'
+import { deployMockContractGeneralFixture } from '@/test/mocks/commonFixture'
 
 describe('CCIPAdapter', function () {
   let accessManagement: AccessManagement
@@ -133,7 +134,7 @@ describe('CCIPAdapter', function () {
   })
 
   describe('Receive message', () => {
-    it('should receive message from router', async function () {
+    it('should receive message from router and execute', async function () {
       const [fakeRouterCaller, otherSideCaller] = await getSigners()
 
       const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
@@ -176,6 +177,162 @@ describe('CCIPAdapter', function () {
         )
     })
 
+    it('should receive message from router and manually execute by limit', async function () {
+      const [fakeRouterCaller, otherSideCaller] = await getSigners()
+
+      const { mockBridgeAddress, mockBridge } = await loadFixture(
+        deployMockBridgeFixture
+      )
+
+      const { mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(ROUTER_ROLE, fakeRouterCaller.address, 0)
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 80001n,
+        sender: abiCoder.encode(['address'], [otherSideCaller.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await mockBridge.lock()
+
+      await ccipAdapter.ccipReceive(payload)
+
+      await expect(ccipAdapter.manuallyExecuteMessages(1))
+        .to.emit(ccipAdapter, 'ERC721Received')
+        .withArgs(
+          payload.sourceChainSelector,
+          otherSideCaller.address,
+          payload.data
+        )
+    })
+
+    it('should return messages that has manually executed', async function () {
+      const [fakeRouterCaller, otherSideCaller] = await getSigners()
+
+      const { mockBridgeAddress, mockBridge } = await loadFixture(
+        deployMockBridgeFixture
+      )
+
+      const { mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(ROUTER_ROLE, fakeRouterCaller.address, 0)
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 80001n,
+        sender: abiCoder.encode(['address'], [otherSideCaller.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await mockBridge.lock()
+
+      await ccipAdapter.ccipReceive(payload)
+      await ccipAdapter.manuallyExecuteMessages(1)
+
+      const executedMessage = await ccipAdapter.getExecutedMessage(0)
+
+      expect({
+        fromChain: executedMessage.fromChain,
+        sender: executedMessage.sender,
+        data: executedMessage.data
+      }).to.be.deep.equal({
+        fromChain: payload.sourceChainSelector,
+        sender: otherSideCaller.address,
+        data: payload.data
+      })
+    })
+
+    it('should return pending message that has not manually executed', async function () {
+      const [fakeRouterCaller, otherSideCaller] = await getSigners()
+
+      const { mockBridgeAddress, mockBridge } = await loadFixture(
+        deployMockBridgeFixture
+      )
+
+      const { mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(ROUTER_ROLE, fakeRouterCaller.address, 0)
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 80001n,
+        sender: abiCoder.encode(['address'], [otherSideCaller.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await mockBridge.lock()
+
+      await ccipAdapter.ccipReceive(payload)
+
+      const pendingMessage = await ccipAdapter.getPendingMessage(0)
+
+      expect({
+        fromChain: pendingMessage.fromChain,
+        sender: pendingMessage.sender,
+        data: pendingMessage.data
+      }).to.be.deep.equal({
+        fromChain: payload.sourceChainSelector,
+        sender: otherSideCaller.address,
+        data: payload.data
+      })
+    })
+
     describe('Checks', () => {
       it('should revert if receive message from unknown caller', async function () {
         const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
@@ -209,6 +366,27 @@ describe('CCIPAdapter', function () {
           ccipAdapter,
           'AccessManagedUnauthorized'
         )
+      })
+
+      it('should revert if execute manually when does not have any pending messages', async function () {
+        const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+
+        const { mockCCIPRouterAddress } = await loadFixture(
+          deployMockCCIPRouterFixture
+        )
+
+        const { ccipAdapter } = await loadFixture(
+          deployCCIPAdapterFixture.bind(
+            this,
+            mockBridgeAddress,
+            accessManagementAddress,
+            mockCCIPRouterAddress
+          )
+        )
+
+        await expect(
+          ccipAdapter.manuallyExecuteMessages(1)
+        ).to.be.revertedWithCustomError(ccipAdapter, 'NoMessagesAvailable')
       })
     })
   })

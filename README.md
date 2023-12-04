@@ -5,9 +5,7 @@
 ## Networks
 
 - Avalanche Fuji (43113)
-- Optimism Goerli (420)
 - Mumbai (80001)
-- Base goerli (84531)
 
 ## Getting Started
 
