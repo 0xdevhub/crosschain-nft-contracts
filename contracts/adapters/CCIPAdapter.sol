@@ -90,7 +90,9 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     function manuallyExecuteMessages(uint256 limitToExecute_) public {
         if (s_pendingMessagesCount == 0) revert NoMessagesAvailable();
 
-        for (uint256 i = 0; i < limitToExecute_; i++) {
+        uint256 limit = limitToExecute_ > s_pendingMessagesCount ? s_pendingMessagesCount : limitToExecute_;
+
+        for (uint256 i = 0; i < limit; i++) {
             IBridge.ERC721Receive memory payload = s_pendingMessagesToExecute[i];
 
             _receiveMessage(payload);

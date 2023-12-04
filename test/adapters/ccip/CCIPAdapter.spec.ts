@@ -333,6 +333,55 @@ describe('CCIPAdapter', function () {
       })
     })
 
+    it('should receive message from router and execute manually by limit from pending messages', async function () {
+      const [fakeRouterCaller, otherSideCaller] = await getSigners()
+
+      const { mockBridgeAddress, mockBridge } = await loadFixture(
+        deployMockBridgeFixture
+      )
+
+      const { mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /// grant role to bridge contract
+      await accessManagement.grantRole(ROUTER_ROLE, fakeRouterCaller.address, 0)
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 80001n,
+        sender: abiCoder.encode(['address'], [otherSideCaller.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await mockBridge.lock()
+
+      await ccipAdapter.ccipReceive(payload)
+
+      await expect(ccipAdapter.manuallyExecuteMessages(10))
+        .to.emit(ccipAdapter, 'ERC721Received')
+        .withArgs(
+          payload.sourceChainSelector,
+          otherSideCaller.address,
+          payload.data
+        )
+    })
+
     describe('Checks', () => {
       it('should revert if receive message from unknown caller', async function () {
         const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
