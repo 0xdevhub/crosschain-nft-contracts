@@ -10,8 +10,8 @@ contract MockBridge {
 
     bool public s_isLocked;
 
-    function lock() external {
-        s_isLocked = true;
+    function lock(bool status_) external {
+        s_isLocked = status_;
     }
 
     event ERC721Received(ERC721Receive indexed message_);

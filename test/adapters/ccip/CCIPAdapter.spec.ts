@@ -213,9 +213,11 @@ describe('CCIPAdapter', function () {
         destTokenAmounts: []
       }
 
-      await mockBridge.lock()
+      await mockBridge.lock(true)
 
       await ccipAdapter.ccipReceive(payload)
+
+      await mockBridge.lock(false)
 
       await expect(ccipAdapter.manuallyExecuteMessages(1))
         .to.emit(ccipAdapter, 'ERC721Received')
@@ -262,9 +264,10 @@ describe('CCIPAdapter', function () {
         destTokenAmounts: []
       }
 
-      await mockBridge.lock()
-
+      await mockBridge.lock(true)
       await ccipAdapter.ccipReceive(payload)
+      await mockBridge.lock(false)
+
       await ccipAdapter.manuallyExecuteMessages(1)
 
       const executedMessage = await ccipAdapter.getExecutedMessage(0)
@@ -316,9 +319,11 @@ describe('CCIPAdapter', function () {
         destTokenAmounts: []
       }
 
-      await mockBridge.lock()
+      await mockBridge.lock(true)
 
       await ccipAdapter.ccipReceive(payload)
+
+      await mockBridge.lock(false)
 
       const pendingMessage = await ccipAdapter.getPendingMessage(0)
 
@@ -369,9 +374,9 @@ describe('CCIPAdapter', function () {
         destTokenAmounts: []
       }
 
-      await mockBridge.lock()
-
+      await mockBridge.lock(true)
       await ccipAdapter.ccipReceive(payload)
+      await mockBridge.lock(false)
 
       await expect(ccipAdapter.manuallyExecuteMessages(10))
         .to.emit(ccipAdapter, 'ERC721Received')

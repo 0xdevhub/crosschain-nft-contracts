@@ -75,12 +75,10 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
 
     function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual override {
         try IBridge(bridge()).receiveERC721(payload_) {
-            /// @dev if success, just bypass
+            emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
         } catch {
             _setPendingMessage(payload_);
         }
-
-        emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     function _setPendingMessage(IBridge.ERC721Receive memory payload_) private {
