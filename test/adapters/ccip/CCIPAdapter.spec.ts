@@ -446,6 +446,40 @@ describe('CCIPAdapter', function () {
           ccipAdapter.getPendingMessage(1)
         ).to.be.revertedWithCustomError(ccipAdapter, 'NoMessagesAvailable')
       })
+
+      it('should revert if caller is not router', async function () {
+        const [, hacker, fromOtherChainAdapter] = await getSigners()
+
+        const mockBridgeAddress = '0xEF324FB84e72F098363837dF92C7aFfF46675411'
+
+        const { mockCCIPRouterAddress } = await loadFixture(
+          deployMockCCIPRouterFixture
+        )
+
+        const { ccipAdapter } = await loadFixture(
+          deployCCIPAdapterFixture.bind(
+            this,
+            mockBridgeAddress,
+            accessManagementAddress,
+            mockCCIPRouterAddress
+          )
+        )
+
+        const payload: Client.Any2EVMMessageStruct = {
+          messageId: ethers.encodeBytes32String('messsage_id'),
+          sourceChainSelector: 195185815885835825n,
+          sender: abiCoder.encode(['address'], [fromOtherChainAdapter.address]),
+          data: abiCoder.encode(['string'], ['hello']),
+          destTokenAmounts: []
+        }
+
+        await expect(
+          ccipAdapter.connect(hacker).ccipReceive(payload)
+        ).to.be.revertedWithCustomError(
+          ccipAdapter,
+          'AccessManagedUnauthorized'
+        )
+      })
     })
   })
 
@@ -659,6 +693,212 @@ describe('CCIPAdapter', function () {
 
         await expect(
           ccipAdapter.connect(mockRouterCaller).executeMessages(0)
+        ).to.be.revertedWithCustomError(ccipAdapter, 'NoMessagesAvailable')
+      })
+    })
+  })
+
+  describe('Execute messages by automation', () => {
+    it('should return false check upkeep is not due', async function () {
+      const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
+
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+
+      const { mockCCIPRouter, mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /**Grant role to router calling ccipReceive */
+      await accessManagement.grantRole(ROUTER_ROLE, mockRouterCaller.address, 0)
+
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      await mockCCIPRouter.setFee(200_000)
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 195185815885835825n,
+        sender: abiCoder.encode(['address'], [fromOtherChainAdapter.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+      await ccipAdapter.performUpkeep('0x')
+
+      const performUpkeep = await ccipAdapter.checkUpkeep('0x')
+
+      expect(performUpkeep).to.be.deep.equal([false, '0x'])
+    })
+
+    it('should return false check upkeep is due but no pending messages', async function () {
+      const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
+
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+
+      const { mockCCIPRouter, mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /**Grant role to router calling ccipReceive */
+      await accessManagement.grantRole(ROUTER_ROLE, mockRouterCaller.address, 0)
+
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      await mockCCIPRouter.setFee(200_000)
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 195185815885835825n,
+        sender: abiCoder.encode(['address'], [fromOtherChainAdapter.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+      await ccipAdapter.performUpkeep('0x')
+
+      const performUpkeep = await ccipAdapter.checkUpkeep('0x')
+
+      await time.increase(60 * 60 * 24 * 2)
+
+      expect(performUpkeep).to.be.deep.equal([false, '0x'])
+    })
+
+    it('should return true check if upkeep is due and pending messages', async function () {
+      const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
+
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+
+      const { mockCCIPRouter, mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /**Grant role to router calling ccipReceive */
+      await accessManagement.grantRole(ROUTER_ROLE, mockRouterCaller.address, 0)
+
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      await mockCCIPRouter.setFee(200_000)
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 195185815885835825n,
+        sender: abiCoder.encode(['address'], [fromOtherChainAdapter.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+      await ccipAdapter.performUpkeep('0x')
+
+      await time.increase(60 * 60 * 24 * 2)
+
+      await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+      const performUpkeep = await ccipAdapter.checkUpkeep('0x')
+
+      expect(performUpkeep).to.be.deep.equal([true, '0x'])
+    })
+
+    it('should update last timestamp when call perform upkeep', async function () {
+      const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
+
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+
+      const { mockCCIPRouter, mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /**Grant role to router calling ccipReceive */
+      await accessManagement.grantRole(ROUTER_ROLE, mockRouterCaller.address, 0)
+
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+      await mockCCIPRouter.setFee(200_000)
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 195185815885835825n,
+        sender: abiCoder.encode(['address'], [fromOtherChainAdapter.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+      await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+      await ccipAdapter.performUpkeep('0x')
+
+      const lastTimeStamp = await ccipAdapter.getLastTimeStampPerformUpkeep()
+
+      expect(lastTimeStamp).to.be.not.equal(0)
+    })
+
+    describe('Checks', () => {
+      it('should revert if perform upkeep if pending messages is empty', async function () {
+        const mockBridgeAddress = '0xEF324FB84e72F098363837dF92C7aFfF46675411'
+        const mockCCIPRouterAddress =
+          '0xF903ba9E006193c1527BfBe65fe2123704EA3F99'
+
+        const { ccipAdapter } = await loadFixture(
+          deployCCIPAdapterFixture.bind(
+            this,
+            mockBridgeAddress,
+            accessManagementAddress,
+            mockCCIPRouterAddress
+          )
+        )
+
+        await expect(
+          ccipAdapter.performUpkeep('0x')
         ).to.be.revertedWithCustomError(ccipAdapter, 'NoMessagesAvailable')
       })
     })

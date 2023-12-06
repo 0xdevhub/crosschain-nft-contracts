@@ -11,14 +11,14 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
 contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface {
+    /// @dev messages storage
     IBaseAdapter.MessageReceive[] private s_pendingMessagesToExecute;
-
-    /// @dev updateInterval is used to check in seconds if upkeep is needed
-    uint256 private s_updateInterval = 60;
-    uint256 private s_lastTimeStamp;
-    uint256 private s_defaultExecutionLimit = 10;
-
     uint256 private s_messagesExecutedCount;
+
+    /// @dev automation settings
+    uint256 private s_updateInterval = 60;
+    uint256 private s_lastTimeStampPerformUpkeep;
+    uint256 private s_defaultExecutionLimit = 10;
 
     error NoMessagesAvailable();
 
@@ -48,7 +48,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     function checkUpkeep(
         bytes calldata /* checkData */
     ) external view override returns (bool upkeepNeeded, bytes memory /* performData */) {
-        if ((block.timestamp - s_lastTimeStamp) > s_updateInterval) {
+        if ((block.timestamp - s_lastTimeStampPerformUpkeep) > s_updateInterval) {
             /// @dev execute messages if there are any message available
             upkeepNeeded = s_pendingMessagesToExecute.length > 0;
         } else {
@@ -59,8 +59,14 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     }
 
     function performUpkeep(bytes calldata /* performData */) external override {
+        if (s_pendingMessagesToExecute.length == 0) revert NoMessagesAvailable();
+
         executeMessages(s_defaultExecutionLimit);
-        s_lastTimeStamp = block.timestamp;
+        s_lastTimeStampPerformUpkeep = block.timestamp;
+    }
+
+    function getLastTimeStampPerformUpkeep() public view returns (uint256) {
+        return s_lastTimeStampPerformUpkeep;
     }
 
     /// @inheritdoc IBaseAdapter
@@ -112,6 +118,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     }
 
     function _receiveMessage(IBaseAdapter.MessageReceive memory payload_) internal virtual override {
+        /// @dev: todo, try before set as peding
         // try IBridge(getBridge()).receiveERC721(payload_) {
         //     /** @dev ignore */
         // } catch  {
