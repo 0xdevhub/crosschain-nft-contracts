@@ -40,7 +40,7 @@ contract Bridge is IBridge, AccessManaged {
         IBridge.RampType rampType_,
         bool isEnabled_,
         uint256 gasLimit_
-    ) external {
+    ) external restricted {
         IBridge.EvmChainSettings memory evmChainSettings = IBridge.EvmChainSettings({
             evmChainId: evmChainId_,
             nonEvmChainId: nonEvmChainId_,
@@ -68,7 +68,7 @@ contract Bridge is IBridge, AccessManaged {
         address wrappedAddress_,
         uint256 originEvmChainId_,
         address originAddress_
-    ) external {
+    ) external restricted {
         _setERC721WrappedToken(wrappedAddress_, originEvmChainId_, originAddress_);
     }
 
@@ -86,6 +86,10 @@ contract Bridge is IBridge, AccessManaged {
         s_wrappedERC721TokenOrigin[wrappedAddress_] = originAddress_;
 
         emit IBridge.ERC721WrappedCreated(originEvmChainId_, originAddress_, wrappedAddress_);
+    }
+
+    function getERC721WrappedToken(address originAddress_) external view returns (IBridge.ERC721Wrapped memory) {
+        return s_wrappedERC721Tokens[originAddress_];
     }
 
     /// @dev todo: reentracy guard
@@ -120,8 +124,10 @@ contract Bridge is IBridge, AccessManaged {
         if (existentWrappedAddress != address(0)) {
             WERC721 wERC721 = WERC721(existentWrappedAddress);
             wERC721.safeTransferFrom(msg.sender, address(this), tokenId_);
+            /// @dev burn wrapped token before sending back
             wERC721.bridgeBurn(tokenId_);
         } else {
+            /// @dev just lock original ERC721
             IERC721(token_).safeTransferFrom(msg.sender, address(this), tokenId_);
         }
     }
@@ -172,7 +178,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function receiveERC721(IBaseAdapter.MessageReceive memory payload_) external override {
+    function receiveERC721(IBaseAdapter.MessageReceive memory payload_) external override restricted {
         uint256 fromEvmChainId = s_nonEvmChains[payload_.fromChain];
 
         IBridge.ERC721Data memory data = _getDecodedERC721Data(payload_.data);
