@@ -21,7 +21,7 @@ pnpm hardhat deploy-adapter-contract --network 43113 --adapter "CCIPAdapter" --b
 
 =========================
 
-pnpm hardhat set-chain-settings --network 43113 --bridge-address 0x0214f538B87996Dc42924DCeeb84023D01C50dFC --evm-chain-id 80001 --non-evm-chain-id 12532609583862916517 --adapter-address 0x01Dfab90DC8C8E5F66E3fB51009B4c5D8820e44f ---target-adapter-address 0x45ACa774719B311fF4DA05724866DdBC18f3e31c --is-enabled true --gas-limit 4000000
+pnpm hardhat set-chain-settings --network 43113 --bridge-address 0x0214f538B87996Dc42924DCeeb84023D01C50dFC --evm-chain-id 80001 --non-evm-chain-id 0x01Dfab90DC8C8E5F66E3fB51009B4c5D8820e44f12532609583862916517 --adapter-address 0x01Dfab90DC8C8E5F66E3fB51009B4c5D8820e44f ---target-adapter-address 0x45ACa774719B311fF4DA05724866DdBC18f3e31c --is-enabled true --gas-limit 4000000
 
 # Bridge ERC721 using ERC20 token as fee
 

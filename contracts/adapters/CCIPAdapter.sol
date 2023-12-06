@@ -14,9 +14,9 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     IBridge.ERC721Receive[] private s_pendingMessagesToExecute;
 
     /// @dev updateInterval is used to check in seconds if upkeep is needed
-    uint256 public s_updateInterval = 60;
-    uint256 public s_lastTimeStamp;
-    uint256 public s_defaultExecutionLimit;
+    uint256 private s_updateInterval = 60;
+    uint256 private s_lastTimeStamp;
+    uint256 private s_defaultExecutionLimit = 10;
 
     error NoMessagesAvailable();
 
@@ -46,8 +46,12 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     function checkUpkeep(
         bytes calldata /* checkData */
     ) external view override returns (bool upkeepNeeded, bytes memory /* performData */) {
-        upkeepNeeded = (block.timestamp - s_lastTimeStamp) > s_updateInterval;
+        if (s_pendingMessagesToExecute.length == 0) {
+            upkeepNeeded = false;
+            return (upkeepNeeded, "");
+        }
 
+        upkeepNeeded = (block.timestamp - s_lastTimeStamp) > s_updateInterval;
         return (upkeepNeeded, "");
     }
 
