@@ -20,6 +20,7 @@ export type SetupBridgeAdapterTask = {
   adapterContractName: 'CCIPAdapter'
   accountIndex: number
   routerToAdapterFunctionSelector: 'ccipReceive'
+  /// @todo: applly both instead of select one of them
   bridgeToAdapterFunctionSelector:
     | 'sendMessageUsingNative'
     | 'sendMessageUsingERC20'

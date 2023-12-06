@@ -8,13 +8,15 @@ import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications
 import {IBaseAdapter, BaseAdapter} from "./BaseAdapter.sol";
 import {IBridge} from "../interfaces/IBridge.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
-contract CCIPAdapter is BaseAdapter, CCIPReceiver {
-    mapping(uint256 => IBridge.ERC721Receive) private s_pendingMessagesToExecute;
-    mapping(uint256 => IBridge.ERC721Receive) private s_pendingMessagesExecuted;
+contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface {
+    IBridge.ERC721Receive[] private s_pendingMessagesToExecute;
 
-    uint256 private s_pendingMessagesCount;
-    uint256 private s_pendingMessagesExecutedCount;
+    /// @dev updateInterval is used to check in seconds if upkeep is needed
+    uint256 public s_updateInterval = 60;
+    uint256 public s_lastTimeStamp;
+    uint256 public s_defaultExecutionLimit;
 
     error NoMessagesAvailable();
 
@@ -24,6 +26,37 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
         address router_,
         address feeToken_
     ) BaseAdapter(bridge_, accessManagement_, feeToken_) CCIPReceiver(router_) {}
+
+    function setUpdateInterval(uint256 updateInterval_) external {
+        s_updateInterval = updateInterval_;
+    }
+
+    function updateInterval() public view returns (uint256) {
+        return s_updateInterval;
+    }
+
+    function setDefaultExecutionLimit(uint256 defaultExecutionLimit_) external {
+        s_defaultExecutionLimit = defaultExecutionLimit_;
+    }
+
+    function defaultExecutionLimit() public view returns (uint256) {
+        return s_defaultExecutionLimit;
+    }
+
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    ) external view override returns (bool upkeepNeeded, bytes memory /* performData */) {
+        upkeepNeeded = (block.timestamp - s_lastTimeStamp) > s_updateInterval;
+
+        return (upkeepNeeded, "");
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external override {
+        if ((block.timestamp - s_lastTimeStamp) > s_updateInterval) {
+            s_lastTimeStamp = block.timestamp;
+            executeMessages(s_defaultExecutionLimit);
+        }
+    }
 
     /// @inheritdoc IBaseAdapter
     function getFee(IBridge.ERC721Send memory payload_) public view override returns (uint256) {
@@ -58,7 +91,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     /// @inheritdoc CCIPReceiver
-    function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
+    function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override {
         _ccipReceive(any2EvmMessage);
     }
 
@@ -74,38 +107,44 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver {
     }
 
     function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual override {
-        try IBridge(bridge()).receiveERC721(payload_) {
-            emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
-        } catch {
-            _setPendingMessage(payload_);
-        }
+        _setPendingMessage(payload_);
+        emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     function _setPendingMessage(IBridge.ERC721Receive memory payload_) private {
-        s_pendingMessagesToExecute[s_pendingMessagesCount++] = payload_;
+        s_pendingMessagesToExecute.push(payload_);
     }
 
-    function manuallyExecuteMessages(uint256 limitToExecute_) public {
-        if (s_pendingMessagesCount == 0) revert NoMessagesAvailable();
+    function executeMessages(uint256 limitToExecute_) public {
+        if (s_pendingMessagesToExecute.length == 0) revert NoMessagesAvailable();
 
-        uint256 limit = limitToExecute_ > s_pendingMessagesCount ? s_pendingMessagesCount : limitToExecute_;
+        uint256 limit = limitToExecute_ > s_pendingMessagesToExecute.length
+            ? s_pendingMessagesToExecute.length
+            : limitToExecute_;
 
-        for (uint256 i = 0; i < limit; i++) {
-            IBridge.ERC721Receive memory payload = s_pendingMessagesToExecute[i];
+        uint256 lastIndex = limit - 1;
+        uint256 itemsToDelete = limit;
 
-            _receiveMessage(payload);
+        while (limit > 0) {
+            IBridge.ERC721Receive memory payload = s_pendingMessagesToExecute[lastIndex];
 
-            s_pendingMessagesExecuted[s_pendingMessagesExecutedCount++] = payload;
-            s_pendingMessagesCount--;
+            IBridge(bridge()).receiveERC721(payload);
+
+            if (lastIndex > 0) {
+                lastIndex--;
+            }
+
+            limit--;
+        }
+
+        while (itemsToDelete > 0) {
+            s_pendingMessagesToExecute.pop();
+            itemsToDelete--;
         }
     }
 
     function getPendingMessage(uint256 index_) public view returns (IBridge.ERC721Receive memory) {
         return s_pendingMessagesToExecute[index_];
-    }
-
-    function getExecutedMessage(uint256 index_) public view returns (IBridge.ERC721Receive memory) {
-        return s_pendingMessagesExecuted[index_];
     }
 
     /// @inheritdoc BaseAdapter

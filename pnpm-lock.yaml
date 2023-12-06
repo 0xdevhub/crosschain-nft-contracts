@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@chainlink/contracts':
+    specifier: ^0.8.0
+    version: 0.8.0(ethers@6.8.0)
   '@chainlink/contracts-ccip':
     specifier: ^0.7.6
     version: 0.7.6(ethers@6.8.0)
@@ -130,6 +133,19 @@ packages:
 
   /@chainlink/contracts-ccip@0.7.6(ethers@6.8.0):
     resolution: {integrity: sha512-yNbCBFpLs3R+ALymto9dQYKz3vatnjqYGu1pnMD0i2fHEMthiXe0+otaNCGNht6n8k7ruNaA0DNpz3F+2jHQXw==}
+    dependencies:
+      '@eth-optimism/contracts': 0.5.40(ethers@6.8.0)
+      '@openzeppelin/contracts': 4.3.3
+      '@openzeppelin/contracts-upgradeable-4.7.3': /@openzeppelin/contracts-upgradeable@4.7.3
+      '@openzeppelin/contracts-v0.7': /@openzeppelin/contracts@3.4.2
+    transitivePeerDependencies:
+      - bufferutil
+      - ethers
+      - utf-8-validate
+    dev: false
+
+  /@chainlink/contracts@0.8.0(ethers@6.8.0):
+    resolution: {integrity: sha512-nUv1Uxw5Mn92wgLs2bgPYmo8hpdQ3s9jB/lcbdU0LmNOVu0hbfmouVnqwRLa28Ll50q6GczUA+eO0ikNIKLZsA==}
     dependencies:
       '@eth-optimism/contracts': 0.5.40(ethers@6.8.0)
       '@openzeppelin/contracts': 4.3.3

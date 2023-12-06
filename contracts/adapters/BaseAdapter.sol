@@ -29,11 +29,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function sendMessageUsingERC20(
-        IBridge.ERC721Send memory payload_,
-        uint256 quotedFee_
-    ) external override restricted {
-        /// @dev check if there is enough fee token amount
+    function sendMessageUsingERC20(IBridge.ERC721Send memory payload_, uint256 quotedFee_) external override {
         if (quotedFee_ < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
         _sendMessage(payload_, quotedFee_);
@@ -41,15 +37,13 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable override restricted {
-        /// @dev check if there is enough fee token amount
+    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable override {
         if (msg.value < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
         _sendMessage(payload_, msg.value);
         emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
-    ///@dev {override} this function to send message using your implementation
     function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal virtual;
 
     function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual {

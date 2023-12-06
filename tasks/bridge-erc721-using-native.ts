@@ -153,17 +153,12 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
 
         console.log('ℹ️ Estimating gas')
 
-        const expectedInputValue =
-          fee +
-          chainConfig.crosschain.gasRequiredDeploy +
-          chainConfig.crosschain.gasRequiredToMint
-
         const estimateGas = await bridge.sendERC721UsingNative.estimateGas(
           targetChainSettings.evmChainId,
           ERC721Address,
           tokenId,
           {
-            value: expectedInputValue
+            value: fee
           }
         )
 
@@ -175,21 +170,12 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
 
         console.log(`ℹ️ Sending ERC721 to bridge using native`)
 
-        await bridge.sendERC721UsingNative.staticCall(
-          targetChainSettings.evmChainId,
-          ERC721Address,
-          tokenId,
-          {
-            value: expectedInputValue
-          }
-        )
-
         const tx3 = await bridge.sendERC721UsingNative(
           targetChainSettings.evmChainId,
           ERC721Address,
           tokenId,
           {
-            value: expectedInputValue
+            value: fee
           }
         )
 
