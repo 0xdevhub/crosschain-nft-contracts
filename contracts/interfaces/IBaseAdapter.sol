@@ -14,7 +14,7 @@ interface IBaseAdapter {
 
     event ERC721Received(uint256 fromChain_, address sender_, bytes data_);
 
-    function bridge() external view returns (address);
+    function getBridge() external view returns (address);
 
     function feeToken() external view returns (address);
 

@@ -16,7 +16,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function bridge() public view override returns (address) {
+    function getBridge() public view override returns (address) {
         return s_bridge;
     }
 
@@ -29,7 +29,10 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function sendMessageUsingERC20(IBridge.ERC721Send memory payload_, uint256 quotedFee_) external override {
+    function sendMessageUsingERC20(
+        IBridge.ERC721Send memory payload_,
+        uint256 quotedFee_
+    ) external override restricted {
         if (quotedFee_ < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
         _sendMessage(payload_, quotedFee_);
@@ -37,7 +40,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable override {
+    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable override restricted {
         if (msg.value < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
         _sendMessage(payload_, msg.value);

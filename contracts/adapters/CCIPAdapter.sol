@@ -27,7 +27,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         address feeToken_
     ) BaseAdapter(bridge_, accessManagement_, feeToken_) CCIPReceiver(router_) {}
 
-    function setUpdateInterval(uint256 updateInterval_) external {
+    function setUpdateInterval(uint256 updateInterval_) external restricted {
         s_updateInterval = updateInterval_;
     }
 
@@ -35,7 +35,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         return s_updateInterval;
     }
 
-    function setDefaultExecutionLimit(uint256 defaultExecutionLimit_) external {
+    function setDefaultExecutionLimit(uint256 defaultExecutionLimit_) external restricted {
         s_defaultExecutionLimit = defaultExecutionLimit_;
     }
 
@@ -46,12 +46,13 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     function checkUpkeep(
         bytes calldata /* checkData */
     ) external view override returns (bool upkeepNeeded, bytes memory /* performData */) {
-        if (s_pendingMessagesToExecute.length == 0) {
+        if ((block.timestamp - s_lastTimeStamp) > s_updateInterval) {
+            /// @dev execute messages if there are any message available
+            upkeepNeeded = s_pendingMessagesToExecute.length > 0;
+        } else {
             upkeepNeeded = false;
-            return (upkeepNeeded, "");
         }
 
-        upkeepNeeded = (block.timestamp - s_lastTimeStamp) > s_updateInterval;
         return (upkeepNeeded, "");
     }
 
@@ -95,7 +96,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     }
 
     /// @inheritdoc CCIPReceiver
-    function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override {
+    function ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) external override restricted {
         _ccipReceive(any2EvmMessage);
     }
 
@@ -132,7 +133,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         while (limit > 0) {
             IBridge.ERC721Receive memory payload = s_pendingMessagesToExecute[lastIndex];
 
-            IBridge(bridge()).receiveERC721(payload);
+            IBridge(getBridge()).receiveERC721(payload);
 
             if (lastIndex > 0) {
                 lastIndex--;

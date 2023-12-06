@@ -28,21 +28,6 @@ contract Bridge is IBridge, AccessManaged {
         s_chainId = chainId_;
     }
 
-    modifier checkEvmChainIdAdapterIsValid(IBridge.EvmChainSettings memory evmChainSettings_) {
-        /// @dev: todo: check by sender when off ramp
-        if (evmChainSettings_.adapter == address(0)) {
-            revert IBridge.AdapterNotFound();
-        }
-        _;
-    }
-
-    modifier checkEvmChainIdIsEnabled(IBridge.EvmChainSettings memory evmChainSettings_) {
-        if (!evmChainSettings_.isEnabled) {
-            revert IBridge.AdapterNotEnabled();
-        }
-        _;
-    }
-
     /// @inheritdoc IBridge
     function chainId() public view returns (uint256) {
         return s_chainId;
