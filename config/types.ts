@@ -29,10 +29,7 @@ export interface Chain {
     }
   }
   testnet: boolean
-  crosschain: {
-    gasRequiredToMint: bigint
-    gasRequiredDeploy: bigint
-  }
+
   assets: {
     [key: string]: {
       address: string

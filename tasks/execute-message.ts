@@ -7,11 +7,13 @@ const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 
 export type SetChainSettingsParams = {
   adapterAddress: string
+  limit: number
   accountIndex: number
 }
 
-task('execute-message', 'execute messa manually ')
+task('execute-message', 'execute message manually ')
   .addParam('adapterAddress', 'adapter address')
+  .addOptionalParam('limit', 'limit', 10, types.int)
   .addOptionalParam(
     'accountIndex',
     'Account index to use for deployment',
@@ -19,7 +21,10 @@ task('execute-message', 'execute messa manually ')
     types.int
   )
   .setAction(
-    async ({ adapterAddress, accountIndex }: SetChainSettingsParams, hre) => {
+    async (
+      { adapterAddress, accountIndex, limit }: SetChainSettingsParams,
+      hre
+    ) => {
       spinner.start()
       try {
         const chainConfig = allowedChainsConfig[+hre.network.name]
@@ -48,7 +53,7 @@ task('execute-message', 'execute messa manually ')
           deployer
         )
 
-        const tx = await adapter.manuallyExecuteMessages(10)
+        const tx = await adapter.executeMessages(limit)
 
         const receipt = await tx.wait()
         const gasUsed = receipt?.gasUsed || 0n

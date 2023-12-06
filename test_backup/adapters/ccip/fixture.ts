@@ -5,19 +5,17 @@ import { ethers } from 'hardhat'
 export async function deployCCIPAdapterFixture(
   bridgeAddress: string,
   accessManagementAddress: string,
-  adapterRouterAddress: string,
+  routerAddress: string,
   feeTokenAddress?: string
 ) {
   const CCIPAdapter =
     await getContractFactory<CCIPAdapter__factory>('CCIPAdapter')
 
-  const erc20OrNative = feeTokenAddress || ethers.ZeroAddress
-
   const ccipAdapter = await CCIPAdapter.deploy(
     bridgeAddress,
     accessManagementAddress,
-    adapterRouterAddress,
-    erc20OrNative
+    routerAddress,
+    feeTokenAddress || ethers.ZeroAddress
   )
   const ccipAdapterAddress = await getContractAddress(ccipAdapter)
 

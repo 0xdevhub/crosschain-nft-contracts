@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
+import {IBaseAdapter} from "./IBaseAdapter.sol";
+
 interface IBridge {
     enum RampType {
         OnRamp,
@@ -12,7 +14,6 @@ interface IBridge {
         uint256 nonEvmChainId;
         address adapter;
         bool isEnabled;
-        /// @dev todo: encode adapter params into bytes to improve with other settings
         uint256 gasLimit;
     }
 
@@ -20,19 +21,6 @@ interface IBridge {
         uint256 originEvmChainId;
         address originAddress;
         address wrappedAddress;
-    }
-
-    struct ERC721Receive {
-        uint256 fromChain;
-        address sender;
-        bytes data; /// @dev ERC721Data
-    }
-
-    struct ERC721Send {
-        uint256 toChain;
-        address receiver;
-        bytes data; /// @dev ERC721Data
-        uint256 gasLimit;
     }
 
     struct ERC721Data {
@@ -57,15 +45,11 @@ interface IBridge {
     error InsufficientFeeTokenAmount();
     error AdapterNotFound();
     error AdapterNotEnabled();
-    error RampTypeNotAllowed();
-    error WrappedContractNotCreated();
     error OperationNotSupported();
 
     event EvmChainSettingsSet(uint256 indexed evmChainId_, RampType indexed rampType_);
-
     event ERC721Sent(uint256 evmChainId_, address receiver_, bytes data_);
     event ERC721Received(uint256 evmChainId_, address sender_, bytes data_);
-
     event ERC721WrappedCreated(
         uint256 indexed originChainId_,
         address indexed originAddress_,
@@ -91,7 +75,7 @@ interface IBridge {
 
     function onERC721Received(address operator, address, uint256, bytes calldata) external view returns (bytes4);
 
-    function receiveERC721(ERC721Receive memory payload_) external;
+    function receiveERC721(IBaseAdapter.MessageReceive memory payload_) external;
 
     function setERC721WrappedToken(address wrappedAddress_, uint256 originEvmChainId, address originAddress) external;
 }

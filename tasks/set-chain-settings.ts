@@ -82,11 +82,7 @@ task('set-chain-settings', 'set chain settings')
 
         console.log('ℹ️ Setting onramp chainSettings')
 
-        const expectedGasMin =
-          chainConfig.crosschain.gasRequiredDeploy +
-          chainConfig.crosschain.gasRequiredToMint
-        const gasLimitValue =
-          expectedGasMin > BigInt(gasLimit) ? expectedGasMin : BigInt(gasLimit)
+        const gasLimitValue = gasLimit ? BigInt(gasLimit) : 2000000n
 
         const tx = await bridgeContract.setChainSetting(
           evmChainId,

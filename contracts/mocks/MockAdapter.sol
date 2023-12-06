@@ -2,12 +2,12 @@
 pragma solidity 0.8.21;
 
 import {IBridge} from "../interfaces/IBridge.sol";
+import {IBaseAdapter} from "../interfaces/IBaseAdapter.sol";
 
-contract MockAdapter {
+contract MockAdapter is IBaseAdapter {
     uint256 private s_fee;
     address private s_feeToken;
-
-    event ERC721Sent(IBridge.ERC721Send data_);
+    address private s_bridge;
 
     function setFeeToken(address feeToken_) external {
         s_feeToken = feeToken_;
@@ -21,15 +21,23 @@ contract MockAdapter {
         s_fee = fee_;
     }
 
-    function getFee(IBridge.ERC721Send memory /*payload*/) public view returns (uint256) {
+    function getFee(IBaseAdapter.MessageSend memory /*payload*/) public view returns (uint256) {
         return s_fee;
     }
 
-    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable {}
+    function setBridge(address bridge_) external {
+        s_bridge = bridge_;
+    }
 
-    function sendMessageUsingERC20(IBridge.ERC721Send memory payload_, uint256 amount_) external {}
+    function getBridge() external view override returns (address) {
+        return s_bridge;
+    }
 
-    function receiveMessage(IBridge.ERC721Receive memory payload_, address bridge_) external {
+    function sendMessageUsingNative(IBaseAdapter.MessageSend memory payload_) external payable {}
+
+    function sendMessageUsingERC20(IBaseAdapter.MessageSend memory payload_, uint256 amount_) external {}
+
+    function receiveMessage(IBaseAdapter.MessageReceive memory payload_, address bridge_) external {
         IBridge(bridge_).receiveERC721(payload_);
     }
 }
