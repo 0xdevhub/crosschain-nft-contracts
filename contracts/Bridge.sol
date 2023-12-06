@@ -7,7 +7,6 @@ import {IBridge} from "./interfaces/IBridge.sol";
 import {IERC721, IERC721Metadata, IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {WERC721} from "./wrapped/WERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "hardhat/console.sol";
 
 contract Bridge is IBridge, AccessManaged {
     uint256 private immutable s_chainId;
@@ -89,6 +88,8 @@ contract Bridge is IBridge, AccessManaged {
         emit IBridge.ERC721WrappedCreated(originEvmChainId_, originAddress_, wrappedAddress_);
     }
 
+    /// @dev todo: reentracy guard
+
     /// @inheritdoc IBridge
     function sendERC721UsingERC20(uint256 toChain_, address token_, uint256 tokenId_, uint256 amount_) external {
         IBaseAdapter adapter = IBaseAdapter(getChainSettings(toChain_, IBridge.RampType.OnRamp).adapter);
@@ -96,7 +97,7 @@ contract Bridge is IBridge, AccessManaged {
         address feeToken = adapter.feeToken();
         if (feeToken == address(0)) revert IBridge.OperationNotSupported();
 
-        IBridge.ERC721Send memory payload = _getPayload(toChain_, token_, tokenId_);
+        IBaseAdapter.MessageSend memory payload = _getPayload(toChain_, token_, tokenId_);
         if (adapter.getFee(payload) > amount_) revert IBridge.InsufficientFeeTokenAmount();
 
         /// @dev get fees tokens first
@@ -130,7 +131,7 @@ contract Bridge is IBridge, AccessManaged {
         IBaseAdapter adapter = IBaseAdapter(getChainSettings(toChain_, IBridge.RampType.OnRamp).adapter);
         if (adapter.feeToken() != address(0)) revert IBridge.OperationNotSupported();
 
-        IBridge.ERC721Send memory payload = _getPayload(toChain_, token_, tokenId_);
+        IBaseAdapter.MessageSend memory payload = _getPayload(toChain_, token_, tokenId_);
         if (adapter.getFee(payload) > msg.value) revert IBridge.InsufficientFeeTokenAmount();
 
         _receiveERC721FromSender(token_, tokenId_);
@@ -144,13 +145,13 @@ contract Bridge is IBridge, AccessManaged {
         uint256 evmChainId_,
         address token_,
         uint256 tokenId_
-    ) internal view returns (IBridge.ERC721Send memory) {
+    ) internal view returns (IBaseAdapter.MessageSend memory) {
         /// @dev get target details to prepare payload
         EvmChainSettings memory offRampChainSettings = getChainSettings(evmChainId_, IBridge.RampType.OffRamp);
         IERC721Metadata metadata = IERC721Metadata(token_);
 
         return
-            IBridge.ERC721Send({
+            IBaseAdapter.MessageSend({
                 gasLimit: offRampChainSettings.gasLimit,
                 toChain: offRampChainSettings.nonEvmChainId, /// @dev adapter use nonvEvmChainId to handle message
                 receiver: offRampChainSettings.adapter, /// @dev adatper address that will receive the message
@@ -171,7 +172,7 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function receiveERC721(IBridge.ERC721Receive memory payload_) external override {
+    function receiveERC721(IBaseAdapter.MessageReceive memory payload_) external override {
         uint256 fromEvmChainId = s_nonEvmChains[payload_.fromChain];
 
         IBridge.ERC721Data memory data = _getDecodedERC721Data(payload_.data);
@@ -223,9 +224,8 @@ contract Bridge is IBridge, AccessManaged {
         return IBridge.ERC721Metadata({name: name, symbol: symbol, tokenURI: tokenURI});
     }
 
-    // ["14767482510784806043","0xf783c882dc9A0AB1E59301AEE0b742bb4582Dd8C","0x0000000000000000000000006815547453b8731a39eb420c11e45d6c685a677c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000001388100000000000000000000000075df84936cc7fc772f68e66269aac03d1bbf8e5f00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000568656c6c6f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"]
     function _createWrapped(
-        IBridge.ERC721Receive memory payload_,
+        IBaseAdapter.MessageReceive memory payload_,
         address token,
         string memory name_,
         string memory symbol_

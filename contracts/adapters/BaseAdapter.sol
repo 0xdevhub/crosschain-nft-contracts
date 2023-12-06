@@ -21,7 +21,7 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
     }
 
     /// @inheritdoc IBaseAdapter
-    function getFee(IBridge.ERC721Send memory payload_) public view virtual override returns (uint256);
+    function getFee(IBaseAdapter.MessageSend memory payload_) public view virtual override returns (uint256);
 
     /// @inheritdoc IBaseAdapter
     function feeToken() public view virtual override returns (address) {
@@ -30,28 +30,28 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
 
     /// @inheritdoc IBaseAdapter
     function sendMessageUsingERC20(
-        IBridge.ERC721Send memory payload_,
+        IBaseAdapter.MessageSend memory payload_,
         uint256 quotedFee_
     ) external override restricted {
         if (quotedFee_ < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
         _sendMessage(payload_, quotedFee_);
-        emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
+        emit IBaseAdapter.MessageSent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
     /// @inheritdoc IBaseAdapter
-    function sendMessageUsingNative(IBridge.ERC721Send memory payload_) external payable override restricted {
+    function sendMessageUsingNative(IBaseAdapter.MessageSend memory payload_) external payable override restricted {
         if (msg.value < getFee(payload_)) revert InsufficientFeeTokenAmount();
 
         _sendMessage(payload_, msg.value);
-        emit IBaseAdapter.ERC721Sent(payload_.toChain, payload_.receiver, payload_.data);
+        emit IBaseAdapter.MessageSent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
-    function _sendMessage(IBridge.ERC721Send memory payload_, uint256 quotedFee_) internal virtual;
+    function _sendMessage(IBaseAdapter.MessageSend memory payload_, uint256 quotedFee_) internal virtual;
 
-    function _receiveMessage(IBridge.ERC721Receive memory payload_) internal virtual {
+    function _receiveMessage(IBaseAdapter.MessageReceive memory payload_) internal virtual {
         IBridge(s_bridge).receiveERC721(payload_);
-        emit IBaseAdapter.ERC721Received(payload_.fromChain, payload_.sender, payload_.data);
+        emit IBaseAdapter.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
     }
 
     /// @dev prevent to receive native token
