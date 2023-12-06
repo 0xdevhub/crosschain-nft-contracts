@@ -45,15 +45,11 @@ interface IBridge {
     error InsufficientFeeTokenAmount();
     error AdapterNotFound();
     error AdapterNotEnabled();
-    error RampTypeNotAllowed();
-    error WrappedContractNotCreated();
     error OperationNotSupported();
 
     event EvmChainSettingsSet(uint256 indexed evmChainId_, RampType indexed rampType_);
-
     event ERC721Sent(uint256 evmChainId_, address receiver_, bytes data_);
     event ERC721Received(uint256 evmChainId_, address sender_, bytes data_);
-
     event ERC721WrappedCreated(
         uint256 indexed originChainId_,
         address indexed originAddress_,

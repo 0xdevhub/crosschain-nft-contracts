@@ -27,6 +27,27 @@ contract Bridge is IBridge, AccessManaged {
         s_chainId = chainId_;
     }
 
+    modifier checkEvmChainIdAdapterOnRamp(IBridge.EvmChainSettings memory evmChainSettings_) {
+        if (evmChainSettings_.adapter == address(0)) {
+            revert IBridge.AdapterNotFound();
+        }
+        _;
+    }
+
+    modifier checkEvmChainIdAdapterOffRamp(IBridge.EvmChainSettings memory evmChainSettings_, address sender_) {
+        if (evmChainSettings_.adapter != sender_) {
+            revert IBridge.AdapterNotFound();
+        }
+        _;
+    }
+
+    modifier checkEvmChainIdIsEnabled(IBridge.EvmChainSettings memory evmChainSettings_) {
+        if (!evmChainSettings_.isEnabled) {
+            revert IBridge.AdapterNotEnabled();
+        }
+        _;
+    }
+
     /// @inheritdoc IBridge
     function chainId() public view returns (uint256) {
         return s_chainId;
@@ -95,7 +116,16 @@ contract Bridge is IBridge, AccessManaged {
     /// @dev todo: reentracy guard
 
     /// @inheritdoc IBridge
-    function sendERC721UsingERC20(uint256 toChain_, address token_, uint256 tokenId_, uint256 amount_) external {
+    function sendERC721UsingERC20(
+        uint256 toChain_,
+        address token_,
+        uint256 tokenId_,
+        uint256 amount_
+    )
+        external
+        checkEvmChainIdAdapterOnRamp(getChainSettings(toChain_, IBridge.RampType.OnRamp))
+        checkEvmChainIdIsEnabled(getChainSettings(toChain_, IBridge.RampType.OnRamp))
+    {
         IBaseAdapter adapter = IBaseAdapter(getChainSettings(toChain_, IBridge.RampType.OnRamp).adapter);
 
         address feeToken = adapter.feeToken();
@@ -133,7 +163,16 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function sendERC721UsingNative(uint256 toChain_, address token_, uint256 tokenId_) external payable {
+    function sendERC721UsingNative(
+        uint256 toChain_,
+        address token_,
+        uint256 tokenId_
+    )
+        external
+        payable
+        checkEvmChainIdAdapterOnRamp(getChainSettings(toChain_, IBridge.RampType.OnRamp))
+        checkEvmChainIdIsEnabled(getChainSettings(toChain_, IBridge.RampType.OnRamp))
+    {
         IBaseAdapter adapter = IBaseAdapter(getChainSettings(toChain_, IBridge.RampType.OnRamp).adapter);
         if (adapter.feeToken() != address(0)) revert IBridge.OperationNotSupported();
 
@@ -178,7 +217,18 @@ contract Bridge is IBridge, AccessManaged {
     }
 
     /// @inheritdoc IBridge
-    function receiveERC721(IBaseAdapter.MessageReceive memory payload_) external override restricted {
+    function receiveERC721(
+        IBaseAdapter.MessageReceive memory payload_
+    )
+        external
+        override
+        restricted
+        checkEvmChainIdAdapterOffRamp(
+            getChainSettings(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp),
+            payload_.sender
+        )
+        checkEvmChainIdIsEnabled(getChainSettings(s_nonEvmChains[payload_.fromChain], IBridge.RampType.OffRamp))
+    {
         uint256 fromEvmChainId = s_nonEvmChains[payload_.fromChain];
 
         IBridge.ERC721Data memory data = _getDecodedERC721Data(payload_.data);
