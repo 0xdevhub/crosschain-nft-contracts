@@ -17,7 +17,7 @@ contract Bridge is IBridge, AccessManaged {
     /// @dev nonEvmChainId => evmChainId
     mapping(uint256 => uint256) private s_nonEvmChains;
 
-    /// @dev originAddress -> wrapped token
+    /// @dev originAddress -> wrapped token details
     mapping(address => IBridge.ERC721Wrapped) private s_wrappedERC721Tokens;
 
     /// @dev wrapped token address -> origin address
@@ -195,6 +195,14 @@ contract Bridge is IBridge, AccessManaged {
         EvmChainSettings memory offRampChainSettings = getChainSettings(evmChainId_, IBridge.RampType.OffRamp);
         IERC721Metadata metadata = IERC721Metadata(token_);
 
+        IBridge.ERC721Wrapped memory wrappedToken = s_wrappedERC721Tokens[s_wrappedERC721TokenOrigin[token_]];
+
+        /// @dev use token address if its origin address
+        address originTokenAddress = wrappedToken.originAddress == address(0) ? token_ : wrappedToken.originAddress;
+
+        /// @dev use source chain id if its origin chain id
+        uint256 originChainId = wrappedToken.originEvmChainId == 0 ? s_chainId : wrappedToken.originEvmChainId;
+
         return
             IBaseAdapter.MessageSend({
                 gasLimit: offRampChainSettings.gasLimit,
@@ -202,7 +210,7 @@ contract Bridge is IBridge, AccessManaged {
                 receiver: offRampChainSettings.adapter, /// @dev adatper address that will receive the message
                 data: _getEncodedPayloadData(
                     msg.sender, /// @dev address that will receive the ERC721 wrapped in the other chain
-                    abi.encode(s_chainId, token_, tokenId_),
+                    abi.encode(originChainId, originTokenAddress, tokenId_),
                     abi.encode(metadata.name(), metadata.symbol(), metadata.tokenURI(tokenId_))
                 )
             });

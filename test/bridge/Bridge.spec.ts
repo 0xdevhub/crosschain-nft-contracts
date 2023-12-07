@@ -1115,6 +1115,7 @@ describe('Bridge', function () {
       expect(wrappedTokenOwner).to.be.equal(currentOwner.address)
     })
 
+    /// @dev todo: revalidate that test
     it('should transfer to receive ERC721 original when it is origin evm chain id', async function () {
       const [, currentOwner] = await getSigners()
       const evmChainId = 137

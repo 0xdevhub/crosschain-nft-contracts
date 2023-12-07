@@ -7,18 +7,20 @@ import { RampType } from './set-chain-settings'
 const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
 
 export type DeployTestERC721ContractTask = {
-  tokenName: string
-  tokenSymbol: string
   bridgeAddress: string
   adapterAddress: string
   targetNetwork: number
   feeTokenName: 'LINK'
   accountIndex: number
+  tokenAddress: string
+  tokenId: number
+  originChainEvmId: number
 }
 
-task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
-  .addParam('tokenName', 'token name')
-  .addParam('tokenSymbol', 'token symbol')
+task('bridge-erc721', 'bridge ERC721 contract using erc20 token')
+  .addParam('tokenAddress', 'token address')
+  .addParam('tokenId', 'token id')
+  .addParam('originChainEvmId', 'origin chain evm id')
   .addParam('bridgeAddress', 'bridge address')
   .addParam('adapterAddress', 'adapter address')
   .addParam('targetNetwork', 'target network')
@@ -32,13 +34,14 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
   .setAction(
     async (
       {
-        tokenName,
-        tokenSymbol,
         bridgeAddress,
         targetNetwork,
         adapterAddress,
         accountIndex,
-        feeTokenName
+        feeTokenName,
+        tokenAddress,
+        tokenId,
+        originChainEvmId
       }: DeployTestERC721ContractTask,
       hre
     ) => {
@@ -61,27 +64,18 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
           provider
         )
 
-        console.log(
-          `ℹ️ Deploying ERC721 ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
-        )
-
-        const ERC721 = await hre.ethers.deployContract(
-          'MockERC721',
-          [tokenName, tokenSymbol],
+        const ERC721 = await hre.ethers.getContractAt(
+          'ERC721',
+          tokenAddress,
           deployer
         )
 
-        await ERC721.waitForDeployment()
+        const tokenName = await ERC721.name()
+        const tokenSymbol = await ERC721.symbol()
 
-        const tokenId = 1
-
-        console.log('ℹ️ Minting: ', tokenId)
-
-        const tx = await ERC721.mint(tokenId)
-        const receipt = await tx.wait()
-        const gasUsed = receipt?.gasUsed || 0n
-
-        console.log('ℹ️ Done and gas used: ', gasUsed)
+        console.log(
+          `ℹ️ Briding ERC721 ${tokenName} with symbol ${tokenSymbol} to ${chainConfig.id}`
+        )
 
         /**
          *
@@ -112,8 +106,6 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
           RampType.OnRamp
         )
 
-        const ERC721Address = await ERC721.getAddress()
-
         const payload = {
           toChain: targetChainSettings.nonEvmChainId,
           receiver: targetChainSettings.adapter,
@@ -124,7 +116,7 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
               deployer.address,
               abiCoder.encode(
                 ['uint256', 'address', 'uint256'],
-                [chainConfig.id, ERC721Address, tokenId]
+                [originChainEvmId, tokenAddress, tokenId]
               ),
               abiCoder.encode(
                 ['string', 'string', 'string'],
@@ -175,7 +167,7 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
 
         const estimateGas = await bridge.sendERC721UsingERC20.estimateGas(
           targetChainSettings.evmChainId,
-          ERC721Address,
+          tokenAddress,
           tokenId,
           fee
         )
@@ -186,13 +178,11 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
          *
          */
 
-        console.log(
-          `ℹ️ Sending ERC721 ${ERC721Address} to bridge using ${feeTokenName}`
-        )
+        console.log(`ℹ️ Sending ERC721 to bridge using ${feeTokenName}`)
 
         const tx3 = await bridge.sendERC721UsingERC20(
           targetChainSettings.evmChainId,
-          ERC721Address,
+          tokenAddress,
           tokenId,
           fee
         )
@@ -206,16 +196,12 @@ task('bridge-erc721-using-erc20', 'bridge ERC721 contract using erc20 token')
          *
          */
 
-        const ERC721Owner = await ERC721.ownerOf(tokenId)
-
         spinner.stop()
-        console.log(
-          `✅ ERC721 ${tokenName} deployed and transfered to ${ERC721Owner}`
-        )
+        console.log(`✅ ERC721 ${tokenName} transfered`)
       } catch (error) {
         spinner.stop()
         console.log(error)
-        console.log(`❌ ERC721 ${tokenName}  deploy failed`)
+        console.log(`❌ ERC721 bridge failed`)
       }
     }
   )
