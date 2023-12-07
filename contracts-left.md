@@ -48,4 +48,4 @@ pnpm hardhat execute-message --network 80001 --adapter-address 0x533088e7bC6eC08
 
 =========================
 
-pnpm hardhat bridge-erc721 --network 80001 --token-address 0x46bef163d6c470a4774f9585f3500ae3b642e751 --token-id 529 --bridge-address 0xBA70e221fF13Ace063868304719D9C67Aa274989 --adapter-address 0x533088e7bC6eC082F64BE2F54E303aFc8358ed24 --target-network 43113 --fee-token-name LINK --origin-chain-evm-id 80001
+pnpm hardhat bridge-erc721 --network 80001 --token-address 0x46bef163d6c470a4774f9585f3500ae3b642e751 --token-id 530 --bridge-address 0xBA70e221fF13Ace063868304719D9C67Aa274989 --adapter-address 0x533088e7bC6eC082F64BE2F54E303aFc8358ed24 --target-network 43113 --fee-token-name LINK --origin-chain-evm-id 80001
