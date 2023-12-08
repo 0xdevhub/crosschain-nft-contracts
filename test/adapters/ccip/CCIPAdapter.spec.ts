@@ -285,6 +285,57 @@ describe('CCIPAdapter', function () {
       ])
     })
 
+    it('should execute message instead of set as pending if bridge didnt revert', async function () {
+      const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
+
+      const { mockBridgeAddress, mockBridge } = await loadFixture(
+        deployMockBridgeFixture
+      )
+
+      const { mockCCIPRouterAddress } = await loadFixture(
+        deployMockCCIPRouterFixture
+      )
+
+      const { ccipAdapter, ccipAdapterAddress } = await loadFixture(
+        deployCCIPAdapterFixture.bind(
+          this,
+          mockBridgeAddress,
+          accessManagementAddress,
+          mockCCIPRouterAddress
+        )
+      )
+
+      /**Grant role to router calling ccipReceive */
+      await accessManagement.grantRole(
+        ROUTER_ROLE,
+        mockRouterCaller.address,
+        ROUTER_ROLE_DELAY
+      )
+
+      await accessManagement.setTargetFunctionRole(
+        ccipAdapterAddress,
+        [ccipAdapter.interface.getFunction('ccipReceive').selector],
+        ROUTER_ROLE
+      )
+
+      const payload: Client.Any2EVMMessageStruct = {
+        messageId: ethers.encodeBytes32String('messsage_id'),
+        sourceChainSelector: 195185815885835825n,
+        sender: abiCoder.encode(['address'], [fromOtherChainAdapter.address]),
+        data: abiCoder.encode(['string'], ['hello']),
+        destTokenAmounts: []
+      }
+
+      /// @dev disable mock force revert
+      await mockBridge.lock(false)
+
+      await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+
+      const total = await ccipAdapter.getPendingMessagesToExecuteCount()
+
+      expect(total).to.be.deep.equal(0n)
+    })
+
     it('should increment execute messages count on receive', async function () {
       const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
 
