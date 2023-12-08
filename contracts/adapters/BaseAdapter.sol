@@ -47,8 +47,21 @@ abstract contract BaseAdapter is IBaseAdapter, AccessManaged {
         emit IBaseAdapter.MessageSent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
+    /**
+     * @notice default implementation for sending crosschain  you must implement
+     *         your own logic to accept income messages from external resources (e.g. bridge)
+     *
+     * @param payload_ message payload
+     * @param quotedFee_ required fee amount
+     */
     function _sendMessage(IBaseAdapter.MessageSend memory payload_, uint256 quotedFee_) internal virtual;
 
+    /**
+     * @notice default implementation for receiving crosschain message and send to bridge
+     *         you should implement your own logic to accept income messages from external resources (e.g. router)
+     *
+     * @param payload_ message payload
+     */
     function _receiveMessage(IBaseAdapter.MessageReceive memory payload_) internal virtual {
         IBridge(s_bridge).receiveERC721(payload_);
         emit IBaseAdapter.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);

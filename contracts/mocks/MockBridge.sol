@@ -8,7 +8,7 @@ contract MockBridge {
         bytes data;
     }
 
-    bool public s_isLocked;
+    bool public s_isLocked = true;
 
     function lock(bool status_) external {
         s_isLocked = status_;

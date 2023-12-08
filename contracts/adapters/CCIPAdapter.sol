@@ -15,9 +15,13 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
     IBaseAdapter.MessageReceive[] private s_pendingMessagesToExecute;
     uint256 private s_messagesExecutedCount;
 
-    /// @dev automation settings
+    /// @dev interval in seconds to automation execute messages
     uint256 private s_updateInterval = 60;
+
+    /// @dev last timestamp when performUpkeep was executed
     uint256 private s_lastTimeStampPerformUpkeep;
+
+    /// @dev default limit of messages to execute (batch)
     uint256 private s_defaultExecutionLimit = 10;
 
     error NoMessagesAvailable();
@@ -45,6 +49,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         return s_defaultExecutionLimit;
     }
 
+    /// @dev check if there are any messages available to execute
     function checkUpkeep(
         bytes calldata /* checkData */
     ) external view override returns (bool upkeepNeeded, bytes memory /* performData */) {
@@ -58,6 +63,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         return (upkeepNeeded, "");
     }
 
+    /// @dev interface required by Chainlink Automation
     function performUpkeep(bytes calldata /* performData */) external override {
         if (s_pendingMessagesToExecute.length == 0) revert NoMessagesAvailable();
 
@@ -80,10 +86,21 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         return _getFee(uint64(payload_.toChain), evm2AnyMessage);
     }
 
-    function _getFee(uint64 toChain, Client.EVM2AnyMessage memory evm2AnyMessage) internal view returns (uint256) {
-        return IRouterClient(getRouter()).getFee(toChain, evm2AnyMessage);
+    /**
+     * @notice get fee amount require for sending message using Chainlink CCIP
+     * @param toChain_ target chain
+     * @param evm2AnyMessage_ message payload
+     */
+    function _getFee(uint64 toChain_, Client.EVM2AnyMessage memory evm2AnyMessage_) internal view returns (uint256) {
+        return IRouterClient(getRouter()).getFee(toChain_, evm2AnyMessage_);
     }
 
+    /**
+     * @notice build CCIP message payload
+     * @param receiver_ address of receiver (crosschain adapter)
+     * @param data_ message payload
+     * @param gasLimit_ gas limit
+     */
     function _buildCCIPMessage(
         address receiver_,
         bytes memory data_,
@@ -117,13 +134,18 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         _receiveMessage(payload);
     }
 
+    /**
+     * @notice set income message as pending to execute, its override default behavior from BaseAdapter
+     *         to allow automation to execute messages in batches (s_defaultExecutionLimit)
+     * @param payload_ message payload
+     */
     function _receiveMessage(IBaseAdapter.MessageReceive memory payload_) internal virtual override {
-        /// @dev: todo, try before set as peding
-        // try IBridge(getBridge()).receiveERC721(payload_) {
-        //     /** @dev ignore */
-        // } catch  {
-        _setPendingMessage(payload_);
-        // }
+        /// @dev try before set as peding
+        try IBridge(getBridge()).receiveERC721(payload_) {
+            /** @dev ignore */
+        } catch {
+            _setPendingMessage(payload_);
+        }
 
         emit IBaseAdapter.MessageReceived(payload_.fromChain, payload_.sender, payload_.data);
     }
@@ -140,6 +162,10 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         return s_pendingMessagesToExecute[index_];
     }
 
+    /**
+     * @notice {public} to execute pending messages in batches  manually
+     * @param limitToExecute_ amount of messages to execute (batch)
+     */
     function executeMessages(uint256 limitToExecute_) public {
         if (limitToExecute_ == 0 || s_pendingMessagesToExecute.length == 0) revert NoMessagesAvailable();
 
@@ -150,10 +176,11 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         uint256 lastIndex = limit - 1;
         uint256 messagesToDelete = limit;
 
+        /// @dev execute pending messages
         while (limit > 0) {
             IBaseAdapter.MessageReceive memory payload = s_pendingMessagesToExecute[lastIndex];
 
-            IBridge(getBridge()).receiveERC721(payload);
+            _receiveMessage(payload);
 
             s_messagesExecutedCount++;
 
@@ -164,16 +191,19 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
             limit--;
         }
 
+        /// @dev remove pending messages from the list
         while (messagesToDelete > 0) {
             s_pendingMessagesToExecute.pop();
             messagesToDelete--;
         }
     }
 
+    /// @dev amount of executed messages
     function getMessagesExecutedCount() public view returns (uint256) {
         return s_messagesExecutedCount;
     }
 
+    /// @dev amount of pending messages to execute
     function getPendingMessagesToExecuteCount() public view returns (uint256) {
         return s_pendingMessagesToExecute.length;
     }
@@ -188,6 +218,7 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
             IERC20(feeToken()).approve(getRouter(), quotedFee_);
         }
 
+        /// @dev set token amounts that is required for send the message
         uint256[2] memory tokenAmounts_ = [payload_.gasLimit, quotedFee_];
 
         _ccipSend(uint64(payload_.toChain), payload_.receiver, payload_.data, isFeeTokenNative, tokenAmounts_);
@@ -195,8 +226,16 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         emit IBaseAdapter.MessageSent(payload_.toChain, payload_.receiver, payload_.data);
     }
 
+    /**
+     * @notice send message using chainlink CCIP
+     * @param toChain_ target chain
+     * @param receiver_ receiver address
+     * @param data_ message payload
+     * @param isFeeTokenNative is fee token native
+     * @param tokenAmounts_ token amounts
+     */
     function _ccipSend(
-        uint64 toChain,
+        uint64 toChain_,
         address receiver_,
         bytes memory data_,
         bool isFeeTokenNative,
@@ -205,11 +244,12 @@ contract CCIPAdapter is BaseAdapter, CCIPReceiver, AutomationCompatibleInterface
         IRouterClient router = IRouterClient(getRouter());
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(receiver_, data_, tokenAmounts_[0]);
 
-        if (!isFeeTokenNative) {
-            router.ccipSend(toChain, evm2AnyMessage);
-        } else {
+        if (isFeeTokenNative) {
             /// @dev spend native token as fees
-            router.ccipSend{value: tokenAmounts_[1]}(toChain, evm2AnyMessage);
+            router.ccipSend{value: tokenAmounts_[1]}(toChain_, evm2AnyMessage);
+        } else {
+            /// @dev just send message since we already approved router to spend ERC20 token as fees
+            router.ccipSend(toChain_, evm2AnyMessage);
         }
     }
 }

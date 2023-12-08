@@ -236,7 +236,7 @@ describe('CCIPAdapter', function () {
     it('should set as pending message on receive', async function () {
       const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
 
-      const mockBridgeAddress = '0xEF324FB84e72F098363837dF92C7aFfF46675411'
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
       const { mockCCIPRouterAddress } = await loadFixture(
         deployMockCCIPRouterFixture
@@ -288,7 +288,7 @@ describe('CCIPAdapter', function () {
     it('should increment execute messages count on receive', async function () {
       const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
 
-      const mockBridgeAddress = '0xEF324FB84e72F098363837dF92C7aFfF46675411'
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
       const { mockCCIPRouterAddress } = await loadFixture(
         deployMockCCIPRouterFixture
@@ -335,7 +335,7 @@ describe('CCIPAdapter', function () {
     it('should emit MessageReceived on receive message', async function () {
       const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
 
-      const mockBridgeAddress = '0xEF324FB84e72F098363837dF92C7aFfF46675411'
+      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
       const { mockCCIPRouterAddress } = await loadFixture(
         deployMockCCIPRouterFixture
@@ -404,7 +404,7 @@ describe('CCIPAdapter', function () {
       it('should revert if get message from a non existen index when list is not empty', async function () {
         const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
 
-        const mockBridgeAddress = '0xEF324FB84e72F098363837dF92C7aFfF46675411'
+        const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
 
         const { mockCCIPRouterAddress } = await loadFixture(
           deployMockCCIPRouterFixture
@@ -581,7 +581,9 @@ describe('CCIPAdapter', function () {
     it('should remove from pending messages after execution', async function () {
       const [, mockRouterCaller, fromOtherChainAdapter] = await getSigners()
 
-      const { mockBridgeAddress } = await loadFixture(deployMockBridgeFixture)
+      const { mockBridgeAddress, mockBridge } = await loadFixture(
+        deployMockBridgeFixture
+      )
 
       const { mockCCIPRouterAddress } = await loadFixture(
         deployMockCCIPRouterFixture
@@ -615,6 +617,8 @@ describe('CCIPAdapter', function () {
 
       await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
       await ccipAdapter.connect(mockRouterCaller).ccipReceive(payload)
+
+      await mockBridge.lock(false)
 
       await ccipAdapter.executeMessages(1)
 
