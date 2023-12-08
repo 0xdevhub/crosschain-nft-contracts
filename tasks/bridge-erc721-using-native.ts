@@ -4,7 +4,7 @@ import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 import { RampType } from './set-chain-settings'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
 export type DeployTestERC721ContractTask = {
   tokenName: string
@@ -69,6 +69,7 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
         )
 
         await ERC721.waitForDeployment()
+        const ERC721Address = await ERC721.getAddress()
 
         const tokenId = 1
 
@@ -78,11 +79,15 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
         const receipt = await tx.wait()
         const gasUsed = receipt?.gasUsed || 0n
 
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed)
 
         /**
          *
          */
+
+        spinner.start()
 
         console.log('ℹ️ Getting required fee from adapter')
 
@@ -104,17 +109,15 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
 
         const abiCoder = hre.ethers.AbiCoder.defaultAbiCoder()
 
-        const targetChainSettings = await bridge.getChainSettings(
+        const targetEvmChainIdSettings = await bridge.getEvmChainIdSettings(
           targetNetwork,
           RampType.OnRamp
         )
 
-        const ERC721Address = await ERC721.getAddress()
-
         const payload = {
-          toChain: targetChainSettings.nonEvmChainId,
-          receiver: targetChainSettings.adapter,
-          gasLimit: targetChainSettings.gasLimit,
+          toChain: targetEvmChainIdSettings.nonEvmChainId,
+          receiver: targetEvmChainIdSettings.adapter,
+          gasLimit: targetEvmChainIdSettings.gasLimit,
           data: abiCoder.encode(
             ['address', 'bytes', 'bytes'],
             [
@@ -133,11 +136,14 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
 
         const fee = await adapter.getFee(payload)
 
+        spinner.stop()
         console.log('ℹ️ Required feee:', fee)
 
         /**
          *
          */
+
+        spinner.start()
 
         console.log('ℹ️ Approving ERC721 to bridge')
         const tx2 = await ERC721.approve(bridgeAddress, tokenId)
@@ -145,16 +151,21 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
 
         const receipt2 = await tx2.wait()
         const gasUsed2 = receipt2?.gasUsed || 0n
+
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed2)
 
         /**
          *
          */
 
+        spinner.start()
+
         console.log('ℹ️ Estimating gas')
 
         const estimateGas = await bridge.sendERC721UsingNative.estimateGas(
-          targetChainSettings.evmChainId,
+          targetEvmChainIdSettings.evmChainId,
           ERC721Address,
           tokenId,
           {
@@ -162,16 +173,20 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
           }
         )
 
+        spinner.stop()
+
         console.log('ℹ️ Gas estimate', estimateGas)
 
         /**
          *
          */
 
+        spinner.start()
+
         console.log(`ℹ️ Sending ERC721 to bridge using native`)
 
         const tx3 = await bridge.sendERC721UsingNative(
-          targetChainSettings.evmChainId,
+          targetEvmChainIdSettings.evmChainId,
           ERC721Address,
           tokenId,
           {
@@ -182,13 +197,18 @@ task('bridge-erc721-using-native', 'bridge ERC721 contract using native token')
         const receipt3 = await tx3.wait()
         const gasUsed3 = receipt3?.gasUsed || 0n
 
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed3)
 
         /**
          *
          */
 
+        spinner.start()
+
         const ERC721Owner = await ERC721.ownerOf(tokenId)
+        console.log('ℹ️ Checking transfer')
 
         spinner.stop()
         console.log(

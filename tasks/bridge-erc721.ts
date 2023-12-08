@@ -4,7 +4,7 @@ import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 import { RampType } from './set-chain-settings'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
 export type DeployTestERC721ContractTask = {
   bridgeAddress: string
@@ -101,15 +101,15 @@ task('bridge-erc721', 'bridge ERC721 contract using erc20 token')
 
         const abiCoder = hre.ethers.AbiCoder.defaultAbiCoder()
 
-        const targetChainSettings = await bridge.getChainSettings(
+        const targetEvmChainIdSettings = await bridge.getEvmChainIdSettings(
           targetNetwork,
           RampType.OnRamp
         )
 
         const payload = {
-          toChain: targetChainSettings.nonEvmChainId,
-          receiver: targetChainSettings.adapter,
-          gasLimit: targetChainSettings.gasLimit,
+          toChain: targetEvmChainIdSettings.nonEvmChainId,
+          receiver: targetEvmChainIdSettings.adapter,
+          gasLimit: targetEvmChainIdSettings.gasLimit,
           data: abiCoder.encode(
             ['address', 'bytes', 'bytes'],
             [
@@ -166,7 +166,7 @@ task('bridge-erc721', 'bridge ERC721 contract using erc20 token')
         console.log('ℹ️ Estimating gas')
 
         const estimateGas = await bridge.sendERC721UsingERC20.estimateGas(
-          targetChainSettings.evmChainId,
+          targetEvmChainIdSettings.evmChainId,
           tokenAddress,
           tokenId,
           fee
@@ -181,7 +181,7 @@ task('bridge-erc721', 'bridge ERC721 contract using erc20 token')
         console.log(`ℹ️ Sending ERC721 to bridge using ${feeTokenName}`)
 
         const tx3 = await bridge.sendERC721UsingERC20(
-          targetChainSettings.evmChainId,
+          targetEvmChainIdSettings.evmChainId,
           tokenAddress,
           tokenId,
           fee

@@ -1,9 +1,5 @@
 import { getContractAddress, getContractFactory } from '@/scripts/utils'
-import {
-  Bridge__factory,
-  MockAdapter__factory,
-  MockContractGeneral__factory
-} from '@/typechain'
+import { Bridge__factory } from '@/typechain'
 
 export enum RampType {
   OnRamp,

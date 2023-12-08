@@ -3,7 +3,7 @@ import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
 export type DeployBridgeContractTask = {
   accountIndex: number
@@ -55,12 +55,13 @@ task('deploy-bridge-contract', 'Deploy bridge contract')
 
       const receipt = await tx.deploymentTransaction()?.wait()
       const gasUsed = receipt?.gasUsed || 0n
-
+      spinner.stop()
       console.log('ℹ️ Gas used: ', gasUsed)
 
       /**
        *
        */
+      spinner.start()
 
       const bridgeContractAddress = await bridgeContract.getAddress()
 

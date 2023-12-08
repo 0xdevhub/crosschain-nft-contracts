@@ -3,7 +3,7 @@ import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
 export type SetChainSettingsParams = {
   adapterAddress: string
@@ -53,16 +53,21 @@ task('execute-message', 'execute message manually ')
           deployer
         )
 
+        const bridge = await hre.ethers.getContractFactory('Bridge')
+
+        console.log(bridge.interface.getError('AdapterNotFound')?.selector)
+
         const tx = await adapter.executeMessages(limit)
 
         const receipt = await tx.wait()
         const gasUsed = receipt?.gasUsed || 0n
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed)
 
         /**
          *
          */
-        spinner.stop()
         console.log(`✅ Messages executed`)
       } catch (error) {
         spinner.stop()

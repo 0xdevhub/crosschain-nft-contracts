@@ -11,8 +11,8 @@ contract WERC721 is ERC721 {
 
     error OnlyBridge();
 
-    constructor(address bridgeAddress_, string memory name_, string memory symbol_) ERC721(name_, symbol_) {
-        s_bridgeAddress = bridgeAddress_;
+    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+        s_bridgeAddress = msg.sender;
     }
 
     modifier onlyBridge() {

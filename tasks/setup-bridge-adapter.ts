@@ -10,7 +10,7 @@ import {
   ROUTER_ROLE_DELAY
 } from '@/scripts/constants'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 import { allowedChainsConfig } from '@/config/config'
 
 export type SetupBridgeAdapterTask = {
@@ -20,7 +20,6 @@ export type SetupBridgeAdapterTask = {
   adapterContractName: 'CCIPAdapter'
   accountIndex: number
   routerToAdapterFunctionSelector: 'ccipReceive'
-  /// @todo: applly both instead of select one of them
   bridgeToAdapterFunctionSelector:
     | 'sendMessageUsingNative'
     | 'sendMessageUsingERC20'
@@ -101,6 +100,7 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
 
         const receipt = await tx.wait()
         const gasUsed = receipt?.gasUsed || 0n
+        spinner.stop()
 
         console.log('ℹ️ Done and gas used: ', gasUsed)
 
@@ -108,6 +108,7 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
          *
          */
 
+        spinner.start()
         console.log('ℹ️ Granting adapter role: ', ADAPTER_ROLE)
 
         const tx2 = await accessManagementContract.grantRole(
@@ -119,12 +120,15 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         const receipt2 = await tx2.wait()
         const gasUsed2 = receipt2?.gasUsed || 0n
 
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed2)
 
         /**
          *
          */
 
+        spinner.start()
         console.log('ℹ️ Granting bridge role: ', BRIDGE_ROLE)
 
         const tx3 = await accessManagementContract.grantRole(
@@ -136,11 +140,15 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         const receipt3 = await tx3.wait()
         const gasUsed3 = receipt3?.gasUsed || 0n
 
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed3)
 
         /**
          * send messages
          */
+
+        spinner.start()
 
         console.log(
           'ℹ️ Granting bridge role to adapter function selector:',
@@ -165,11 +173,16 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
 
         const receipt4 = await tx4.wait()
         const gasUsed4 = receipt4?.gasUsed || 0n
+
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed4)
 
         /**
          * receive messages
          */
+
+        spinner.start()
 
         console.log(
           'ℹ️ Granting router role to adapter function selector:',
@@ -190,11 +203,16 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         await tx5.wait()
         const receipt5 = await tx5.wait()
         const gasUsed5 = receipt5?.gasUsed || 0n
+
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed5)
 
         /**
          *
          */
+
+        spinner.start()
 
         const adapterToBridgeFunctionSelector = 'receiveERC721'
 
@@ -220,13 +238,14 @@ task('setup-bridge-adapter', 'setting up bridge and adapter')
         const receipt6 = await tx6.wait()
         const gasUsed6 = receipt6?.gasUsed || 0n
 
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed6)
 
         /**
          *
          */
 
-        spinner.stop()
         console.log(`✅ Roles granted to contracts`)
       } catch (error) {
         spinner.stop()

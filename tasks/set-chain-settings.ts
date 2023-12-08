@@ -8,9 +8,9 @@ export enum RampType {
   OffRamp
 }
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
-export type SetChainSettingsParams = {
+export type SetEvmChainIdSettingsParams = {
   bridgeAddress: string
   evmChainId: number
   nonEvmChainId: number
@@ -46,7 +46,7 @@ task('set-chain-settings', 'set chain settings')
         gasLimit,
         isEnabled,
         accountIndex
-      }: SetChainSettingsParams,
+      }: SetEvmChainIdSettingsParams,
       hre
     ) => {
       spinner.start()
@@ -84,7 +84,7 @@ task('set-chain-settings', 'set chain settings')
 
         const gasLimitValue = gasLimit ? BigInt(gasLimit) : 2000000n
 
-        const tx = await bridgeContract.setChainSetting(
+        const tx = await bridgeContract.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           adapterAddress,
@@ -95,14 +95,19 @@ task('set-chain-settings', 'set chain settings')
 
         const receipt = await tx.wait()
         const gasUsed = receipt?.gasUsed || 0n
+
+        spinner.stop()
+
         console.log('ℹ️ Done and gas used: ', gasUsed)
 
         /**
          *
          */
+
+        spinner.start()
         console.log('ℹ️ Setting offramp chainSettings')
 
-        const tx2 = await bridgeContract.setChainSetting(
+        const tx2 = await bridgeContract.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           targetAdapterAddress,
@@ -115,6 +120,7 @@ task('set-chain-settings', 'set chain settings')
 
         const receipt2 = await tx2.wait()
         const gasUsed2 = receipt2?.gasUsed || 0n
+
         console.log('ℹ️ Done and gas used: ', gasUsed2)
 
         /**

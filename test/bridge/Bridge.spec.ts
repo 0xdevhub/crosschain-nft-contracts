@@ -6,10 +6,16 @@ import { RampType, deployBridgeFixture } from './fixture'
 import { deployMockERC721Fixture } from '@/test/mocks/erc721Fixture'
 import { deployMockAdapterFixture } from '@/test/mocks/adapterFixture'
 import { deployMockContractGeneralFixture } from '@/test/mocks/commonFixture'
-import { abiCoder, getSigners } from '@/scripts/utils'
+import {
+  abiCoder,
+  getContractAddress,
+  getContractFactory,
+  getSigners
+} from '@/scripts/utils'
 import { ethers } from 'hardhat'
 import { ADAPTER_ROLE, ADAPTER_ROLE_DELAY } from '@/scripts/constants'
 import { deployMockERC20Fixture } from '../mocks/erc20Fixture'
+import { Bridge__factory } from '@/typechain'
 
 describe('Bridge', function () {
   let accessManagement: AccessManagement
@@ -46,7 +52,7 @@ describe('Bridge', function () {
       const nonEvmChainId = 805125132001
       const isEnabled = true
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         adapterAddress,
@@ -55,7 +61,10 @@ describe('Bridge', function () {
         0n
       )
 
-      const adapter = await bridge.getChainSettings(evmChainId, RampType.OnRamp)
+      const adapter = await bridge.getEvmChainIdSettings(
+        evmChainId,
+        RampType.OnRamp
+      )
 
       expect(adapter).to.deep.equal([
         evmChainId,
@@ -78,7 +87,7 @@ describe('Bridge', function () {
       const isEnabled = true
 
       await expect(
-        bridge.setChainSetting(
+        bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           adapterAddress,
@@ -97,17 +106,18 @@ describe('Bridge', function () {
         deployBridgeFixture.bind(this, accessManagementAddress)
       )
 
-      await bridge.setERC721WrappedToken(
-        wrappedAddress,
+      await bridge.setWERC721ByOriginERC721Address(
+        originAddress,
         originEvmChainId,
-        originAddress
+        wrappedAddress
       )
 
-      const wrappedToken = await bridge.getERC721WrappedToken(originAddress)
+      const wrappedToken =
+        await bridge.getWERC721ByOriginERC721Address(originAddress)
 
       expect(wrappedToken).to.deep.equal([
-        originEvmChainId,
         originAddress,
+        originEvmChainId,
         wrappedAddress
       ])
     })
@@ -128,7 +138,7 @@ describe('Bridge', function () {
         await expect(
           bridge
             .connect(hacker)
-            .setChainSetting(
+            .setEvmChainIdSetting(
               evmChainId,
               nonEvmChainId,
               adapterAddress,
@@ -151,7 +161,7 @@ describe('Bridge', function () {
         await expect(
           bridge
             .connect(hacker)
-            .setERC721WrappedToken(
+            .setWERC721ByOriginERC721Address(
               wrappedAddress,
               originEvmChainId,
               originAddress
@@ -186,7 +196,7 @@ describe('Bridge', function () {
 
       await mockAdapter.setFeeToken(mockERC20Address)
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -242,7 +252,7 @@ describe('Bridge', function () {
       const expectedAmount = 100_000n
       await mockAdapter.setFee(expectedAmount)
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress, // source
@@ -251,7 +261,7 @@ describe('Bridge', function () {
         0n
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress, // source
@@ -356,7 +366,7 @@ describe('Bridge', function () {
 
       await mockAdapter.setFeeToken(mockERC20Address)
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -407,7 +417,7 @@ describe('Bridge', function () {
 
         await mockAdapter.setFeeToken(mockERC20Address)
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -458,7 +468,7 @@ describe('Bridge', function () {
         const expectedAmount = 100_000n
         await mockAdapter.setFee(expectedAmount)
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -534,7 +544,7 @@ describe('Bridge', function () {
 
         await mockAdapter.setFeeToken(mockERC20Address)
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -582,7 +592,7 @@ describe('Bridge', function () {
         deployMockAdapterFixture
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -632,7 +642,7 @@ describe('Bridge', function () {
         deployMockAdapterFixture
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress, // source
@@ -641,7 +651,7 @@ describe('Bridge', function () {
         0n
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress, // destination
@@ -738,7 +748,7 @@ describe('Bridge', function () {
         deployMockAdapterFixture
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -780,7 +790,7 @@ describe('Bridge', function () {
           deployMockAdapterFixture
         )
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -826,7 +836,7 @@ describe('Bridge', function () {
         const expectedAmount = 100_000n
         await mockAdapter.setFee(expectedAmount)
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -895,7 +905,7 @@ describe('Bridge', function () {
           deployMockAdapterFixture
         )
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -939,7 +949,7 @@ describe('Bridge', function () {
         deployMockAdapterFixture
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -1023,7 +1033,7 @@ describe('Bridge', function () {
         deployMockAdapterFixture
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -1135,7 +1145,7 @@ describe('Bridge', function () {
         deployMockAdapterFixture
       )
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -1160,7 +1170,7 @@ describe('Bridge', function () {
       await mockERC721.approve(bridgeAddress, tokenId)
       await bridge.sendERC721UsingNative(evmChainId, mockERC721Address, tokenId)
 
-      await bridge.setChainSetting(
+      await bridge.setEvmChainIdSetting(
         evmChainId,
         nonEvmChainId,
         mockAdapterAddress,
@@ -1200,6 +1210,89 @@ describe('Bridge', function () {
       expect(ERC721Owner).to.be.equal(currentOwner.address)
     })
 
+    it('should create the same address if transfered to a third chain', async function () {
+      const [, currentOwner] = await getSigners()
+
+      const { mockAdapterAddress, mockAdapter } = await loadFixture(
+        deployMockAdapterFixture
+      )
+
+      const isEnabled = true
+
+      /// @dev first evm
+      const evmChainId1 = 1
+      const nonEvmChainId1 = 123456789
+
+      const Bridge = await getContractFactory<Bridge__factory>('Bridge')
+
+      /// @dev second evm
+      const evmChainId2 = 2
+      const bridge2 = await Bridge.deploy(accessManagementAddress, evmChainId2)
+      const bridgeAddress2 = await getContractAddress(bridge2)
+
+      /// @dev set chain 1 as offramp of chain 2
+      await bridge2.setEvmChainIdSetting(
+        evmChainId1,
+        nonEvmChainId1,
+        mockAdapterAddress,
+        RampType.OffRamp,
+        isEnabled,
+        0n
+      )
+
+      /// @dev grant adapter role to adapter
+      await accessManagement.grantRole(ADAPTER_ROLE, mockAdapterAddress, 0)
+
+      /// @dev grant adapter role to bridge 2
+      await accessManagement.setTargetFunctionRole(
+        bridgeAddress2,
+        [bridge2.interface.getFunction('receiveERC721').selector],
+        ADAPTER_ROLE
+      )
+
+      /// @dev deploy a ERC721 token
+      const { mockERC721, mockERC721Address } = await loadFixture(
+        deployMockERC721Fixture
+      )
+
+      const tokenId = 1
+      await mockERC721.mint(tokenId)
+
+      const encodedData = abiCoder.encode(
+        ['address', 'bytes', 'bytes'],
+        [
+          currentOwner.address,
+          abiCoder.encode(
+            ['uint256', 'address', 'uint256'],
+            [evmChainId1, mockERC721Address, tokenId]
+          ),
+          abiCoder.encode(
+            ['string', 'string', 'string'],
+            [
+              await mockERC721.name(),
+              await mockERC721.symbol(),
+              await mockERC721.tokenURI(tokenId)
+            ]
+          )
+        ]
+      )
+
+      const payload = {
+        fromChain: nonEvmChainId1,
+        sender: mockAdapterAddress,
+        data: encodedData
+      }
+
+      await mockAdapter.receiveMessage(payload, bridgeAddress2)
+
+      const wERC721Bridge2 =
+        await bridge2.getWERC721ByOriginERC721Address(mockERC721Address)
+
+      expect(wERC721Bridge2.wrappedAddress).to.be.equal(
+        '0x1555F25256ef6dA9CD5Ae892C32028ed3f8F9D8a'
+      )
+    })
+
     describe('Checks', () => {
       it('should revert receive if sender not allowed', async function () {
         const { bridge, bridgeAddress } = await loadFixture(
@@ -1214,7 +1307,7 @@ describe('Bridge', function () {
           deployMockAdapterFixture
         )
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,
@@ -1317,7 +1410,7 @@ describe('Bridge', function () {
           deployMockAdapterFixture
         )
 
-        await bridge.setChainSetting(
+        await bridge.setEvmChainIdSetting(
           evmChainId,
           nonEvmChainId,
           mockAdapterAddress,

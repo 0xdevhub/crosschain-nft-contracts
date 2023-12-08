@@ -3,7 +3,7 @@ import { Spinner } from '../scripts/spinner'
 import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
 export type DeployWrappedTokenTask = {
   accountIndex: number
@@ -61,10 +61,13 @@ task('deploy-wrapped-contract', 'deploy wrapped token contract ')
           [receiver.address, tokenName, tokenSymbol],
           deployer
         )
+        const nftAddress = await nft.getAddress()
 
         const tx = await nft.waitForDeployment()
         const receipt = await tx.deploymentTransaction()?.wait()
         const gasUsed = receipt?.gasUsed || 0n
+
+        spinner.stop()
 
         console.log('ℹ️ Done and gas used: ', gasUsed)
 
@@ -72,11 +75,13 @@ task('deploy-wrapped-contract', 'deploy wrapped token contract ')
          *
          */
 
+        spinner.start()
         console.log('ℹ️ Minting: ', tokenId)
 
         const tx2 = await nft.bridgeMint(receiver.address, tokenId, '0x')
         const receipt2 = await tx2.wait()
         const gasUsed2 = receipt2?.gasUsed || 0n
+        spinner.stop()
 
         console.log('ℹ️ Done and gas used: ', gasUsed2)
 
@@ -84,9 +89,6 @@ task('deploy-wrapped-contract', 'deploy wrapped token contract ')
          *
          */
 
-        const nftAddress = await nft.getAddress()
-
-        spinner.stop()
         console.log(`✅ Deployed NFT ${tokenName} at: `, nftAddress)
       } catch (error) {
         spinner.stop()

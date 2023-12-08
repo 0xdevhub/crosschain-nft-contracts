@@ -28,7 +28,7 @@ export const avalancheFuji: Chain = {
       blockCreated: 7096959
     },
     accessManagement: {
-      address: '0x7953C478A5F5d53C263Bd1251BfC4c418d8C5568',
+      address: '0xA77Bb3B4aC78198208922A6c919921b274be0F9c',
       blockCreated: 0
     }
   },
@@ -77,7 +77,7 @@ export const polygonMumbai: Chain = {
       blockCreated: 25770160
     },
     accessManagement: {
-      address: '0xBbd6d4dC3BF45fdbc286a01916eb7611b727957c',
+      address: '0x52Ef16e646A21150b6f8D7A41F0D6A9483EC2196',
       blockCreated: 0
     }
   },

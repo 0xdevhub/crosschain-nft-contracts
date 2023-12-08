@@ -4,7 +4,7 @@ import cliSpinner from 'cli-spinners'
 import { allowedChainsConfig } from '@/config/config'
 import { ethers } from 'ethers'
 
-const spinner: Spinner = new Spinner(cliSpinner.aesthetic)
+const spinner: Spinner = new Spinner(cliSpinner.triangle)
 
 export type DeployBridgeContractTask = {
   adapter: 'CCIPAdapter'
@@ -79,18 +79,18 @@ task('deploy-adapter-contract', 'Deploy adapter contract')
           deployer
         )
 
+        const adapterContractAddress = await adapterContract.getAddress()
+
         const tx = await adapterContract.waitForDeployment()
         const receipt = await tx.deploymentTransaction()?.wait()
         const gasUsed = receipt?.gasUsed || 0n
+        spinner.stop()
         console.log('ℹ️ Gas used: ', gasUsed)
 
         /**
          *
          */
 
-        const adapterContractAddress = await adapterContract.getAddress()
-
-        spinner.stop()
         console.log(
           `✅ Adapter ${adapter} deployed at:`,
           adapterContractAddress
